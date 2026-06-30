@@ -1,0 +1,252 @@
+{
+  "GET /v1/keys": {
+    "description": "List this tenant's issuer signing keys (active, rotated, and not-yet-retired) and the JWKS endpoint where verifiers can fetch the public keys. Call it to inspect the current key lifecycle before or after a rotation, or to discover the JWKS URI to publish to relying parties. Authenticated with the tenant API key; the active signing key is lazily created on first call so the list is never empty.",
+    "responses": {
+      "200": {
+        "description": "The tenant's signing keys, newest first, plus the JWKS URI for verifiers.",
+        "fields": {
+          "keys": {
+            "type": "array",
+            "description": "All signing keys for the tenant that are still relevant to verification (status active or rotated), ordered by creation time descending. A rotated key remains listed until it passes its valid_until and is retired.",
+            "items": {
+              "type": "object",
+              "fields": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "description": "Internal UUID primary key of the signing-key record.",
+                  "example": "5f6a1c2d-3e4b-5a6c-7d8e-9f0a1b2c3d4e"
+                },
+                "kid": {
+                  "type": "string",
+                  "description": "JWK key identifier (the RFC 7638 thumbprint of the public key). This is the `kid` placed in the SD-JWT VC header; verifiers resolve the verification key by matching it.",
+                  "example": "Ab3kQ9z1Xy7..."
+                },
+                "alg": {
+                  "type": "string",
+                  "description": "JWS signing algorithm used by this key. Always ES256 (ECDSA over P-256 with SHA-256).",
+                  "example": "ES256"
+                },
+                "status": {
+                  "type": "string",
+                  "enum": ["active", "rotated", "retired"],
+                  "description": "Key lifecycle state. `active` signs newly issued credentials; `rotated` is superseded but still verifies credentials already issued under it until its valid_until; `retired` is past validity and no longer trusted (retired keys are not returned by this endpoint).",
+                  "example": "active"
+                },
+                "is_active": {
+                  "type": "boolean",
+                  "description": "True only for the single current signing key (equivalent to status == active). Rotated keys have this set to false.",
+                  "example": true
+                },
+                "valid_until": {
+                  "type": "string",
+                  "format": "date-time",
+                  "nullable": true,
+                  "description": "ISO 8601 timestamp until which a rotated key remains valid for verification (the overlapping-validity window, 365 days from rotation by default). Null for the active key, which has no expiry while active.",
+                  "example": "2027-06-30T12:00:00+00:00"
+                },
+                "created_at": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "ISO 8601 timestamp when the signing key was created.",
+                  "example": "2026-06-30T12:00:00+00:00"
+                }
+              }
+            }
+          },
+          "jwks_uri": {
+            "type": "string",
+            "format": "uri",
+            "description": "Absolute URL of this tenant's JWT VC Issuer metadata / JWKS endpoint, where verifiers fetch the public JWKs (active + rotated, not-expired keys) needed to verify issued credentials.",
+            "example": "https://credentials.didit.me/v1/issuers/acme-air/.well-known/jwt-vc-issuer"
+          }
+        }
+      }
+    }
+  },
+  "POST /v1/keys/rotate": {
+    "description": "Rotate the tenant's issuer signing key: mint a fresh active key for all future issuance and demote the previously active key to `rotated` with an overlapping-validity window (365 days) so credentials already issued under it keep verifying. Call it on a routine key-rotation schedule or in response to a suspected key compromise. Authenticated with the tenant API key.",
+    "responses": {
+      "201": {
+        "description": "Rotation succeeded. Returns the newly created active key, the demoted previous key (if one existed), and an impact summary describing how many in-force credentials remain verifiable under the rotated key.",
+        "fields": {
+          "new_key": {
+            "type": "object",
+            "description": "The freshly created signing key, now active and used to sign all newly issued credentials.",
+            "fields": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "description": "Internal UUID primary key of the new signing-key record.",
+                "example": "7a8b9c0d-1e2f-3a4b-5c6d-7e8f9a0b1c2d"
+              },
+              "kid": {
+                "type": "string",
+                "description": "JWK key identifier (RFC 7638 thumbprint) of the new active key. Future-issued credentials carry this `kid` in their header.",
+                "example": "Zx9wV8u7T6s..."
+              },
+              "alg": {
+                "type": "string",
+                "description": "JWS signing algorithm. Always ES256.",
+                "example": "ES256"
+              },
+              "status": {
+                "type": "string",
+                "enum": ["active", "rotated", "retired"],
+                "description": "Lifecycle state of the new key; always `active` immediately after rotation.",
+                "example": "active"
+              },
+              "is_active": {
+                "type": "boolean",
+                "description": "Always true for the new key.",
+                "example": true
+              },
+              "valid_until": {
+                "type": "string",
+                "format": "date-time",
+                "nullable": true,
+                "description": "Validity expiry. Null for the new active key (no expiry while active).",
+                "example": null
+              },
+              "created_at": {
+                "type": "string",
+                "format": "date-time",
+                "description": "ISO 8601 timestamp when the new key was created.",
+                "example": "2026-06-30T12:00:00+00:00"
+              }
+            }
+          },
+          "rotated_key": {
+            "type": "object",
+            "nullable": true,
+            "description": "The previously active key, now demoted to `rotated`. Null when no active key existed before this call (e.g. the very first rotation on a tenant). Remains verifiable until its valid_until.",
+            "fields": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "description": "Internal UUID primary key of the rotated (formerly active) signing-key record.",
+                "example": "5f6a1c2d-3e4b-5a6c-7d8e-9f0a1b2c3d4e"
+              },
+              "kid": {
+                "type": "string",
+                "description": "JWK key identifier (RFC 7638 thumbprint) of the rotated key. Credentials already issued under this `kid` keep verifying during the overlap window.",
+                "example": "Ab3kQ9z1Xy7..."
+              },
+              "alg": {
+                "type": "string",
+                "description": "JWS signing algorithm. Always ES256.",
+                "example": "ES256"
+              },
+              "status": {
+                "type": "string",
+                "enum": ["active", "rotated", "retired"],
+                "description": "Lifecycle state of the demoted key; always `rotated` immediately after rotation.",
+                "example": "rotated"
+              },
+              "is_active": {
+                "type": "boolean",
+                "description": "Always false for the rotated key.",
+                "example": false
+              },
+              "valid_until": {
+                "type": "string",
+                "format": "date-time",
+                "nullable": true,
+                "description": "ISO 8601 timestamp until which the rotated key remains valid for verification (set to now + 365 days at rotation).",
+                "example": "2027-06-30T12:00:00+00:00"
+              },
+              "created_at": {
+                "type": "string",
+                "format": "date-time",
+                "description": "ISO 8601 timestamp when the rotated key was originally created.",
+                "example": "2025-06-30T12:00:00+00:00"
+              }
+            }
+          },
+          "impact": {
+            "type": "object",
+            "description": "Summary of the rotation's effect on credentials already in force.",
+            "fields": {
+              "credentials_under_previous_key": {
+                "type": "integer",
+                "description": "Count of the tenant's currently-issued (status == issued, not soft-deleted) credentials that were signed under the previous key and remain verifiable under it until its valid_until.",
+                "example": 4213
+              },
+              "note": {
+                "type": "string",
+                "description": "Human-readable explanation of the overlapping-validity behaviour after rotation.",
+                "example": "Existing credentials remain valid under the rotated key until its valid_until; new credentials use the new key."
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "GET /v1/keys/impact": {
+    "description": "Preview the blast radius of a key rotation without performing one: returns how many currently-issued credentials would continue to verify under the current key after rotation (overlapping validity). Call it before POST /v1/keys/rotate to understand the impact. Authenticated with the tenant API key.",
+    "responses": {
+      "200": {
+        "description": "The rotation-impact preview for the tenant.",
+        "fields": {
+          "credentials_under_active_key": {
+            "type": "integer",
+            "description": "Count of the tenant's currently-issued (status == issued, not soft-deleted) credentials that would continue to verify under the current key after rotation, because the rotated key stays valid during its overlap window.",
+            "example": 4213
+          },
+          "note": {
+            "type": "string",
+            "description": "Human-readable explanation of the rotation-overlap behaviour.",
+            "example": "These credentials would continue to verify under the current key after rotation (overlapping validity)."
+          }
+        }
+      }
+    }
+  },
+  "GET /v1/status-lists/{slug}/{uuid}": {
+    "description": "Public, unauthenticated fetch of an entire IETF Token Status List (compressed bitstring) used for SD-JWT VC revocation and suspension. Verifiers fetch the whole list (never a per-credential entry) and read the bit at a credential's status index; serving the full list rather than a single entry is a deliberate correlation defense. Call it when verifying a credential whose `status` claim points at this list.",
+    "params": [
+      {
+        "name": "slug",
+        "in": "path",
+        "required": true,
+        "type": "string",
+        "description": "The issuer tenant's URL slug. Scopes the lookup to that tenant; a mismatched slug returns 404.",
+        "example": "acme-air"
+      },
+      {
+        "name": "uuid",
+        "in": "path",
+        "required": true,
+        "type": "string",
+        "format": "uuid",
+        "description": "UUID of the specific status list to fetch. Must belong to the tenant identified by `slug`, or the request returns 404.",
+        "example": "9f0a1b2c-3d4e-5f6a-7b8c-9d0e1f2a3b4c"
+      }
+    ],
+    "responses": {
+      "200": {
+        "description": "The full status list as a base64url-encoded bitstring plus its self-referential URI and size.",
+        "fields": {
+          "uri": {
+            "type": "string",
+            "format": "uri",
+            "description": "Canonical absolute URI of this status list, of the form {issuer_iss}/v1/status-lists/{slug}/{uuid}. This is the value referenced from each credential's status claim.",
+            "example": "https://acme-air.didit.me/v1/status-lists/acme-air/9f0a1b2c-3d4e-5f6a-7b8c-9d0e1f2a3b4c"
+          },
+          "size": {
+            "type": "integer",
+            "description": "Number of bits in the status list (the herd size, deliberately far larger than the credential count to resist correlation). Defaults to 131072.",
+            "example": 131072
+          },
+          "bits_b64": {
+            "type": "string",
+            "format": "byte",
+            "description": "The status-list bitstring encoded as a base64url string (no padding stripping; standard urlsafe base64 of the raw bytes). Decode it and read the bit at a credential's status index: 1 means revoked/suspended, 0 means valid.",
+            "example": "AAAAAAAAAAAAAAAAAAAAAA"
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,703 @@
+{
+  "GET /v1/issuers/{slug}/.well-known/openid-credential-issuer": {
+    "description": "OpenID4VCI 1.0 issuer metadata document. Public, unauthenticated, served per tenant under the tenant's issuer slug. A holder wallet fetches this first to discover the credential, token, nonce, and JWKS endpoints, plus the set of credential configurations the issuer supports. The `credential_configurations_supported` map is built dynamically from the tenant's (non-deleted) credential schemas, keyed by each schema's Verifiable Credential Type (`vct`). All endpoint URLs are absolute and derived from the request's base URL.",
+    "params": {
+      "path": {
+        "slug": {
+          "type": "string",
+          "description": "The tenant's issuer slug. Resolves to a non-deleted Tenant; an unknown or soft-deleted slug returns 404.",
+          "example": "airline-demo"
+        }
+      },
+      "query": {}
+    },
+    "request": {
+      "required": false,
+      "fields": {}
+    },
+    "responses": {
+      "200": {
+        "description": "OpenID4VCI issuer metadata.",
+        "fields": {
+          "credential_issuer": {
+            "type": "string",
+            "format": "uri",
+            "description": "The issuer's stable credential-issuer identifier — `{base}/v1/issuers/{slug}`. Used as the proof JWT `aud` (audience) and as the trust anchor for this issuer.",
+            "example": "https://id.didit.me/v1/issuers/airline-demo"
+          },
+          "credential_endpoint": {
+            "type": "string",
+            "format": "uri",
+            "description": "Absolute URL of the credential endpoint (POST /v1/credential) where the wallet redeems a Bearer access token + holder proof for the SD-JWT VC.",
+            "example": "https://id.didit.me/v1/credential"
+          },
+          "nonce_endpoint": {
+            "type": "string",
+            "format": "uri",
+            "description": "Absolute URL of the nonce endpoint (POST /v1/nonce) that mints the single-use `c_nonce` the holder must embed in the proof JWT.",
+            "example": "https://id.didit.me/v1/nonce"
+          },
+          "token_endpoint": {
+            "type": "string",
+            "format": "uri",
+            "description": "Absolute URL of the token endpoint (POST /v1/oauth/token) that exchanges a pre-authorized_code (plus tx_code) for an access token.",
+            "example": "https://id.didit.me/v1/oauth/token"
+          },
+          "jwt_vc_issuer": {
+            "type": "string",
+            "format": "uri",
+            "description": "Absolute URL of the SD-JWT VC issuer metadata / JWKS document (GET /v1/issuers/{slug}/.well-known/jwt-vc-issuer) holding the public keys used to verify issued credentials.",
+            "example": "https://id.didit.me/v1/issuers/airline-demo/.well-known/jwt-vc-issuer"
+          },
+          "credential_configurations_supported": {
+            "type": "object",
+            "description": "Map of supported credential configurations, keyed by the credential's `vct` (Verifiable Credential Type). One entry per non-deleted schema owned by the tenant. The key equals the value of the nested `vct` field. An empty object means the tenant has no schemas yet.",
+            "example": {
+              "AirlineLoyalty": {
+                "format": "dc+sd-jwt",
+                "vct": "AirlineLoyalty",
+                "cryptographic_binding_methods_supported": ["jwk"],
+                "credential_signing_alg_values_supported": ["ES256"],
+                "proof_types_supported": {
+                  "jwt": {
+                    "proof_signing_alg_values_supported": ["ES256", "EdDSA"]
+                  }
+                }
+              }
+            },
+            "fields": {
+              "format": {
+                "type": "string",
+                "description": "Credential format identifier. Always `dc+sd-jwt` (Digital Credentials SD-JWT VC).",
+                "example": "dc+sd-jwt"
+              },
+              "vct": {
+                "type": "string",
+                "description": "Verifiable Credential Type — the schema's `vct`. Matches the map key.",
+                "example": "AirlineLoyalty"
+              },
+              "cryptographic_binding_methods_supported": {
+                "type": "array",
+                "description": "Holder key-binding methods the issuer accepts. Always `[\"jwk\"]` — the holder binds the credential to a public JWK.",
+                "example": ["jwk"]
+              },
+              "credential_signing_alg_values_supported": {
+                "type": "array",
+                "description": "Algorithms the issuer uses to sign the credential. Always `[\"ES256\"]`.",
+                "example": ["ES256"]
+              },
+              "proof_types_supported": {
+                "type": "object",
+                "description": "Proof types the credential endpoint accepts, keyed by proof type. Only `jwt` is supported; its `proof_signing_alg_values_supported` lists the algorithms the holder's proof JWT may be signed with (`ES256`, `EdDSA`).",
+                "example": {
+                  "jwt": {
+                    "proof_signing_alg_values_supported": ["ES256", "EdDSA"]
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "404": {
+        "description": "No tenant exists for the given slug (or it is soft-deleted).",
+        "fields": {
+          "detail": {
+            "type": "string",
+            "description": "Human-readable not-found message.",
+            "example": "Not found."
+          }
+        }
+      }
+    }
+  },
+  "GET /v1/issuers/{slug}/.well-known/jwt-vc-issuer": {
+    "description": "SD-JWT VC issuer metadata (the JWKS document) for a tenant. Public and unauthenticated. Returns the issuer identifier plus the JSON Web Key Set holding the tenant's active issuer public key, which verifiers and wallets use to validate the signature on issued SD-JWT VCs. The single returned key has its `kid` set to its JWK thumbprint.",
+    "params": {
+      "path": {
+        "slug": {
+          "type": "string",
+          "description": "The tenant's issuer slug. Resolves to a non-deleted Tenant; an unknown or soft-deleted slug returns 404.",
+          "example": "airline-demo"
+        }
+      },
+      "query": {}
+    },
+    "request": {
+      "required": false,
+      "fields": {}
+    },
+    "responses": {
+      "200": {
+        "description": "SD-JWT VC issuer JWKS.",
+        "fields": {
+          "issuer": {
+            "type": "string",
+            "format": "uri",
+            "description": "The issuer's credential-issuer identifier — `{base}/v1/issuers/{slug}`. Matches `credential_issuer` in the issuer metadata document.",
+            "example": "https://id.didit.me/v1/issuers/airline-demo"
+          },
+          "jwks": {
+            "type": "object",
+            "description": "JSON Web Key Set wrapping the issuer's public signing key(s).",
+            "fields": {
+              "keys": {
+                "type": "array",
+                "description": "Array of public JWKs. Currently holds exactly one entry: the tenant's active issuer public key (EC P-256 / ES256). Each key includes a `kid` equal to its JWK thumbprint.",
+                "example": [
+                  {
+                    "kty": "EC",
+                    "crv": "P-256",
+                    "x": "f83OJ3D2xF1Bg8vub9tLe1gHMzV76e8Tus9uPHvRVEU",
+                    "y": "x_FEzRu9m36HLN_tue659LNpXW6pCyStikYjKIWI5a0",
+                    "kid": "NzbLsXh8uDCcd-6MNwXF4W_7noWXFZAfHkxZsRGC9Xs"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "404": {
+        "description": "No tenant exists for the given slug (or it is soft-deleted).",
+        "fields": {
+          "detail": {
+            "type": "string",
+            "description": "Human-readable not-found message.",
+            "example": "Not found."
+          }
+        }
+      }
+    }
+  },
+  "POST /v1/oauth/token": {
+    "description": "OpenID4VCI token endpoint. Implements the pre-authorized_code grant only: the wallet exchanges the `pre-authorized_code` from a credential offer (and the transaction code if the offer required one) for a short-lived Bearer access token used at the credential endpoint. Public and unauthenticated (the pre-authorized_code itself is the capability). The token is single-use and expires in 300 seconds. tx_code is brute-force protected — after 5 failed attempts the offer locks out. The grant fails (HTTP 400 `invalid_grant`) if the code is unknown, already redeemed, expired, or the tx_code is wrong; an unsupported `grant_type` returns 400 `unsupported_grant_type`.",
+    "params": {
+      "path": {},
+      "query": {}
+    },
+    "request": {
+      "required": true,
+      "fields": {
+        "grant_type": {
+          "type": "string",
+          "required": true,
+          "description": "OAuth grant type. Must be exactly `urn:ietf:params:oauth:grant-type:pre-authorized_code` — the only grant the token endpoint supports. Any other value returns 400 `unsupported_grant_type`.",
+          "example": "urn:ietf:params:oauth:grant-type:pre-authorized_code"
+        },
+        "pre-authorized_code": {
+          "type": "string",
+          "required": true,
+          "description": "The pre-authorized code issued with the credential offer (the `pre_authorized_code` field of POST /v1/credential-offers, also present in the offer's `grants` object). The endpoint also accepts the snake_case alias `pre_authorized_code`. Identifies the offer being redeemed.",
+          "example": "s8Ilre7v2K9pQx1bN4mZ"
+        },
+        "tx_code": {
+          "type": "string",
+          "required": false,
+          "description": "The transaction code (PIN) for offers created with `tx_code: true`. A 6-digit numeric string communicated to the holder out-of-band. Omit (or send empty) for offers that have no tx_code. After 5 wrong attempts the offer is locked.",
+          "example": "517082"
+        }
+      }
+    },
+    "responses": {
+      "200": {
+        "description": "Access token issued.",
+        "fields": {
+          "access_token": {
+            "type": "string",
+            "description": "Opaque Bearer access token. Send it as `Authorization: Bearer <access_token>` to POST /v1/credential. Single-use and valid for `expires_in` seconds.",
+            "example": "5a0W4gQ2tR8yU1vC7pLxZ3mB6nK9dF0"
+          },
+          "token_type": {
+            "type": "string",
+            "description": "Token type. Always the literal `bearer`.",
+            "example": "bearer"
+          },
+          "expires_in": {
+            "type": "integer",
+            "description": "Access token lifetime in seconds. Always 300 (5 minutes).",
+            "example": 300
+          }
+        }
+      },
+      "400": {
+        "description": "Grant rejected — unsupported grant_type, or an invalid/expired/already-redeemed pre-authorized_code, or a wrong/exceeded tx_code.",
+        "fields": {
+          "error": {
+            "type": "string",
+            "description": "OAuth error code. `unsupported_grant_type` when `grant_type` is not the pre-authorized_code URN; `invalid_grant` for any code/tx_code failure.",
+            "example": "invalid_grant"
+          },
+          "error_description": {
+            "type": "string",
+            "description": "Human-readable reason. Present on `invalid_grant` responses. Typical values: `invalid pre-authorized_code`, `offer already redeemed`, `offer expired`, `invalid tx_code`, `tx_code attempts exceeded`.",
+            "example": "invalid tx_code"
+          }
+        }
+      }
+    }
+  },
+  "POST /v1/nonce": {
+    "description": "OpenID4VCI nonce endpoint. Public, unauthenticated. Mints a fresh single-use `c_nonce` that the holder must embed in the proof JWT presented to the credential endpoint. The c_nonce is consumed when the proof is verified and expires after 60 seconds. The request body is empty.",
+    "params": {
+      "path": {},
+      "query": {}
+    },
+    "request": {
+      "required": false,
+      "fields": {}
+    },
+    "responses": {
+      "200": {
+        "description": "A single-use challenge nonce.",
+        "fields": {
+          "c_nonce": {
+            "type": "string",
+            "description": "The challenge nonce. Place it in the `nonce` claim of the holder proof JWT sent to POST /v1/credential. Single-use — consumed on successful proof verification.",
+            "example": "NKQRYXz1aB2cD3eF4gH5"
+          },
+          "c_nonce_expires_in": {
+            "type": "integer",
+            "description": "Nonce lifetime in seconds. Always 60.",
+            "example": 60
+          }
+        }
+      }
+    }
+  },
+  "POST /v1/credential": {
+    "description": "OpenID4VCI credential endpoint. Exchanges a Bearer access token (from POST /v1/oauth/token) plus a holder proof-of-possession JWT for the issued SD-JWT VC. Requires `Authorization: Bearer <access_token>`. The proof JWT (typ `openid4vci-proof+jwt`) carries the holder's public key and must include the `c_nonce` minted by POST /v1/nonce as its `nonce` claim and the issuer's `credential_issuer` identifier as its `aud`. On success the access token, c_nonce, and offer are all consumed (single-use), the credential is bound to the holder key, and the SD-JWT VC is returned. Returns 401 if the Authorization header is missing/not Bearer, and 400 if the proof is missing or invalid (expired token/nonce, bad signature, wrong audience, etc.).",
+    "params": {
+      "path": {},
+      "query": {}
+    },
+    "request": {
+      "required": true,
+      "headers": {
+        "Authorization": {
+          "type": "string",
+          "required": true,
+          "description": "Bearer access token obtained from POST /v1/oauth/token. Format: `Bearer <access_token>`. Missing or non-Bearer returns 401 `invalid_token`.",
+          "example": "Bearer 5a0W4gQ2tR8yU1vC7pLxZ3mB6nK9dF0"
+        }
+      },
+      "fields": {
+        "proof": {
+          "type": "object",
+          "required": true,
+          "description": "The holder proof-of-possession object. Carries the JWT that proves control of the holder key the credential will be bound to.",
+          "fields": {
+            "proof_type": {
+              "type": "string",
+              "required": true,
+              "description": "Proof type. Must be `jwt` (the only type supported, per `proof_types_supported` in the issuer metadata).",
+              "example": "jwt"
+            },
+            "jwt": {
+              "type": "string",
+              "description": "The proof JWT (header typ `openid4vci-proof+jwt`, signed with ES256 or EdDSA). Its payload must contain `nonce` = the `c_nonce` from POST /v1/nonce, `aud` = the issuer's `credential_issuer` identifier, and `iat`; its header carries the holder public `jwk`. Required — a missing or empty `proof.jwt` returns 400 `invalid_proof`.",
+              "example": "eyJ0eXAiOiJvcGVuaWQ0dmNpLXByb29mK2p3dCIsImFsZyI6IkVTMjU2IiwiandrIjp7Li4ufX0.eyJub25jZSI6Ik5LUVJZWC4uLiIsImF1ZCI6Imh0dHBzOi8vaWQuZGlkaXQubWUvdjEvaXNzdWVycy9haXJsaW5lLWRlbW8iLCJpYXQiOjE3MTk3NjUwMDB9.<signature>"
+            }
+          }
+        }
+      }
+    },
+    "responses": {
+      "200": {
+        "description": "The issued SD-JWT VC.",
+        "fields": {
+          "credential": {
+            "type": "string",
+            "description": "The issued credential as a `dc+sd-jwt` (SD-JWT VC) string: the issuer-signed JWS followed by tilde-separated selective-disclosure segments, ending in a trailing tilde — `<jws>~<disclosure>~<disclosure>~`. The holder stores this and presents it (optionally with a key-binding JWT) to verifiers.",
+            "example": "eyJhbGciOiJFUzI1NiIsInR5cCI6ImRjK3NkLWp3dCJ9.eyJ2Y3QiOiJBaXJsaW5lTG95YWx0eSIsImlzcyI6Imh0dHBzOi8vaWQuZGlkaXQubWUvdjEvaXNzdWVycy9haXJsaW5lLWRlbW8iLC4uLn0.<signature>~WyJzYWx0IiwgImdpdmVuX25hbWUiLCAiQWRhIl0~WyJzYWx0IiwgInRpZXIiLCAiZ29sZCJd~"
+          },
+          "vct": {
+            "type": "string",
+            "description": "Verifiable Credential Type of the issued credential (the schema's `vct`).",
+            "example": "AirlineLoyalty"
+          }
+        }
+      },
+      "400": {
+        "description": "Missing or invalid proof (no `proof.jwt`, expired/invalid access token, expired/consumed c_nonce, malformed proof payload, bad key binding, or wrong audience).",
+        "fields": {
+          "error": {
+            "type": "string",
+            "description": "Error code. Always `invalid_proof` for proof/token/nonce failures.",
+            "example": "invalid_proof"
+          },
+          "error_description": {
+            "type": "string",
+            "description": "Human-readable reason. Examples: `missing proof.jwt`, `invalid access token`, `access token already used`, `access token expired`, `invalid or expired c_nonce`, `malformed proof payload`.",
+            "example": "invalid or expired c_nonce"
+          }
+        }
+      },
+      "401": {
+        "description": "Missing or non-Bearer Authorization header.",
+        "fields": {
+          "error": {
+            "type": "string",
+            "description": "Error code. Always `invalid_token`.",
+            "example": "invalid_token"
+          }
+        }
+      }
+    }
+  },
+  "POST /v1/credential-offers": {
+    "description": "Create an OpenID4VCI credential offer using the pre-authorized_code flow. Authenticated with the tenant API key (Bearer). The issuer picks a credential template (scoped to the caller's tenant), embeds the claim values, and — by default — generates a 6-digit transaction code (PIN). Returns the offer identifier, the wallet deep-link URI, the issuer identifier, the pre-authorized code, the tx_code (if any), and the `grants` object the wallet uses to drive the token exchange. The offer expires 10 minutes after creation and is single-use.",
+    "params": {
+      "path": {},
+      "query": {}
+    },
+    "request": {
+      "required": true,
+      "fields": {
+        "template_id": {
+          "type": "string",
+          "format": "uuid",
+          "required": true,
+          "description": "UUID of the credential template to issue from. Must belong to the caller's tenant and not be soft-deleted, else 404. Determines the schema (`vct`, attributes, selective-disclosure flags).",
+          "example": "8f3b1c2d-4e5a-6b7c-8d9e-0f1a2b3c4d5e"
+        },
+        "claims": {
+          "type": "object",
+          "required": false,
+          "description": "Claim name/value map to embed in the credential, keyed by the schema's attribute names. Defaults to `{}` if omitted. Values are stored on the offer and bound into the SD-JWT VC at issuance.",
+          "example": {
+            "given_name": "Ada",
+            "tier": "gold"
+          }
+        },
+        "tx_code": {
+          "type": "boolean",
+          "required": false,
+          "description": "Whether to require a transaction code (PIN) at token exchange. Defaults to `true`. When `true`, a random 6-digit numeric tx_code is generated and returned (deliver it to the holder out-of-band). When `false`, no tx_code is required and the response `tx_code` is an empty string.",
+          "example": true
+        }
+      }
+    },
+    "responses": {
+      "201": {
+        "description": "Credential offer created.",
+        "fields": {
+          "offer_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "UUID of the created offer. Use it in GET /v1/credential-offers/{uuid} (holder preview) and POST /v1/credential-offers/{uuid}/accept.",
+            "example": "1a2b3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d"
+          },
+          "credential_offer_uri": {
+            "type": "string",
+            "format": "uri",
+            "description": "The OpenID4VCI credential-offer deep link for the holder wallet — `openid-credential-offer://?tenant={slug}&code={pre_authorized_code}`. Typically rendered as a QR code.",
+            "example": "openid-credential-offer://?tenant=airline-demo&code=s8Ilre7v2K9pQx1bN4mZ"
+          },
+          "credential_issuer": {
+            "type": "string",
+            "format": "uri",
+            "description": "The issuer's credential-issuer identifier — `{base}/v1/issuers/{slug}`.",
+            "example": "https://id.didit.me/v1/issuers/airline-demo"
+          },
+          "pre_authorized_code": {
+            "type": "string",
+            "description": "The pre-authorized code the wallet sends to POST /v1/oauth/token as `pre-authorized_code`. Also surfaced inside `grants`.",
+            "example": "s8Ilre7v2K9pQx1bN4mZ"
+          },
+          "tx_code": {
+            "type": "string",
+            "description": "The 6-digit transaction code (PIN) the holder must enter at token exchange. Empty string when the offer was created with `tx_code: false`.",
+            "example": "517082"
+          },
+          "grants": {
+            "type": "object",
+            "description": "OpenID4VCI grants object keyed by grant type. Contains a single key, `urn:ietf:params:oauth:grant-type:pre-authorized_code`, whose value object carries the `pre-authorized_code`. This is the structure a wallet reads to drive the token request.",
+            "example": {
+              "urn:ietf:params:oauth:grant-type:pre-authorized_code": {
+                "pre-authorized_code": "s8Ilre7v2K9pQx1bN4mZ"
+              }
+            }
+          }
+        }
+      },
+      "404": {
+        "description": "No template with `template_id` exists for the caller's tenant (or it is soft-deleted).",
+        "fields": {
+          "detail": {
+            "type": "string",
+            "description": "Human-readable not-found message.",
+            "example": "Not found."
+          }
+        }
+      }
+    }
+  },
+  "GET /v1/credential-offers/{uuid}": {
+    "description": "Holder-facing preview of a credential offer. Public and unauthenticated — the offer UUID is the capability. Returns a wallet-friendly summary of what would be issued: the issuer identity, the credential type and format, expiry, whether a transaction code is required, and the per-claim breakdown (label, value, selective-disclosure flag). Used to render a consent screen before the holder accepts the offer.",
+    "params": {
+      "path": {
+        "uuid": {
+          "type": "string",
+          "format": "uuid",
+          "description": "UUID of the credential offer (the `offer_id` returned by POST /v1/credential-offers). Unknown or soft-deleted returns 404.",
+          "example": "1a2b3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d"
+        }
+      },
+      "query": {}
+    },
+    "request": {
+      "required": false,
+      "fields": {}
+    },
+    "responses": {
+      "200": {
+        "description": "Holder offer preview.",
+        "fields": {
+          "offer_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "UUID of the offer.",
+            "example": "1a2b3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d"
+          },
+          "offer_uri": {
+            "type": "string",
+            "format": "uri",
+            "description": "The OpenID4VCI credential-offer deep link — `openid-credential-offer://?tenant={slug}&code={pre_authorized_code}`.",
+            "example": "openid-credential-offer://?tenant=airline-demo&code=s8Ilre7v2K9pQx1bN4mZ"
+          },
+          "issuer": {
+            "type": "object",
+            "description": "Issuer identity for the consent screen.",
+            "fields": {
+              "name": {
+                "type": "string",
+                "description": "Human-readable tenant/issuer name.",
+                "example": "Airline Demo"
+              },
+              "did": {
+                "type": "string",
+                "description": "Decentralized identifier of the issuer — `did:web:{slug}.didit.test`.",
+                "example": "did:web:airline-demo.didit.test"
+              },
+              "domain": {
+                "type": "string",
+                "description": "The issuer's `iss` value (issuer domain/identifier configured on the tenant).",
+                "example": "https://id.didit.me/v1/issuers/airline-demo"
+              },
+              "id": {
+                "type": "string",
+                "description": "The tenant slug.",
+                "example": "airline-demo"
+              }
+            }
+          },
+          "vct": {
+            "type": "string",
+            "description": "Verifiable Credential Type that would be issued (the schema's `vct`).",
+            "example": "AirlineLoyalty"
+          },
+          "format": {
+            "type": "string",
+            "description": "Credential format. Always `SD_JWT_VC`.",
+            "example": "SD_JWT_VC"
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO-8601 timestamp when the offer expires (10 minutes after creation). Empty string if the offer has no expiry set.",
+            "example": "2026-06-30T13:40:00+00:00"
+          },
+          "tx_code_required": {
+            "type": "boolean",
+            "description": "Whether the holder must supply a transaction code at token exchange. True when the offer was created with `tx_code: true`.",
+            "example": true
+          },
+          "tx_code_length": {
+            "type": "integer",
+            "description": "Expected length of the transaction code, so the wallet can render the right PIN input. Equals the length of the offer's tx_code, or 6 when no tx_code is set.",
+            "example": 6
+          },
+          "claims": {
+            "type": "array",
+            "description": "Per-claim breakdown of what the credential will contain, one entry per schema attribute.",
+            "fields": {
+              "name": {
+                "type": "string",
+                "description": "Machine name of the claim (schema attribute name).",
+                "example": "given_name"
+              },
+              "label": {
+                "type": "string",
+                "description": "Human-readable label, derived from the claim name (underscores to spaces, title-cased).",
+                "example": "Given Name"
+              },
+              "value": {
+                "type": "string",
+                "description": "The claim value to be issued, stringified. Empty string if not provided in the offer's claims.",
+                "example": "Ada"
+              },
+              "selective_disclosure": {
+                "type": "boolean",
+                "description": "Whether this claim is selectively disclosable (the holder can choose whether to reveal it). Taken from the schema attribute's `sd` flag; defaults to true.",
+                "example": true
+              }
+            }
+          }
+        }
+      },
+      "404": {
+        "description": "No offer exists for the given UUID (or it is soft-deleted).",
+        "fields": {
+          "detail": {
+            "type": "string",
+            "description": "Human-readable not-found message.",
+            "example": "Not found."
+          }
+        }
+      }
+    }
+  },
+  "POST /v1/credential-offers/{uuid}/accept": {
+    "description": "Demo convenience endpoint that accepts a credential offer and runs the full OpenID4VCI token -> nonce -> proof -> credential flow server-side using a freshly generated holder key. Public and unauthenticated (the offer UUID is the capability). It redeems the pre-authorized code with the offer's own tx_code, mints a c_nonce, builds the holder proof JWT, and issues the SD-JWT VC — returning the assembled credential, its type, and the generated holder public JWK. NOTE: real wallets perform proof-of-possession client-side; this endpoint exists so the holder demo UI can obtain a credential in one call. Because it consumes the single-use offer/token/nonce, an already-redeemed or expired offer returns 400.",
+    "params": {
+      "path": {
+        "uuid": {
+          "type": "string",
+          "format": "uuid",
+          "description": "UUID of the credential offer to accept (the `offer_id` from POST /v1/credential-offers). Unknown or soft-deleted returns 404.",
+          "example": "1a2b3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d"
+        }
+      },
+      "query": {}
+    },
+    "request": {
+      "required": false,
+      "fields": {}
+    },
+    "responses": {
+      "200": {
+        "description": "Offer accepted and credential issued.",
+        "fields": {
+          "credential": {
+            "type": "object",
+            "description": "The issued credential, expanded for the holder UI.",
+            "fields": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "description": "UUID of the issued credential record. Empty string if no issued record is found.",
+                "example": "9c0d1e2f-3a4b-5c6d-7e8f-9a0b1c2d3e4f"
+              },
+              "issuer": {
+                "type": "object",
+                "description": "Issuer identity block — `name`, `did` (`did:web:{slug}.didit.test`), `domain` (the tenant `iss`), `id` (slug).",
+                "example": {
+                  "name": "Airline Demo",
+                  "did": "did:web:airline-demo.didit.test",
+                  "domain": "https://id.didit.me/v1/issuers/airline-demo",
+                  "id": "airline-demo"
+                }
+              },
+              "vct": {
+                "type": "string",
+                "description": "Verifiable Credential Type of the issued credential.",
+                "example": "AirlineLoyalty"
+              },
+              "credential_name": {
+                "type": "string",
+                "description": "Human-readable name of the credential (the schema name).",
+                "example": "Airline Loyalty Card"
+              },
+              "format": {
+                "type": "string",
+                "description": "Credential format. Always `SD_JWT_VC`.",
+                "example": "SD_JWT_VC"
+              },
+              "status": {
+                "type": "string",
+                "description": "Lifecycle status of the freshly issued credential. Always `issued` here.",
+                "example": "issued"
+              },
+              "issued_at": {
+                "type": "string",
+                "format": "date-time",
+                "description": "ISO-8601 issuance timestamp. Empty string if no issued record is found.",
+                "example": "2026-06-30T13:31:00+00:00"
+              },
+              "expires_at": {
+                "type": "string",
+                "format": "date-time",
+                "description": "ISO-8601 expiry of the credential. Empty string if the credential has no expiry (or no issued record).",
+                "example": "2027-06-30T13:31:00+00:00"
+              },
+              "subject": {
+                "type": "string",
+                "description": "Convenience subject label — the offer's `given_name` claim value (empty if absent).",
+                "example": "Ada"
+              },
+              "claims": {
+                "type": "array",
+                "description": "Per-claim breakdown (same shape as the holder preview): `name`, `label`, `value`, `selective_disclosure`, one entry per schema attribute.",
+                "example": [
+                  {
+                    "name": "given_name",
+                    "label": "Given Name",
+                    "value": "Ada",
+                    "selective_disclosure": true
+                  },
+                  {
+                    "name": "tier",
+                    "label": "Tier",
+                    "value": "gold",
+                    "selective_disclosure": true
+                  }
+                ]
+              },
+              "sd_jwt": {
+                "type": "string",
+                "description": "The full SD-JWT VC string — `<jws>~<disclosure>~...~` — issued and bound to the generated holder key.",
+                "example": "eyJhbGciOiJFUzI1NiIsInR5cCI6ImRjK3NkLWp3dCJ9.<payload>.<signature>~WyJzYWx0IiwgImdpdmVuX25hbWUiLCAiQWRhIl0~"
+              }
+            }
+          },
+          "vct": {
+            "type": "string",
+            "description": "Verifiable Credential Type of the issued credential (top-level convenience copy of `credential.vct`).",
+            "example": "AirlineLoyalty"
+          },
+          "holder_jwk": {
+            "type": "object",
+            "description": "The public JWK of the server-generated holder key the credential is bound to (key-binding public key). In a real wallet flow this key lives only on the holder device.",
+            "example": {
+              "kty": "EC",
+              "crv": "P-256",
+              "x": "MKBCTNIcKUSDii11ySs3526iDZ8AiTo7Tu6KPAqv7D4",
+              "y": "4Etl6SRW2YiLUrN5vfvVHuhp7x8PxltmWWlbbM4IFyM"
+            }
+          }
+        }
+      },
+      "400": {
+        "description": "The flow could not complete — e.g. the offer was already redeemed, expired, or a tx_code/proof step failed.",
+        "fields": {
+          "error": {
+            "type": "string",
+            "description": "Human-readable failure reason. Examples: `offer already redeemed`, `offer expired`, `invalid tx_code`.",
+            "example": "offer already redeemed"
+          }
+        }
+      },
+      "404": {
+        "description": "No offer exists for the given UUID (or it is soft-deleted).",
+        "fields": {
+          "detail": {
+            "type": "string",
+            "description": "Human-readable not-found message.",
+            "example": "Not found."
+          }
+        }
+      }
+    }
+  }
+}

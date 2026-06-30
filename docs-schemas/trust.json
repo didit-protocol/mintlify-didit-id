@@ -1,0 +1,487 @@
+{
+  "GET /v1/trust-frameworks": {
+    "description": "List the global reference trust frameworks Didit ID recognizes (eIDAS 2.0 / EUDI, ISO/IEC 18013-5 mDL, Swiss e-ID, US mDL / AAMVA). These are read-only reference rows seeded on first access — they are not tenant-scoped — and are used to tag a trusted issuer with the framework it operates under. The response is a bare JSON array of framework objects ordered by name.",
+    "params": [],
+    "request": {},
+    "responses": {
+      "200": {
+        "description": "A bare JSON array of trust framework objects, ordered alphabetically by name.",
+        "fields": {
+          "items": {
+            "type": "array",
+            "description": "Array of trust framework reference objects.",
+            "items": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "description": "Stable UUID of the trust framework row.",
+                "example": "9f1b2c3d-4e5f-6a7b-8c9d-0e1f2a3b4c5d"
+              },
+              "slug": {
+                "type": "string",
+                "description": "URL-safe unique identifier for the framework; use this value as the `framework` field when registering a trusted issuer.",
+                "example": "eidas2"
+              },
+              "name": {
+                "type": "string",
+                "description": "Human-readable framework name.",
+                "example": "eIDAS 2.0 (EUDI)"
+              },
+              "region": {
+                "type": "string",
+                "description": "Geographic region or jurisdiction the framework applies to (e.g. EU, CH, US, Global).",
+                "example": "EU"
+              },
+              "profile": {
+                "type": "string",
+                "description": "Interoperability profile the framework follows (e.g. HAIP, ISO mDL, AAMVA, national).",
+                "example": "HAIP"
+              },
+              "formats": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Credential formats supported under this framework (e.g. sd_jwt_vc, mdoc).",
+                "example": ["sd_jwt_vc", "mdoc"]
+              },
+              "description": {
+                "type": "string",
+                "description": "Short prose description of the framework.",
+                "example": "EU Digital Identity Wallet framework."
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "GET /v1/trusted-issuers": {
+    "description": "List the issuers this tenant trusts when verifying presented credentials. During verification, Didit ID rejects any credential whose `iss` is not an active trusted issuer (the supply-chain-of-trust gate). The tenant's own self-trust row is guaranteed to exist so the registry is never empty. Scoped to the caller's tenant via the API key. Returns a bare JSON array ordered by most-recently-created first.",
+    "params": [],
+    "request": {},
+    "responses": {
+      "200": {
+        "description": "A bare JSON array of trusted issuer objects for the caller's tenant, newest first.",
+        "fields": {
+          "items": {
+            "type": "array",
+            "description": "Array of trusted issuer objects.",
+            "items": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "description": "UUID of the trusted issuer registry entry.",
+                "example": "0a1b2c3d-4e5f-6071-8293-a4b5c6d7e8f9"
+              },
+              "name": {
+                "type": "string",
+                "description": "Display name of the trusted issuer.",
+                "example": "Gov PID"
+              },
+              "iss": {
+                "type": "string",
+                "description": "The HTTPS `iss` identifier of the issuer; credentials are matched against this value during verification.",
+                "example": "https://pid.gov.example"
+              },
+              "trust_anchor": {
+                "type": "string",
+                "enum": ["https-jwks", "did-web", "x509"],
+                "description": "How the issuer's signing key is anchored and resolved. `https-jwks` resolves keys from `jwks_uri`; `did-web` resolves from the issuer DID; `x509` uses a certificate chain.",
+                "example": "https-jwks"
+              },
+              "jwks_uri": {
+                "type": "string",
+                "description": "JWKS endpoint used to fetch the issuer's public keys (populated when `trust_anchor` is `https-jwks`). Empty string when not set.",
+                "example": "https://pid.gov.example/.well-known/jwks.json"
+              },
+              "did": {
+                "type": "string",
+                "description": "Decentralized identifier of the issuer (populated when `trust_anchor` is `did-web`). Empty string when not set.",
+                "example": "did:web:pid.gov.example"
+              },
+              "status": {
+                "type": "string",
+                "enum": ["active", "revoked"],
+                "description": "Whether this issuer is currently trusted. Only `active` issuers pass the verification trust gate.",
+                "example": "active"
+              },
+              "added_by": {
+                "type": "string",
+                "description": "Identifier of the API user / tenant principal that registered this trusted issuer. Empty string for seeded self-trust rows.",
+                "example": "tenant:airline-acme"
+              },
+              "framework": {
+                "type": "string",
+                "description": "Slug of the trust framework this issuer operates under, or null if none is associated.",
+                "example": "eidas2"
+              },
+              "created_at": {
+                "type": "string",
+                "format": "date-time",
+                "description": "ISO 8601 timestamp when the trusted issuer was registered.",
+                "example": "2026-06-29T12:34:56.789012+00:00"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "POST /v1/trusted-issuers": {
+    "description": "Register an issuer this tenant will trust when verifying credentials. After registration, credentials whose `iss` matches an active trusted issuer pass the verification trust gate. The new entry is always created with status `active` and `added_by` set to the calling API principal. Scoped to the caller's tenant via the API key.",
+    "params": [],
+    "request": {
+      "required": ["name", "iss"],
+      "fields": {
+        "name": {
+          "type": "string",
+          "description": "Display name for the trusted issuer.",
+          "example": "Gov PID"
+        },
+        "iss": {
+          "type": "string",
+          "description": "The HTTPS `iss` identifier of the issuer to trust. Must be unique within the tenant.",
+          "example": "https://pid.gov.example"
+        },
+        "trust_anchor": {
+          "type": "string",
+          "enum": ["https-jwks", "did-web", "x509"],
+          "description": "How the issuer's signing key is anchored. Defaults to `https-jwks` when omitted.",
+          "example": "https-jwks"
+        },
+        "jwks_uri": {
+          "type": "string",
+          "description": "JWKS endpoint used to fetch the issuer's public keys. Provide when `trust_anchor` is `https-jwks`.",
+          "example": "https://pid.gov.example/.well-known/jwks.json"
+        },
+        "did": {
+          "type": "string",
+          "description": "Decentralized identifier of the issuer. Provide when `trust_anchor` is `did-web`.",
+          "example": "did:web:pid.gov.example"
+        },
+        "framework": {
+          "type": "string",
+          "description": "Trust framework slug (from GET /v1/trust-frameworks) to associate with this issuer (e.g. eidas2). Resolved to a framework if it exists; ignored if no match is found.",
+          "example": "eidas2"
+        }
+      }
+    },
+    "responses": {
+      "201": {
+        "description": "The trusted issuer was registered. Returns the full trusted issuer object.",
+        "fields": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "UUID of the newly created trusted issuer registry entry.",
+            "example": "0a1b2c3d-4e5f-6071-8293-a4b5c6d7e8f9"
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name of the trusted issuer.",
+            "example": "Gov PID"
+          },
+          "iss": {
+            "type": "string",
+            "description": "The HTTPS `iss` identifier of the issuer.",
+            "example": "https://pid.gov.example"
+          },
+          "trust_anchor": {
+            "type": "string",
+            "enum": ["https-jwks", "did-web", "x509"],
+            "description": "How the issuer's signing key is anchored and resolved.",
+            "example": "https-jwks"
+          },
+          "jwks_uri": {
+            "type": "string",
+            "description": "JWKS endpoint for the issuer's public keys; empty string when not set.",
+            "example": "https://pid.gov.example/.well-known/jwks.json"
+          },
+          "did": {
+            "type": "string",
+            "description": "Issuer DID; empty string when not set.",
+            "example": ""
+          },
+          "status": {
+            "type": "string",
+            "enum": ["active", "revoked"],
+            "description": "Trust status of the issuer. Newly created issuers are always `active`.",
+            "example": "active"
+          },
+          "added_by": {
+            "type": "string",
+            "description": "Identifier of the API principal that registered this trusted issuer.",
+            "example": "tenant:airline-acme"
+          },
+          "framework": {
+            "type": "string",
+            "description": "Slug of the associated trust framework, or null if none.",
+            "example": "eidas2"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 timestamp when the trusted issuer was registered.",
+            "example": "2026-06-29T12:34:56.789012+00:00"
+          }
+        }
+      }
+    }
+  },
+  "DELETE /v1/trusted-issuers/{uuid}": {
+    "description": "Remove an issuer from this tenant's trusted-issuer registry (soft delete). After removal, credentials from this issuer no longer pass the verification trust gate. Scoped to the caller's tenant — a UUID belonging to a different tenant returns 404. Returns 204 No Content on success with an empty body.",
+    "params": [
+      {
+        "name": "uuid",
+        "in": "path",
+        "required": true,
+        "type": "string",
+        "format": "uuid",
+        "description": "UUID of the trusted issuer registry entry to remove.",
+        "example": "0a1b2c3d-4e5f-6071-8293-a4b5c6d7e8f9"
+      }
+    ],
+    "request": {},
+    "responses": {
+      "204": {
+        "description": "The trusted issuer was removed (soft-deleted). No response body is returned.",
+        "fields": {}
+      }
+    }
+  },
+  "POST /v1/trusted-issuers/{uuid}/validate": {
+    "description": "Re-check that a registered trusted issuer is reachable and its trust anchor resolves. Returns the full trusted issuer object plus a `validation` block summarizing the check. Scoped to the caller's tenant — a UUID belonging to a different tenant returns 404.",
+    "params": [
+      {
+        "name": "uuid",
+        "in": "path",
+        "required": true,
+        "type": "string",
+        "format": "uuid",
+        "description": "UUID of the trusted issuer to validate.",
+        "example": "0a1b2c3d-4e5f-6071-8293-a4b5c6d7e8f9"
+      }
+    ],
+    "request": {},
+    "responses": {
+      "200": {
+        "description": "The trusted issuer object with an appended `validation` block describing the re-check result.",
+        "fields": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "UUID of the trusted issuer registry entry.",
+            "example": "0a1b2c3d-4e5f-6071-8293-a4b5c6d7e8f9"
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name of the trusted issuer.",
+            "example": "Gov PID"
+          },
+          "iss": {
+            "type": "string",
+            "description": "The HTTPS `iss` identifier of the issuer.",
+            "example": "https://pid.gov.example"
+          },
+          "trust_anchor": {
+            "type": "string",
+            "enum": ["https-jwks", "did-web", "x509"],
+            "description": "How the issuer's signing key is anchored and resolved.",
+            "example": "https-jwks"
+          },
+          "jwks_uri": {
+            "type": "string",
+            "description": "JWKS endpoint for the issuer's public keys; empty string when not set.",
+            "example": "https://pid.gov.example/.well-known/jwks.json"
+          },
+          "did": {
+            "type": "string",
+            "description": "Issuer DID; empty string when not set.",
+            "example": ""
+          },
+          "status": {
+            "type": "string",
+            "enum": ["active", "revoked"],
+            "description": "Trust status of the issuer.",
+            "example": "active"
+          },
+          "added_by": {
+            "type": "string",
+            "description": "Identifier of the API principal that registered this trusted issuer.",
+            "example": "tenant:airline-acme"
+          },
+          "framework": {
+            "type": "string",
+            "description": "Slug of the associated trust framework, or null if none.",
+            "example": "eidas2"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 timestamp when the trusted issuer was registered.",
+            "example": "2026-06-29T12:34:56.789012+00:00"
+          },
+          "validation": {
+            "type": "object",
+            "description": "Summary of the freshly run trust-anchor re-check.",
+            "fields": {
+              "reachable": {
+                "type": "boolean",
+                "description": "Whether the issuer endpoint (e.g. its JWKS or DID document) was reachable.",
+                "example": true
+              },
+              "anchor_ok": {
+                "type": "boolean",
+                "description": "Whether the issuer's trust anchor resolved and validated successfully.",
+                "example": true
+              },
+              "status": {
+                "type": "string",
+                "enum": ["active", "revoked"],
+                "description": "The current registry status of the issuer at validation time.",
+                "example": "active"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "GET /v1/relying-parties": {
+    "description": "List the relying parties (verifiers) registered under this tenant. A relying party's web origin is checked when it requests a credential presentation over the Digital Credentials API. Scoped to the caller's tenant via the API key. Returns a bare JSON array ordered by most-recently-created first.",
+    "params": [],
+    "request": {},
+    "responses": {
+      "200": {
+        "description": "A bare JSON array of relying party objects for the caller's tenant, newest first.",
+        "fields": {
+          "items": {
+            "type": "array",
+            "description": "Array of relying party objects.",
+            "items": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "description": "UUID of the relying party registration.",
+                "example": "1b2c3d4e-5f60-7182-93a4-b5c6d7e8f901"
+              },
+              "name": {
+                "type": "string",
+                "description": "Display name of the relying party / verifier.",
+                "example": "Airline Check-in"
+              },
+              "origin": {
+                "type": "string",
+                "description": "The registered web origin of the relying party, checked on presentation requests.",
+                "example": "https://checkin.airline.com"
+              },
+              "client_id": {
+                "type": "string",
+                "description": "OAuth/OpenID4VP client identifier for the relying party. Empty string when not set.",
+                "example": "airline-checkin"
+              },
+              "status": {
+                "type": "string",
+                "enum": ["active", "revoked"],
+                "description": "Whether the relying party registration is currently active.",
+                "example": "active"
+              },
+              "created_at": {
+                "type": "string",
+                "format": "date-time",
+                "description": "ISO 8601 timestamp when the relying party was registered.",
+                "example": "2026-06-29T12:34:56.789012+00:00"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "POST /v1/relying-parties": {
+    "description": "Register a relying party (verifier) under this tenant. Its web origin is validated when it requests a credential presentation over the Digital Credentials API. The new registration is always created with status `active`. Scoped to the caller's tenant via the API key.",
+    "params": [],
+    "request": {
+      "required": ["name", "origin"],
+      "fields": {
+        "name": {
+          "type": "string",
+          "description": "Display name for the relying party / verifier.",
+          "example": "Airline Check-in"
+        },
+        "origin": {
+          "type": "string",
+          "description": "Web origin of the relying party; this is the value checked on DC-API presentation requests.",
+          "example": "https://checkin.airline.com"
+        },
+        "client_id": {
+          "type": "string",
+          "description": "OAuth/OpenID4VP client identifier for the relying party.",
+          "example": "airline-checkin"
+        }
+      }
+    },
+    "responses": {
+      "201": {
+        "description": "The relying party was registered. Returns the full relying party object.",
+        "fields": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "UUID of the newly created relying party registration.",
+            "example": "1b2c3d4e-5f60-7182-93a4-b5c6d7e8f901"
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name of the relying party / verifier.",
+            "example": "Airline Check-in"
+          },
+          "origin": {
+            "type": "string",
+            "description": "The registered web origin of the relying party.",
+            "example": "https://checkin.airline.com"
+          },
+          "client_id": {
+            "type": "string",
+            "description": "OAuth/OpenID4VP client identifier for the relying party; empty string when not set.",
+            "example": "airline-checkin"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["active", "revoked"],
+            "description": "Status of the relying party registration. Newly created relying parties are always `active`.",
+            "example": "active"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 timestamp when the relying party was registered.",
+            "example": "2026-06-29T12:34:56.789012+00:00"
+          }
+        }
+      }
+    }
+  },
+  "DELETE /v1/relying-parties/{uuid}": {
+    "description": "Remove a relying party registration from this tenant (soft delete). After removal, the verifier's origin is no longer recognized on presentation requests. Scoped to the caller's tenant — a UUID belonging to a different tenant returns 404. Returns 204 No Content on success with an empty body.",
+    "params": [
+      {
+        "name": "uuid",
+        "in": "path",
+        "required": true,
+        "type": "string",
+        "format": "uuid",
+        "description": "UUID of the relying party registration to remove.",
+        "example": "1b2c3d4e-5f60-7182-93a4-b5c6d7e8f901"
+      }
+    ],
+    "request": {},
+    "responses": {
+      "204": {
+        "description": "The relying party registration was removed (soft-deleted). No response body is returned.",
+        "fields": {}
+      }
+    }
+  }
+}

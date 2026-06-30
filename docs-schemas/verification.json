@@ -1,0 +1,793 @@
+{
+  "POST /v1/presentations/request": {
+    "description": "Create an OpenID4VP presentation request: the verifier (relying party) declares the credential type and the specific claims it wants disclosed, and the service returns a request object containing a DCQL (Digital Credentials Query Language) query, a single-use nonce, and a transaction id to bind the holder's presentation to this exact request. The holder wallet (or the demo present/response flow) presents an SD-JWT VC against this request; the returned `uuid` is the public capability the holder polls via GET /v1/presentations/{uuid} and answers via POST /v1/presentations/{uuid}/response. The nonce has a 300-second TTL and is consumed atomically on first verification (replay is rejected). Authenticated with the tenant API key (Bearer).",
+    "request": {
+      "required": ["requested_vct", "aud"],
+      "fields": {
+        "requested_vct": {
+          "type": "string",
+          "description": "The Verifiable Credential Type (`vct`) the verifier requires the holder to present. Must match the `vct` of a credential schema the holder holds; it is embedded into the DCQL query's `meta.vct_values` so wallets filter to matching credentials.",
+          "example": "https://credentials.didit.me/vct/identity-card"
+        },
+        "requested_claims": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "The list of claim names the verifier asks the holder to selectively disclose (each becomes a DCQL claim path). Only these claims are returned in `disclosed_claims` after a successful presentation; everything else stays hidden under selective disclosure. Defaults to an empty list (no specific claims requested).",
+          "example": ["given_name", "family_name", "birth_date"]
+        },
+        "aud": {
+          "type": "string",
+          "description": "The verifier's audience identifier — its OpenID4VP client_id or web origin. It is bound into the request and must match the `aud` the holder signs into the Key-Binding JWT (KB-JWT) of the presentation; a mismatch fails the `aud` check. Also surfaced as the relying-party name on the public poll endpoint.",
+          "example": "https://checkin.acme-air.com"
+        },
+        "trusted_iss": {
+          "type": "string",
+          "description": "Optional. The issuer identifier (`iss`) the verifier is willing to trust for this presentation. When omitted or blank, it defaults to the tenant's own issuer identifier (`tenant.issuer_iss`). At verification time the presented credential's `iss` is checked against the tenant's trusted-issuer registry; an untrusted issuer fails verification.",
+          "example": "https://credentials.didit.me/issuers/acme-air"
+        }
+      }
+    },
+    "responses": {
+      "201": {
+        "description": "The presentation request was created. Returns the request object the holder/wallet uses to build a presentation, including the DCQL query and the single-use nonce.",
+        "fields": {
+          "uuid": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique identifier of the presentation request. This is the public capability the holder polls (GET /v1/presentations/{uuid}) and answers (POST /v1/presentations/{uuid}/response or /demo-present).",
+            "example": "a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d"
+          },
+          "transaction_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Transaction identifier that binds the holder's presentation to this specific request. Generated server-side and indexed; used to correlate the request with the resulting verification.",
+            "example": "f0e1d2c3-b4a5-6978-8c9d-0a1b2c3d4e5f"
+          },
+          "dcql": {
+            "type": "object",
+            "description": "The OpenID4VP DCQL (Digital Credentials Query Language) query the wallet evaluates to find a matching credential and build the presentation. Contains a `credentials` array; each entry declares the format (`dc+sd-jwt`), the accepted `vct_values`, and the requested claim paths.",
+            "example": {
+              "credentials": [
+                {
+                  "id": "cred1",
+                  "format": "dc+sd-jwt",
+                  "meta": { "vct_values": ["https://credentials.didit.me/vct/identity-card"] },
+                  "claims": [
+                    { "path": ["given_name"] },
+                    { "path": ["family_name"] },
+                    { "path": ["birth_date"] }
+                  ]
+                }
+              ]
+            }
+          },
+          "requested_vct": {
+            "type": "string",
+            "description": "Echoes the Verifiable Credential Type required by this request.",
+            "example": "https://credentials.didit.me/vct/identity-card"
+          },
+          "requested_claims": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Echoes the claim names the verifier asked the holder to disclose.",
+            "example": ["given_name", "family_name", "birth_date"]
+          },
+          "aud": {
+            "type": "string",
+            "description": "Echoes the verifier audience (client_id / origin) the holder must bind into the KB-JWT.",
+            "example": "https://checkin.acme-air.com"
+          },
+          "nonce": {
+            "type": "string",
+            "description": "Single-use, short-TTL (300s) cryptographic nonce the holder must sign into the Key-Binding JWT. Consumed atomically on first verification; a replayed nonce is rejected.",
+            "example": "Xy7Zq9-Ab3kQ9z1Xy7Zq9Ab3kQ9z1Xy7Zq9Ab3kQ9"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["pending", "presented", "verified", "failed"],
+            "description": "Lifecycle state of the presentation request. `pending` immediately after creation; transitions to `verified` once a valid presentation is accepted, or `failed` if verification rejects it. (`presented` is reserved for the intermediate received-but-not-yet-verified state.)",
+            "example": "pending"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 timestamp when the presentation request was created.",
+            "example": "2026-06-30T12:00:00+00:00"
+          }
+        }
+      }
+    }
+  },
+  "GET /v1/presentations/{uuid}": {
+    "description": "Public, unauthenticated poll endpoint for a presentation request — the request `uuid` is itself the capability, so any holder/wallet that received the request can read it without an API key. Returns the request management fields (DCQL, nonce, status) enriched with a holder-facing view: who is asking (`requester`), the human-labelled `claims` being requested with their selective-disclosure flags, and — once a presentation has been verified — a `result` object with the verdict and disclosed claims. Holders poll this to render the consent screen and to observe the verification outcome.",
+    "params": [
+      {
+        "name": "uuid",
+        "in": "path",
+        "required": true,
+        "type": "string",
+        "format": "uuid",
+        "description": "UUID of the presentation request to fetch. An unknown or soft-deleted id returns 404.",
+        "example": "a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d"
+      }
+    ],
+    "responses": {
+      "200": {
+        "description": "The presentation request in its holder-facing shape: the request fields plus `requester`, `claims`, and (once verified) `result`.",
+        "fields": {
+          "uuid": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique identifier of the presentation request.",
+            "example": "a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d"
+          },
+          "transaction_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Transaction identifier binding the holder's presentation to this request.",
+            "example": "f0e1d2c3-b4a5-6978-8c9d-0a1b2c3d4e5f"
+          },
+          "dcql": {
+            "type": "object",
+            "description": "The OpenID4VP DCQL query the wallet evaluates to build the presentation (same structure returned at creation).",
+            "example": {
+              "credentials": [
+                {
+                  "id": "cred1",
+                  "format": "dc+sd-jwt",
+                  "meta": { "vct_values": ["https://credentials.didit.me/vct/identity-card"] },
+                  "claims": [{ "path": ["given_name"] }, { "path": ["birth_date"] }]
+                }
+              ]
+            }
+          },
+          "requested_vct": {
+            "type": "string",
+            "description": "The Verifiable Credential Type required by this request.",
+            "example": "https://credentials.didit.me/vct/identity-card"
+          },
+          "requested_claims": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Raw claim names the verifier requested.",
+            "example": ["given_name", "birth_date"]
+          },
+          "aud": {
+            "type": "string",
+            "description": "The verifier audience (client_id / origin) bound into the request.",
+            "example": "https://checkin.acme-air.com"
+          },
+          "nonce": {
+            "type": "string",
+            "description": "Single-use nonce the holder signs into the KB-JWT.",
+            "example": "Xy7Zq9-Ab3kQ9z1Xy7Zq9Ab3kQ9z1Xy7Zq9Ab3kQ9"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["pending", "presented", "verified", "failed"],
+            "description": "Lifecycle state of the presentation request.",
+            "example": "pending"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 timestamp when the request was created.",
+            "example": "2026-06-30T12:00:00+00:00"
+          },
+          "requester": {
+            "type": "object",
+            "description": "Holder-facing description of the relying party asking for the presentation, used to render the wallet consent screen.",
+            "fields": {
+              "id": {
+                "type": "string",
+                "description": "Identifier of the requester. In this slice always the literal `relying-party`.",
+                "example": "relying-party"
+              },
+              "name": {
+                "type": "string",
+                "description": "Display name of the relying party — the request's `aud` value, or `Relying party` when `aud` is blank.",
+                "example": "https://checkin.acme-air.com"
+              },
+              "did": {
+                "type": "string",
+                "description": "The relying party's decentralized identifier, derived from the tenant slug as `did:web:{slug}.didit.test`.",
+                "example": "did:web:acme-air.didit.test"
+              },
+              "purpose": {
+                "type": "string",
+                "description": "Human-readable reason the credential is being requested, shown to the holder on the consent screen.",
+                "example": "Confirm your identity for this verification."
+              }
+            }
+          },
+          "claims": {
+            "type": "array",
+            "description": "Holder-facing list of the requested claims, one entry per requested claim name, with a human label and selective-disclosure metadata for the consent UI.",
+            "items": {
+              "type": "object",
+              "fields": {
+                "name": {
+                  "type": "string",
+                  "description": "The raw claim name (the disclosure key in the SD-JWT VC).",
+                  "example": "given_name"
+                },
+                "label": {
+                  "type": "string",
+                  "description": "Human-readable label derived from the claim name (underscores replaced with spaces, title-cased) for display in the wallet.",
+                  "example": "Given Name"
+                },
+                "requested": {
+                  "type": "boolean",
+                  "description": "Whether this claim is being requested. Always true for claims listed here.",
+                  "example": true
+                },
+                "selective_disclosure": {
+                  "type": "boolean",
+                  "description": "Whether the claim is disclosed selectively (the holder reveals it on a per-claim basis rather than the whole credential). Always true on this endpoint.",
+                  "example": true
+                }
+              }
+            }
+          },
+          "result": {
+            "type": "object",
+            "nullable": true,
+            "description": "The verification result. Present only once a presentation has been submitted and verified (a one-to-one record per request); absent while the request is still pending.",
+            "fields": {
+              "uuid": {
+                "type": "string",
+                "format": "uuid",
+                "description": "Unique identifier of the verification result record.",
+                "example": "b2c3d4e5-6f7a-8b9c-0d1e-2f3a4b5c6d7e"
+              },
+              "verdict": {
+                "type": "string",
+                "enum": ["verified", "failed"],
+                "description": "Outcome of verifying the presented vp_token: `verified` if every cryptographic and policy check passed, `failed` otherwise.",
+                "example": "verified"
+              },
+              "disclosed_claims": {
+                "type": "object",
+                "description": "Map of the claims the holder actually disclosed (claim name to value). Only the requested, consented claims appear; reserved SD-JWT registered claims (iss, vct, iat, exp, cnf, status, _sd, _sd_alg) are stripped out. Empty when the verdict is `failed`.",
+                "example": { "given_name": "Ada", "family_name": "Lovelace", "birth_date": "1815-12-10" }
+              },
+              "checks": {
+                "type": "object",
+                "description": "Per-check boolean results of verification. Fully populated on a `verified` result; an empty object on a `failed` result (the failing check is captured in `error`).",
+                "fields": {
+                  "signature": {
+                    "type": "boolean",
+                    "description": "The issuer's signature over the SD-JWT is valid, verified with the issuer key resolved by `kid` (supports key rotation).",
+                    "example": true
+                  },
+                  "key_binding": {
+                    "type": "boolean",
+                    "description": "The Key-Binding JWT (KB-JWT) is present and signed by the holder key bound in the credential's `cnf` claim — proving holder possession.",
+                    "example": true
+                  },
+                  "aud": {
+                    "type": "boolean",
+                    "description": "The audience in the KB-JWT matches the verifier audience (`aud`) on the presentation request.",
+                    "example": true
+                  },
+                  "nonce": {
+                    "type": "boolean",
+                    "description": "The nonce in the KB-JWT matches the single-use nonce issued with the request, and the nonce had not been consumed or expired (anti-replay).",
+                    "example": true
+                  },
+                  "alg_allowlist": {
+                    "type": "boolean",
+                    "description": "Every signing algorithm used in the presentation is on the allow-list (ES256), enforced with a defense-in-depth re-assertion after parsing.",
+                    "example": true
+                  },
+                  "not_expired": {
+                    "type": "boolean",
+                    "description": "The credential's `exp` claim is in the future (the library does not enforce expiry, so it is checked explicitly).",
+                    "example": true
+                  },
+                  "not_revoked": {
+                    "type": "boolean",
+                    "description": "The credential is not marked revoked or suspended in its IETF Token Status List (checked when the credential carries a `status` claim).",
+                    "example": true
+                  }
+                }
+              },
+              "error": {
+                "type": "string",
+                "description": "Failure reason as `ExceptionType: message` when the verdict is `failed`; empty string on success.",
+                "example": ""
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "POST /v1/presentations/{uuid}/response": {
+    "description": "Submit a holder's presentation (the SD-JWT VC verifiable presentation, including the Key-Binding JWT) against a presentation request and verify it. The service consumes the request's single-use nonce, verifies the issuer signature (resolving the key by `kid`), the holder key binding, the `aud` and `nonce` bindings, the algorithm allow-list, expiry, and revocation via the Token Status List, then checks the credential's issuer against the tenant's trusted-issuer registry. A presentation request is single-use: a second response (replay) is rejected with 422. Authenticated with the tenant API key.",
+    "params": [
+      {
+        "name": "uuid",
+        "in": "path",
+        "required": true,
+        "type": "string",
+        "format": "uuid",
+        "description": "UUID of the presentation request being answered. Scoped to the authenticated tenant; an unknown, soft-deleted, or sibling-tenant id returns 404.",
+        "example": "a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d"
+      }
+    ],
+    "request": {
+      "required": ["vp_token"],
+      "fields": {
+        "vp_token": {
+          "type": "string",
+          "description": "The OpenID4VP verifiable presentation token: the SD-JWT VC with its selected disclosures and the appended Key-Binding JWT (KB-JWT). The KB-JWT must be signed by the holder key bound in the credential's `cnf` claim and carry the request's `aud` and `nonce`.",
+          "example": "eyJhbGciOiJFUzI1NiIsInR5cCI6ImRjK3NkLWp3dCJ9.eyJpc3MiOiJ...~WyJzYWx0IiwiZ2l2ZW5fbmFtZSIsIkFkYSJd~eyJhbGciOiJFUzI1NiIsInR5cCI6ImtiK2p3dCJ9.eyJub25jZSI6Ii4uLiJ9.sig"
+        }
+      }
+    },
+    "responses": {
+      "200": {
+        "description": "Verification succeeded (verdict `verified`). Returns the verification result with the disclosed claims and the per-check booleans.",
+        "fields": {
+          "uuid": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique identifier of the verification result record.",
+            "example": "b2c3d4e5-6f7a-8b9c-0d1e-2f3a4b5c6d7e"
+          },
+          "verdict": {
+            "type": "string",
+            "enum": ["verified", "failed"],
+            "description": "Outcome of verification; `verified` on a 200 response.",
+            "example": "verified"
+          },
+          "disclosed_claims": {
+            "type": "object",
+            "description": "Map of claim name to value for the claims the holder disclosed. Reserved SD-JWT registered claims (iss, vct, iat, exp, cnf, status, _sd, _sd_alg) are excluded.",
+            "example": { "given_name": "Ada", "family_name": "Lovelace", "birth_date": "1815-12-10" }
+          },
+          "checks": {
+            "type": "object",
+            "description": "Per-check boolean results of verification (all true on a verified result).",
+            "fields": {
+              "signature": {
+                "type": "boolean",
+                "description": "The issuer's signature over the SD-JWT is valid (issuer key resolved by `kid`, supporting rotation).",
+                "example": true
+              },
+              "key_binding": {
+                "type": "boolean",
+                "description": "The KB-JWT is present and signed by the holder key bound in the credential's `cnf` claim (holder possession proof).",
+                "example": true
+              },
+              "aud": {
+                "type": "boolean",
+                "description": "The KB-JWT audience matches the request's verifier audience (`aud`).",
+                "example": true
+              },
+              "nonce": {
+                "type": "boolean",
+                "description": "The KB-JWT nonce matches the request's single-use nonce, which had not been consumed or expired (anti-replay).",
+                "example": true
+              },
+              "alg_allowlist": {
+                "type": "boolean",
+                "description": "Every algorithm in the presentation is on the ES256 allow-list.",
+                "example": true
+              },
+              "not_expired": {
+                "type": "boolean",
+                "description": "The credential's `exp` is in the future.",
+                "example": true
+              },
+              "not_revoked": {
+                "type": "boolean",
+                "description": "The credential is not revoked or suspended per its Token Status List.",
+                "example": true
+              }
+            }
+          },
+          "error": {
+            "type": "string",
+            "description": "Empty string on a verified result.",
+            "example": ""
+          }
+        }
+      },
+      "422": {
+        "description": "Verification failed (verdict `failed`), or the request was already used (replay). Returns the failed result; `checks` is an empty object and `error` carries the failing reason. On replay, the body is a minimal failure shape with `error` set to the replay message.",
+        "fields": {
+          "uuid": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "Unique identifier of the failed verification result record. Absent on the replay-rejection shape.",
+            "example": "b2c3d4e5-6f7a-8b9c-0d1e-2f3a4b5c6d7e"
+          },
+          "verdict": {
+            "type": "string",
+            "enum": ["failed"],
+            "description": "Always `failed` on a 422 response.",
+            "example": "failed"
+          },
+          "disclosed_claims": {
+            "type": "object",
+            "nullable": true,
+            "description": "Empty object on a failed verification; absent on the replay-rejection shape.",
+            "example": {}
+          },
+          "checks": {
+            "type": "object",
+            "description": "Empty object on a failed result (no individual check passed cleanly enough to record; the failing reason is in `error`).",
+            "example": {}
+          },
+          "error": {
+            "type": "string",
+            "description": "Failure reason. On a verification failure, formatted as `ExceptionType: message` (e.g. signature, key-binding, nonce, expiry, revocation, or untrusted-issuer errors). On replay, the literal message that the request was already used.",
+            "example": "SignatureError: untrusted issuer"
+          }
+        }
+      }
+    }
+  },
+  "POST /v1/presentations/{uuid}/demo-present": {
+    "description": "Demo / verifier-simulation endpoint (public, no API key). Server-side it issues a credential matching the request's `vct`, builds a real SD-JWT VC verifiable presentation with a fresh holder key (real KB-JWT, real nonce/aud binding), and verifies it through the full production crypto pipeline — without needing a second device or a real wallet. Used by the verifier console and the holder fallback to produce a genuine verified result. The request must have a credential template for its `vct`, and is single-use (a request that already has a result is rejected with 422). The request body is empty.",
+    "params": [
+      {
+        "name": "uuid",
+        "in": "path",
+        "required": true,
+        "type": "string",
+        "format": "uuid",
+        "description": "UUID of the presentation request to present-and-verify. An unknown or soft-deleted id returns 404.",
+        "example": "a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d"
+      }
+    ],
+    "request": {
+      "required": [],
+      "fields": {}
+    },
+    "responses": {
+      "200": {
+        "description": "The demo presentation verified successfully (verdict `verified`). Returns the verification payload.",
+        "fields": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique identifier of the verification result record.",
+            "example": "b2c3d4e5-6f7a-8b9c-0d1e-2f3a4b5c6d7e"
+          },
+          "request_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "UUID of the presentation request this verification answers.",
+            "example": "a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d"
+          },
+          "verdict": {
+            "type": "string",
+            "enum": ["verified", "failed"],
+            "description": "Outcome of verification; `verified` on a 200 response.",
+            "example": "verified"
+          },
+          "vct": {
+            "type": "string",
+            "description": "The Verifiable Credential Type that was requested and presented.",
+            "example": "https://credentials.didit.me/vct/identity-card"
+          },
+          "verifier": {
+            "type": "string",
+            "description": "The verifier audience (the request's `aud` — client_id / origin) the presentation was bound to.",
+            "example": "https://checkin.acme-air.com"
+          },
+          "requested_claims": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "The claim names the request asked to be disclosed.",
+            "example": ["given_name", "family_name", "birth_date"]
+          },
+          "disclosed_claims": {
+            "type": "object",
+            "description": "Map of claim name to value for the claims disclosed in the presentation. In demo mode the values are synthesized as `demo-{claim_name}` for every requested claim.",
+            "example": { "given_name": "demo-given_name", "family_name": "demo-family_name", "birth_date": "demo-birth_date" }
+          },
+          "checks": {
+            "type": "object",
+            "description": "Per-check boolean results of verification (all true on a verified result).",
+            "fields": {
+              "signature": {
+                "type": "boolean",
+                "description": "The issuer's signature over the SD-JWT is valid (issuer key resolved by `kid`).",
+                "example": true
+              },
+              "key_binding": {
+                "type": "boolean",
+                "description": "The KB-JWT is present and signed by the holder key bound in `cnf` (holder possession proof).",
+                "example": true
+              },
+              "aud": {
+                "type": "boolean",
+                "description": "The KB-JWT audience matches the request's verifier audience.",
+                "example": true
+              },
+              "nonce": {
+                "type": "boolean",
+                "description": "The KB-JWT nonce matches the request's single-use nonce (anti-replay).",
+                "example": true
+              },
+              "alg_allowlist": {
+                "type": "boolean",
+                "description": "Every algorithm in the presentation is on the ES256 allow-list.",
+                "example": true
+              },
+              "not_expired": {
+                "type": "boolean",
+                "description": "The credential's `exp` is in the future.",
+                "example": true
+              },
+              "not_revoked": {
+                "type": "boolean",
+                "description": "The credential is not revoked or suspended per its Token Status List.",
+                "example": true
+              }
+            }
+          },
+          "error": {
+            "type": "string",
+            "description": "Empty string on a verified result.",
+            "example": ""
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 timestamp when the verification result was recorded.",
+            "example": "2026-06-30T12:00:00+00:00"
+          }
+        }
+      },
+      "422": {
+        "description": "The demo presentation failed verification, the request was already used, or no credential template exists for the request's `vct`. On a recorded failure the body is the verification payload with verdict `failed`; on the no-template / already-used short-circuit it is a minimal failure shape (`verdict`, `error`, empty `checks`).",
+        "fields": {
+          "verdict": {
+            "type": "string",
+            "enum": ["failed"],
+            "description": "Always `failed` on a 422 response.",
+            "example": "failed"
+          },
+          "error": {
+            "type": "string",
+            "description": "Failure reason — e.g. a verification error, `request already used`, or `no template for vct {vct}` when the tenant has no credential template for the requested type.",
+            "example": "no template for vct https://credentials.didit.me/vct/identity-card"
+          },
+          "checks": {
+            "type": "object",
+            "description": "Empty object on the short-circuit failure shape; populated only when a full verification ran and failed.",
+            "example": {}
+          }
+        }
+      }
+    }
+  },
+  "GET /v1/verifications": {
+    "description": "List all verification results for the authenticated tenant, newest first. Each entry is a verification payload (the same shape returned by demo-present): verdict, requested and disclosed claims, the per-check booleans, and the verifier audience. Scoped to the tenant via the API key, so only this tenant's verifications are returned. Authenticated with the tenant API key.",
+    "responses": {
+      "200": {
+        "description": "Array of verification payloads for the tenant, ordered by creation time descending.",
+        "fields": {
+          "_root": {
+            "type": "array",
+            "description": "The response body is a JSON array of verification result objects (no envelope).",
+            "items": {
+              "type": "object",
+              "fields": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "description": "Unique identifier of the verification result record.",
+                  "example": "b2c3d4e5-6f7a-8b9c-0d1e-2f3a4b5c6d7e"
+                },
+                "request_id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "description": "UUID of the presentation request this verification answers.",
+                  "example": "a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d"
+                },
+                "verdict": {
+                  "type": "string",
+                  "enum": ["verified", "failed"],
+                  "description": "Outcome of verification.",
+                  "example": "verified"
+                },
+                "vct": {
+                  "type": "string",
+                  "description": "The Verifiable Credential Type that was requested and presented.",
+                  "example": "https://credentials.didit.me/vct/identity-card"
+                },
+                "verifier": {
+                  "type": "string",
+                  "description": "The verifier audience (the request's `aud` — client_id / origin).",
+                  "example": "https://checkin.acme-air.com"
+                },
+                "requested_claims": {
+                  "type": "array",
+                  "items": { "type": "string" },
+                  "description": "The claim names the request asked to be disclosed.",
+                  "example": ["given_name", "birth_date"]
+                },
+                "disclosed_claims": {
+                  "type": "object",
+                  "description": "Map of claim name to value for the claims disclosed. Empty when the verdict is `failed`.",
+                  "example": { "given_name": "Ada", "birth_date": "1815-12-10" }
+                },
+                "checks": {
+                  "type": "object",
+                  "description": "Per-check boolean results of verification. Fully populated on a verified result; empty on a failed result.",
+                  "fields": {
+                    "signature": {
+                      "type": "boolean",
+                      "description": "The issuer's signature over the SD-JWT is valid (issuer key resolved by `kid`).",
+                      "example": true
+                    },
+                    "key_binding": {
+                      "type": "boolean",
+                      "description": "The KB-JWT is present and signed by the holder key bound in `cnf` (holder possession proof).",
+                      "example": true
+                    },
+                    "aud": {
+                      "type": "boolean",
+                      "description": "The KB-JWT audience matches the request's verifier audience.",
+                      "example": true
+                    },
+                    "nonce": {
+                      "type": "boolean",
+                      "description": "The KB-JWT nonce matches the request's single-use nonce (anti-replay).",
+                      "example": true
+                    },
+                    "alg_allowlist": {
+                      "type": "boolean",
+                      "description": "Every algorithm in the presentation is on the ES256 allow-list.",
+                      "example": true
+                    },
+                    "not_expired": {
+                      "type": "boolean",
+                      "description": "The credential's `exp` is in the future.",
+                      "example": true
+                    },
+                    "not_revoked": {
+                      "type": "boolean",
+                      "description": "The credential is not revoked or suspended per its Token Status List.",
+                      "example": true
+                    }
+                  }
+                },
+                "error": {
+                  "type": "string",
+                  "description": "Failure reason (`ExceptionType: message`) when the verdict is `failed`; empty string on success.",
+                  "example": ""
+                },
+                "created_at": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "ISO 8601 timestamp when the verification result was recorded.",
+                  "example": "2026-06-30T12:00:00+00:00"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "GET /v1/verifications/{uuid}": {
+    "description": "Fetch a single verification result by id for the authenticated tenant. Returns the verification payload — verdict, requested and disclosed claims, the per-check booleans, and the verifier audience. Scoped to the tenant via the API key; a verification belonging to another tenant (or an unknown/soft-deleted id) returns 404. Authenticated with the tenant API key.",
+    "params": [
+      {
+        "name": "uuid",
+        "in": "path",
+        "required": true,
+        "type": "string",
+        "format": "uuid",
+        "description": "UUID of the verification result record to fetch. Scoped to the authenticated tenant; a sibling-tenant, unknown, or soft-deleted id returns 404.",
+        "example": "b2c3d4e5-6f7a-8b9c-0d1e-2f3a4b5c6d7e"
+      }
+    ],
+    "responses": {
+      "200": {
+        "description": "The verification payload for the requested result.",
+        "fields": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique identifier of the verification result record.",
+            "example": "b2c3d4e5-6f7a-8b9c-0d1e-2f3a4b5c6d7e"
+          },
+          "request_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "UUID of the presentation request this verification answers.",
+            "example": "a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d"
+          },
+          "verdict": {
+            "type": "string",
+            "enum": ["verified", "failed"],
+            "description": "Outcome of verification.",
+            "example": "verified"
+          },
+          "vct": {
+            "type": "string",
+            "description": "The Verifiable Credential Type that was requested and presented.",
+            "example": "https://credentials.didit.me/vct/identity-card"
+          },
+          "verifier": {
+            "type": "string",
+            "description": "The verifier audience (the request's `aud` — client_id / origin).",
+            "example": "https://checkin.acme-air.com"
+          },
+          "requested_claims": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "The claim names the request asked to be disclosed.",
+            "example": ["given_name", "family_name", "birth_date"]
+          },
+          "disclosed_claims": {
+            "type": "object",
+            "description": "Map of claim name to value for the claims disclosed. Empty when the verdict is `failed`.",
+            "example": { "given_name": "Ada", "family_name": "Lovelace", "birth_date": "1815-12-10" }
+          },
+          "checks": {
+            "type": "object",
+            "description": "Per-check boolean results of verification. Fully populated on a verified result; empty on a failed result.",
+            "fields": {
+              "signature": {
+                "type": "boolean",
+                "description": "The issuer's signature over the SD-JWT is valid (issuer key resolved by `kid`).",
+                "example": true
+              },
+              "key_binding": {
+                "type": "boolean",
+                "description": "The KB-JWT is present and signed by the holder key bound in `cnf` (holder possession proof).",
+                "example": true
+              },
+              "aud": {
+                "type": "boolean",
+                "description": "The KB-JWT audience matches the request's verifier audience.",
+                "example": true
+              },
+              "nonce": {
+                "type": "boolean",
+                "description": "The KB-JWT nonce matches the request's single-use nonce (anti-replay).",
+                "example": true
+              },
+              "alg_allowlist": {
+                "type": "boolean",
+                "description": "Every algorithm in the presentation is on the ES256 allow-list.",
+                "example": true
+              },
+              "not_expired": {
+                "type": "boolean",
+                "description": "The credential's `exp` is in the future.",
+                "example": true
+              },
+              "not_revoked": {
+                "type": "boolean",
+                "description": "The credential is not revoked or suspended per its Token Status List.",
+                "example": true
+              }
+            }
+          },
+          "error": {
+            "type": "string",
+            "description": "Failure reason (`ExceptionType: message`) when the verdict is `failed`; empty string on success.",
+            "example": ""
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 timestamp when the verification result was recorded.",
+            "example": "2026-06-30T12:00:00+00:00"
+          }
+        }
+      }
+    }
+  }
+}
