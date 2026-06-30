@@ -1,0 +1,43 @@
+---
+title: "Wallets and presenting"
+description: "Learn what a wallet is and how selective disclosure lets you share only needed facts."
+---
+
+A wallet is an app that holds your credentials. It is similar to Apple Wallet holding a boarding pass or payment card. Instead of storing only images, this wallet stores signed digital proofs.
+
+The holder is the person or system that controls the wallet. Presenting means showing a credential to a verifier, which is the app or organization checking the proof. If a hotel asks for proof that you are over 18, your wallet can present that fact.
+
+The wallet does not need to show your full birth date if the credential supports selective disclosure.
+
+Selective disclosure means you choose exactly which facts to share. It is like covering parts of a paper ID with your finger before showing it. The hidden parts stay hidden, and the shown parts can still be verified.
+
+<Steps>
+  <Step title="Receive a credential">
+    The wallet receives a credential from an issuer, which is the organization that creates it. Examples include an airline, employer, bank, or event organizer.
+  </Step>
+  <Step title="Store it with the holder key">
+    The wallet keeps the credential and the private key that proves the wallet controls it. A private key is a secret the wallet uses to sign presentations.
+  </Step>
+  <Step title="Review the request">
+    A verifier asks for specific facts, such as `age_over_18` or `boarding_group`. The wallet should show the holder what will be shared.
+  </Step>
+  <Step title="Present only the approved facts">
+    The wallet sends the selected facts plus proof that this presentation belongs to the current request.
+  </Step>
+</Steps>
+
+<Note>
+  In Didit ID, verification requests use OpenID for Verifiable Presentations (OpenID4VP). This is the standard way a verifier asks a wallet to present a credential.
+</Note>
+
+## Why this is useful
+
+Most checks do not need every fact on a document. A venue may need to know that you are old enough to enter. It does not need your address, full name, or birth date.
+
+Selective disclosure reduces oversharing. The verifier gets the fact it needs, and the holder keeps unrelated facts private.
+
+<Tip>
+  A good wallet screen should show who is asking, which issuer made the credential, and exactly which claims will be shared.
+</Tip>
+
+Go deeper: [Holder wallet](/guides/holder-wallet), [OpenID for Verifiable Presentations (OpenID4VP)](/concepts/openid4vp), [Selective Disclosure JSON Web Token Verifiable Credential (SD-JWT VC)](/concepts/sd-jwt-vc), and [verify presentations](/guides/verification).

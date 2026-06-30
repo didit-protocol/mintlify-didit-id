@@ -1,0 +1,87 @@
+---
+title: "Glossary"
+description: "Plain-language definitions for Didit ID terms."
+---
+
+Use this glossary when a word feels unfamiliar. Think of it as a plain-English label on each part of the system. Each definition is one sentence and avoids depending on another definition.
+
+<AccordionGroup>
+  <Accordion title="Claim">
+    A claim is one fact inside a credential, such as a name, age check result, seat number, or employee role.
+  </Accordion>
+  <Accordion title="Credential offer">
+    A credential offer is an invitation that tells a wallet how to request and receive a specific credential.
+  </Accordion>
+  <Accordion title="DCQL (Digital Credentials Query Language)">
+    Digital Credentials Query Language (DCQL) is the request format a verifier uses to ask a wallet for specific credential facts.
+  </Accordion>
+  <Accordion title="Holder">
+    A holder is the person, device, or system that receives a credential and controls when to share it.
+  </Accordion>
+  <Accordion title="Issuer">
+    An issuer is the organization or system that creates a credential and signs it so others can check where it came from.
+  </Accordion>
+  <Accordion title="Key binding">
+    Key binding ties a credential to the holder's wallet so a copied credential string is not enough to present it.
+  </Accordion>
+  <Accordion title="Key rotation">
+    Key rotation means replacing the issuer's signing key with a fresh one while keeping older credentials checkable for a planned time.
+  </Accordion>
+  <Accordion title="Nonce">
+    A nonce is a one-time random value that proves a wallet response belongs to this request and is not a replay of an old one.
+  </Accordion>
+  <Accordion title="OpenID4VCI (OpenID for Verifiable Credential Issuance)">
+    OpenID for Verifiable Credential Issuance (OpenID4VCI) is the standard flow a wallet uses to receive a credential from an issuer.
+  </Accordion>
+  <Accordion title="OpenID4VP (OpenID for Verifiable Presentations)">
+    OpenID for Verifiable Presentations (OpenID4VP) is the standard flow a verifier uses to ask a wallet to show credential facts.
+  </Accordion>
+  <Accordion title="Presentation">
+    A presentation is the package a wallet sends to a verifier when it shows selected credential facts.
+  </Accordion>
+  <Accordion title="Proof of possession">
+    Proof of possession means the wallet signs something to show it controls the secret key linked to the credential.
+  </Accordion>
+  <Accordion title="Revocation">
+    Revocation means an issuer permanently marks a credential so verifiers should no longer accept it.
+  </Accordion>
+  <Accordion title="SD-JWT VC (Selective Disclosure JSON Web Token Verifiable Credential)">
+    Selective Disclosure JSON Web Token Verifiable Credential (SD-JWT VC) is the signed credential format Didit ID uses today.
+  </Accordion>
+  <Accordion title="Selective disclosure">
+    Selective disclosure means the holder can reveal only chosen facts from a credential instead of showing everything inside it.
+  </Accordion>
+  <Accordion title="Status list">
+    A status list is a public list that lets verifiers check whether credentials are still active, paused, or canceled.
+  </Accordion>
+  <Accordion title="Trust framework">
+    A trust framework is a named rulebook or ecosystem that describes how issuers and verifiers should trust each other.
+  </Accordion>
+  <Accordion title="Trust registry">
+    A trust registry is your list of issuers and verifiers that are allowed for a verification flow.
+  </Accordion>
+  <Accordion title="Trusted issuer">
+    A trusted issuer is an issuer your application has chosen to accept for a certain kind of proof.
+  </Accordion>
+  <Accordion title="vct">
+    Verifiable credential type (`vct`) is the label that identifies what kind of credential a wallet or verifier is handling.
+  </Accordion>
+  <Accordion title="Verifiable credential">
+    A verifiable credential is a signed digital proof, like a tamper-proof ID card, that software can check.
+  </Accordion>
+  <Accordion title="Verifier">
+    A verifier is the organization or system that asks for credential facts and checks them before making a decision.
+  </Accordion>
+  <Accordion title="vp_token">
+    A verifiable presentation token (`vp_token`) is the credential presentation string a wallet sends to Didit ID for verification.
+  </Accordion>
+  <Accordion title="Wallet">
+    A wallet is an app or system that stores credentials and helps the holder share selected facts.
+  </Accordion>
+</AccordionGroup>
+
+<Tip>
+  Read [issuer, holder, verifier](/learn/issuer-holder-verifier) first if the roles are still fuzzy.
+</Tip>
+
+Go deeper: [Verifiable credentials](/concepts/verifiable-credentials), [OpenID for Verifiable Credential Issuance (OpenID4VCI)](/concepts/openid4vci), [OpenID for Verifiable Presentations (OpenID4VP)](/concepts/openid4vp), [trust frameworks](/concepts/trust-frameworks), and [Token Status List](/concepts/status-list).

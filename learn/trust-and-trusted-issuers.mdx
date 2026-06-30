@@ -1,0 +1,48 @@
+---
+title: "Trust and trusted issuers"
+description: "Learn why verifiers need to know which issuers to believe."
+---
+
+A verifier is the system checking a credential. An issuer is the organization that created it. A verifier should not accept every signed credential.
+
+A fake company can sign a fake student ID, just like anyone can print a badge at home. The signature proves who made the credential, but the verifier still needs to decide whether that issuer is allowed.
+
+Think of a bouncer at a club. The bouncer does not accept every card with a photo. The bouncer has a list of ID issuers that count, such as a driver's license agency or passport office.
+
+In Didit ID, that list is the trust registry. A trusted issuer is one issuer on that list. If the issuer is not trusted, the credential can be rejected even if the digital seal is valid.
+
+## Trust registry
+
+A trust registry is the verifier's list of issuers it accepts. It answers the question, "Who do we believe for this kind of proof?"
+
+For example, an airport gate may trust the airline for boarding pass credentials. It should not trust a random website that claims to issue boarding passes.
+
+<Steps>
+  <Step title="Choose the trust context">
+    Pick the trust framework, which is the rulebook or ecosystem for the kind of credential you want to verify.
+  </Step>
+  <Step title="Add trusted issuers">
+    Add each issuer you accept. This is like adding approved ID agencies to the bouncer's list.
+  </Step>
+  <Step title="Verify presentations">
+    When a wallet presents a credential, Didit ID checks the digital seal and whether the credential is still active. It also checks whether the issuer is trusted.
+  </Step>
+</Steps>
+
+<Note>
+  A credential can have a valid digital seal and still fail because the issuer is not in your trust registry.
+</Note>
+
+## Trust frameworks
+
+A trust framework is a named rulebook for a credential ecosystem. It helps you group trust decisions under a shared policy.
+
+Electronic Identification, Authentication and Trust Services (eIDAS) is a European Union trust framework for electronic identity and trust services.
+
+Mobile driving license (mDL) is a trust framework family for digital driver's licenses based on mobile license standards.
+
+<Tip>
+  Behind the scenes, Didit ID uses a few agreed-upon technical formats — **you don't need to know their names to use it.** They are just industry standards that let different wallets and apps work together: the credential format is SD-JWT VC, issuing uses OpenID4VCI, and presenting uses OpenID4VP. When you're curious what each one means, the [Concepts](/concepts/sd-jwt-vc) pages explain them.
+</Tip>
+
+Go deeper: [Trust frameworks](/concepts/trust-frameworks), [trust registry](/guides/trust-registry), and [verify presentations](/guides/verification).

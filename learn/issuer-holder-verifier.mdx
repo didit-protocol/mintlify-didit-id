@@ -1,0 +1,50 @@
+---
+title: "Issuer, holder, verifier"
+description: "Learn the three roles through a simple airline boarding pass story."
+---
+
+Most situations have three roles: issuer, holder, and verifier. These names sound formal, but the roles are familiar. One party gives proof, one party carries it, and one party checks it.
+
+## The airline story
+
+An airline gives a passenger a digital boarding pass credential. The airline is the issuer because it creates and signs the boarding pass. The passenger is the holder because they keep it in their wallet.
+
+At the gate, the gate system checks the boarding pass before letting the passenger board. The gate system is the verifier because it checks the proof and decides whether to accept it.
+
+<Steps>
+  <Step title="The airline issues">
+    The airline writes the flight, seat, boarding group, and passenger facts into a credential. It signs the credential so others can check that the airline created it.
+  </Step>
+  <Step title="The passenger holds">
+    The passenger keeps the credential in a wallet app. The wallet is like Apple Wallet, but for signed proofs that can be checked by other systems.
+  </Step>
+  <Step title="The gate verifies">
+    The gate asks for the boarding pass credential. It checks the airline signature, the flight details, and whether the credential is still valid.
+  </Step>
+</Steps>
+
+<Note>
+  The issuer and verifier can be different organizations. A university can issue a diploma credential, and an employer can verify it later.
+</Note>
+
+## The roles in Didit ID
+
+<CardGroup cols={3}>
+  <Card title="Issuer" icon="signature" href="/guides/issuance">
+    Creates credentials and signs them, like the airline creating a boarding pass.
+  </Card>
+  <Card title="Holder" icon="wallet" href="/guides/holder-wallet">
+    Receives credentials and chooses when to share them, like the passenger carrying the boarding pass.
+  </Card>
+  <Card title="Verifier" icon="shield-check" href="/guides/verification">
+    Requests and checks credentials, like the gate checking the boarding pass.
+  </Card>
+</CardGroup>
+
+## Why the split matters
+
+The split gives each party a clear job. The issuer does not need to be called every time a credential is shown. The holder can carry proof and decide when to share it. The verifier can check the proof directly before trusting it.
+
+This is different from uploading a document scan. A scan is just an image. A verifiable credential carries a digital seal that can be checked.
+
+Go deeper: [Verifiable credentials](/concepts/verifiable-credentials), [OpenID for Verifiable Credential Issuance (OpenID4VCI)](/concepts/openid4vci), [OpenID for Verifiable Presentations (OpenID4VP)](/concepts/openid4vp), and [holder wallet](/guides/holder-wallet).

@@ -47,6 +47,19 @@
         "tab": "Documentation",
         "groups": [
           {
+            "group": "Learn the basics",
+            "pages": [
+              "learn/index",
+              "learn/what-is-a-verifiable-credential",
+              "learn/issuer-holder-verifier",
+              "learn/wallets-and-presenting",
+              "learn/trust-and-trusted-issuers",
+              "learn/what-didit-id-does",
+              "learn/what-you-can-build",
+              "learn/glossary"
+            ]
+          },
+          {
             "group": "Get Started",
             "pages": [
               "index",

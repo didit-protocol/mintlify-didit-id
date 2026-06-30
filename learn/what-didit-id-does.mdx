@@ -1,0 +1,63 @@
+---
+title: "What Didit ID does"
+description: "Map Didit ID product capabilities to plain-language benefits."
+---
+
+Didit ID is the backend service that helps your application issue, manage, and verify digital credentials. Think of it as the credential desk behind your app. An issuer creates a credential, and a verifier checks it.
+
+Didit ID creates the signed proof, supports wallet handoff, checks presentations, manages which issuers you trust, and rotates signing keys.
+
+<Note>
+  A **signing key** is just the secret an issuer uses to make its digital seal (the wax seal from [What is a verifiable credential?](/learn/what-is-a-verifiable-credential)). Anyone can check the seal, but only the holder of the key can make it.
+</Note>
+
+## Capabilities and benefits
+
+| What Didit ID lets you do | So you can... |
+| --- | --- |
+| Define credential schemas and templates | decide which facts a credential can contain before you issue it. |
+| Issue credentials | give a person or system a signed digital proof, such as a boarding pass, employee badge, or reusable Know Your Customer (KYC) result. |
+| Let people carry credentials in wallets | let people or systems keep proof and show it later without re-checking the same facts. |
+| Verify presentations | check the digital seal, that the wallet was allowed to share it, that it was meant for this checker, a one-time code that blocks a copied reply from being reused, whether it has expired, whether it was cancelled, and whether the issuer is trusted. |
+| Manage trusted issuers | decide which issuers your application will believe for each type of proof. |
+| Revoke, suspend, or reactivate credentials | stop a credential from verifying when it should no longer count. |
+| Rotate issuer signing keys | switch to a fresh signing key (the secret used to make the seal) for new credentials, while credentials already issued keep working during a grace period. |
+| Keep verification logs | audit what was requested, what was disclosed, and what result Didit ID returned. |
+
+<CardGroup cols={2}>
+  <Card title="Issue" icon="send" href="/guides/issuance">
+    Create credential offers, which are invitations to receive credentials, or issue directly from your backend.
+  </Card>
+  <Card title="Carry" icon="wallet" href="/guides/holder-wallet">
+    Support wallets that accept offers, store credentials, and present selected facts.
+  </Card>
+  <Card title="Verify" icon="shield-check" href="/guides/verification">
+    Request a credential presentation and read the final verification result.
+  </Card>
+  <Card title="Trust" icon="list-check" href="/guides/trust-registry">
+    Register issuers your organization accepts before you trust credentials from them.
+  </Card>
+</CardGroup>
+
+<Note>
+  Management endpoints use your organization's application programming interface (API) key. Some wallet endpoints are public because wallets need to call them without your private API key.
+</Note>
+
+## The simple flow
+
+<Steps>
+  <Step title="Create the credential design">
+    You define the credential type and the facts it can hold.
+  </Step>
+  <Step title="Issue the credential">
+    You give the person or system a signed proof through a credential offer or direct issuance.
+  </Step>
+  <Step title="Present the credential">
+    The wallet shares only the facts a verifier asks for.
+  </Step>
+  <Step title="Verify the result">
+    Didit ID checks the proof and returns the facts that passed verification.
+  </Step>
+</Steps>
+
+Go deeper: [Issue credentials](/guides/issuance), [holder wallet](/guides/holder-wallet), [verify presentations](/guides/verification), [trust registry](/guides/trust-registry), and [key rotation](/guides/key-rotation).

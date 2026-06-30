@@ -1,0 +1,46 @@
+---
+title: "What you can build"
+description: "See concrete examples of products that can use Didit ID."
+---
+
+Didit ID is useful when one party needs to give proof and another party needs to check it later. The proof can move with the person or system that needs it instead of staying trapped in one database. These examples show the idea without assuming technical background.
+
+Each example is like showing a pass at a door. The difference is that software can check the pass instead of a person reading paper.
+
+<CardGroup cols={2}>
+  <Card title="Airline boarding passes" icon="plane" href="/learn/issuer-holder-verifier">
+    An airline issues a boarding pass credential after check-in. The passenger keeps it in a wallet, and the gate verifies the flight, seat, and boarding group before boarding.
+  </Card>
+  <Card title="Age checks" icon="badge-check" href="/learn/wallets-and-presenting">
+    A service asks for proof that someone is over 18. The wallet can share an `over_18` fact without showing the full birth date or address.
+  </Card>
+  <Card title="Employee badges" icon="id-card" href="/learn/trust-and-trusted-issuers">
+    A company issues an employee badge credential with a role or department. A building, help desk, or partner portal can verify that badge before allowing access.
+  </Card>
+  <Card title="Reusable Know Your Customer" icon="user-check" href="/learn/what-didit-id-does">
+    A business completes Know Your Customer (KYC) checks once and issues a credential with the approved facts. The person can reuse that proof with another company that trusts the original business.
+  </Card>
+  <Card title="Event tickets" icon="ticket" href="/learn/what-is-a-verifiable-credential">
+    An event organizer issues a ticket credential. The door scanner verifies that the organizer issued it and has not canceled it.
+  </Card>
+</CardGroup>
+
+## Why these examples fit
+
+<Steps>
+  <Step title="There is a real source">
+    Someone has authority to say the fact is true, such as an airline, employer, bank, or event organizer.
+  </Step>
+  <Step title="The person needs reuse">
+    The person or system should carry proof and show it later without starting from zero each time.
+  </Step>
+  <Step title="The checker needs confidence">
+    The checking system needs more than a screenshot. It needs a signed proof, a check that the proof still counts, and a source it trusts.
+  </Step>
+</Steps>
+
+<Tip>
+  Start with one high-value proof. Good first projects avoid oversharing, save manual checks, or remove repeated document uploads.
+</Tip>
+
+Go deeper: [Issue credentials](/guides/issuance), [verify presentations](/guides/verification), [trust registry](/guides/trust-registry), and [Token Status List](/concepts/status-list).
