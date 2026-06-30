@@ -1,0 +1,147 @@
+---
+title: "Token Status List"
+description: "Understand how Didit ID uses IETF Token Status List to check revocation, suspension, and reactivation."
+---
+
+Token Status List lets verifiers check credential lifecycle state without calling a per-credential status endpoint. Didit ID publishes whole status lists and embeds a status reference in each SD-JWT VC, so verifiers can check whether a credential is active, suspended, or revoked during [OpenID4VP verification](/concepts/openid4vp).
+
+Use status lists to make revocation privacy-preserving at verification time. The verifier fetches a list, checks the credential's indexed entry, and does not tell the issuer which holder or credential it is checking.
+
+## How it works
+
+<Steps>
+  <Step title="Issue a credential with a status reference">
+    When Didit ID issues a credential, it assigns the credential an index in a tenant status list.
+
+    The direct issue endpoint returns that assigned index as `status_idx`. See [Issue a credential directly](/api-reference/credentials/credentials-issue-post).
+  </Step>
+  <Step title="Embed the status claim">
+    The SD-JWT VC includes a `status` claim. The claim points to the status list URI and the credential's index in that list.
+  </Step>
+  <Step title="Fetch the whole list">
+    A verifier fetches the whole list with [Fetch a Token Status List](/api-reference/status/status-lists-slug-uuid-get).
+
+    The endpoint returns the list artifact for the tenant slug and list UUID, not a credential-specific response.
+  </Step>
+  <Step title="Check the indexed status">
+    The verifier expands the compressed bitstring, reads the credential's indexed entry, and applies the result to the verification decision.
+  </Step>
+</Steps>
+
+## Status claim
+
+The credential carries the information a verifier needs to locate the status entry.
+
+```json
+{
+  "status": {
+    "status_list": {
+      "idx": 0,
+      "uri": "http://localhost:8011/v1/status-lists/airline-demo/<uuid>"
+    }
+  }
+}
+```
+
+<ParamField path="status.status_list.uri" type="string" required>
+  The public status list URL. Didit ID exposes lists at `GET /v1/status-lists/{slug}/{uuid}`.
+</ParamField>
+
+<ParamField path="status.status_list.idx" type="integer" required>
+  The credential's position inside the status list. Direct issuance returns the assigned position as `status_idx`.
+</ParamField>
+
+<Note>
+  The `status` claim tells verifiers where to check lifecycle state. It does not disclose the holder's identity.
+</Note>
+
+## Compressed bitstring
+
+An IETF Token Status List stores credential status values in a compressed bitstring. Each credential points to one indexed entry. The verifier decompresses the list and reads the entry at the credential's `idx`.
+
+Didit ID uses this model for lifecycle checks during presentation verification. If the credential's entry indicates a revoked or suspended state, the OpenID4VP result returns `checks.not_revoked: false`.
+
+<ResponseField name="checks.not_revoked" type="boolean">
+  Indicates whether the credential was active in the referenced Token Status List when Didit ID verified the presentation.
+</ResponseField>
+
+## Whole-list fetch for privacy
+
+Fetch status lists with `GET /v1/status-lists/{slug}/{uuid}`.
+
+<CodeGroup>
+```bash cURL
+curl "http://localhost:8011/v1/status-lists/$TENANT_SLUG/$STATUS_LIST_ID"
+```
+
+```js JavaScript
+const response = await fetch(
+  `http://localhost:8011/v1/status-lists/${tenantSlug}/${statusListId}`,
+);
+
+const statusList = await response.json();
+```
+</CodeGroup>
+
+The endpoint returns the whole list for the tenant slug and list UUID. It is public because verifiers need to check credentials without tenant API keys.
+
+Whole-list fetch protects holder privacy better than a per-credential status endpoint:
+
+- The issuer sees list fetches, not individual credential checks.
+- Many credentials can share the same status list artifact.
+- A verifier can cache the list and check multiple credentials locally.
+- The holder does not need to contact the issuer during presentation.
+
+<Warning>
+  Do not build verification logic that calls a tenant-specific management endpoint for each credential. Use the public status list referenced by the credential's `status` claim.
+</Warning>
+
+## Credential lifecycle
+
+Manage lifecycle state through the credential endpoints. These endpoints require `Authorization: Bearer $DIDIT_API_KEY`.
+
+<CodeGroup>
+```bash Revoke
+curl -X POST "http://localhost:8011/v1/credentials/$CREDENTIAL_ID/revoke" \
+  -H "Authorization: Bearer $DIDIT_API_KEY"
+```
+
+```bash Suspend
+curl -X POST "http://localhost:8011/v1/credentials/$CREDENTIAL_ID/suspend" \
+  -H "Authorization: Bearer $DIDIT_API_KEY"
+```
+
+```bash Reactivate
+curl -X POST "http://localhost:8011/v1/credentials/$CREDENTIAL_ID/reactivate" \
+  -H "Authorization: Bearer $DIDIT_API_KEY"
+```
+</CodeGroup>
+
+| Action | Endpoint | Verification effect |
+| --- | --- | --- |
+| Revoke | [Revoke a credential](/api-reference/credentials/credentials-uuid-revoke-post) | The credential should no longer verify as active. |
+| Suspend | [Suspend a credential](/api-reference/credentials/credentials-uuid-suspend-post) | The credential should fail active-status checks until you reactivate it. |
+| Reactivate | [Reactivate a credential](/api-reference/credentials/credentials-uuid-reactivate-post) | The credential can verify again when signature, key binding, audience, nonce, algorithm, expiry, and trust checks also pass. |
+
+Lifecycle changes update the credential's referenced status entry. Verifiers observe the new state the next time they fetch the list or refresh their cached copy.
+
+## Verification behavior
+
+During OpenID4VP verification, Didit ID reads the credential's status reference and fetches the corresponding Token Status List. The final response includes the lifecycle result in `checks.not_revoked`.
+
+```json
+{
+  "verdict": "verified",
+  "checks": {
+    "signature": true,
+    "key_binding": true,
+    "aud": true,
+    "nonce": true,
+    "alg_allowlist": true,
+    "not_expired": true,
+    "not_revoked": true
+  }
+}
+```
+
+The lifecycle check is only one part of verification. A credential must also pass the SD-JWT VC signature, holder key binding, audience, nonce, algorithm allowlist, expiry, and trusted-issuer checks described in [OpenID4VP](/concepts/openid4vp).

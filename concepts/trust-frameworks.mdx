@@ -1,0 +1,153 @@
+---
+title: "Trust frameworks"
+description: "Define which issuers and relying parties your tenant accepts for credential verification."
+---
+
+Trust frameworks let your verifier accept credentials only from issuers your tenant trusts. Didit ID uses the trust registry during OpenID4VP verification, so a valid SD-JWT VC still fails if the issuer is outside your tenant registry.
+
+Use trust frameworks when you need to verify credentials against a policy set such as eIDAS 2.0 / EUDI, ISO mDL, Swiss e-ID, or US mDL AAMVA. Then add the issuers and relying parties that are valid for your tenant.
+
+<CardGroup cols={2}>
+  <Card title="Configure the registry" icon="list-check" href="/guides/trust-registry">
+    Add trusted issuers, register relying parties, and validate issuer entries.
+  </Card>
+  <Card title="Verify presentations" icon="shield-check" href="/guides/verification">
+    Request OpenID4VP presentations and enforce issuer trust during verification.
+  </Card>
+</CardGroup>
+
+## What a framework does
+
+A trust framework is the policy context for a credential ecosystem. It tells your application which rules, issuer types, and relying-party roles apply before you accept a credential.
+
+Didit ID exposes built-in framework entries through [`GET /trust-frameworks`](/api-reference/trust/trust-frameworks-get). The current registry covers these framework families:
+
+- eIDAS 2.0 and EUDI Wallet credentials.
+- ISO 18013 mobile driving license ecosystems.
+- Swiss e-ID credentials.
+- US mDL credentials aligned with AAMVA ecosystems.
+
+The OpenAPI example uses `eidas2` as the framework identifier for eIDAS 2.0.
+
+<Note>
+  mDL / ISO 18013-5/-7 and Apple / Google Wallet support are documented as fast-follow capabilities. Use the framework model now to keep issuer trust policy ready for those ecosystems.
+</Note>
+
+## Trusted issuers
+
+A trusted issuer entry says that your tenant accepts credentials from one issuer within a framework. It binds an issuer identifier to a trust anchor that Didit ID can resolve or validate.
+
+<ParamField path="name" type="string">
+  Human-readable issuer name, such as `Gov PID`.
+</ParamField>
+
+<ParamField path="iss" type="string">
+  The issuer identifier that appears in the SD-JWT VC, such as `https://pid.gov.example`.
+</ParamField>
+
+<ParamField path="trust_anchor" type="string">
+  The trust anchor type. Use `https-jwks`, `did-web`, or `x509`.
+</ParamField>
+
+<ParamField path="framework" type="string">
+  The framework identifier, such as `eidas2`.
+</ParamField>
+
+Create entries with [`POST /trusted-issuers`](/api-reference/trust/trusted-issuers-post), list them with [`GET /trusted-issuers`](/api-reference/trust/trusted-issuers-get), remove them with [`DELETE /trusted-issuers/{uuid}`](/api-reference/trust/trusted-issuers-uuid-delete), and validate an entry with [`POST /trusted-issuers/{uuid}/validate`](/api-reference/trust/trusted-issuers-uuid-validate-post).
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST "http://localhost:8011/v1/trusted-issuers" \
+  -H "Authorization: Bearer $DIDIT_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Gov PID",
+    "iss": "https://pid.gov.example",
+    "trust_anchor": "did-web",
+    "framework": "eidas2"
+  }'
+```
+
+```js JavaScript
+const response = await fetch("http://localhost:8011/v1/trusted-issuers", {
+  method: "POST",
+  headers: {
+    Authorization: `Bearer ${process.env.DIDIT_API_KEY}`,
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    name: "Gov PID",
+    iss: "https://pid.gov.example",
+    trust_anchor: "did-web",
+    framework: "eidas2",
+  }),
+});
+
+const trustedIssuer = await response.json();
+```
+
+</CodeGroup>
+
+## Trust anchors
+
+Trust anchors define how Didit ID connects an issuer record to verifiable key material.
+
+- `https-jwks` anchors the issuer to a JWKS endpoint served over HTTPS.
+- `did-web` anchors the issuer to a DID document resolved from a web domain.
+- `x509` anchors the issuer to certificate-based trust material.
+
+Choose the anchor that matches the issuer ecosystem. For OpenID4VCI issuers, the issuer metadata and JWKS are also discoverable through [`GET /issuers/{slug}/.well-known/openid-credential-issuer`](/api-reference/openid4vci/issuers-slug-openid-credential-issuer-get) and [`GET /issuers/{slug}/.well-known/jwt-vc-issuer`](/api-reference/openid4vci/issuers-slug-jwt-vc-issuer-get).
+
+## Self-trust
+
+Self-trust means your tenant explicitly trusts credentials issued by your own issuer. Add your own issuer to the tenant registry the same way you add an external issuer.
+
+This keeps the trust model consistent. Didit ID does not treat a credential as trusted only because your tenant issued it. The verifier still checks the issuer against the tenant registry during presentation verification.
+
+<Tip>
+  Use self-trust for closed-loop flows where your tenant issues a credential with OpenID4VCI and later verifies that same credential with OpenID4VP.
+</Tip>
+
+## How verification uses the registry
+
+When you create a presentation request with [`POST /presentations/request`](/api-reference/verification/presentations-request-post), you send the credential type, requested claims, audience, and optional `trusted_iss`.
+
+<Steps>
+  <Step title="Create a presentation request">
+    Didit ID builds a DCQL query for `requested_vct`, `requested_claims`, `aud`, and the request nonce.
+  </Step>
+  <Step title="Receive the wallet response">
+    The holder sends a `vp_token` to [`POST /presentations/{uuid}/response`](/api-reference/verification/presentations-uuid-response-post).
+  </Step>
+  <Step title="Check cryptography and lifecycle">
+    Didit ID verifies the signature, holder key binding, audience, nonce, algorithm allowlist, expiry, and Token Status List revocation state.
+  </Step>
+  <Step title="Enforce issuer trust">
+    Didit ID compares the credential issuer to your tenant trust registry. If the issuer is not trusted for the tenant, the verifier rejects the presentation.
+  </Step>
+</Steps>
+
+The verification response returns `verdict`, `disclosed_claims`, and `checks`. The `checks` object covers cryptographic and lifecycle checks such as `signature`, `key_binding`, `aud`, `nonce`, `alg_allowlist`, `not_expired`, and `not_revoked`. Issuer trust contributes to the final `verdict`.
+
+<Warning>
+  Do not rely on signature validation alone. A credential can be well-formed, correctly signed, unexpired, and unrevoked, but still rejected because the issuer is not in your tenant registry.
+</Warning>
+
+## Relying parties
+
+Relying-party records describe the verifiers that participate in a framework. Register them when your framework requires explicit verifier enrollment or when you need tenant-level control over which applications can request presentations.
+
+Use [`POST /relying-parties`](/api-reference/trust/relying-parties-post) to register a relying party, [`GET /relying-parties`](/api-reference/trust/relying-parties-get) to list records, and [`DELETE /relying-parties/{uuid}`](/api-reference/trust/relying-parties-uuid-delete) to remove one.
+
+<Accordion title="What happens if I pass trusted_iss?">
+  `trusted_iss` narrows the presentation request to a specific issuer. The submitted credential must still pass the tenant registry trust check during verification.
+</Accordion>
+
+<Accordion title="Can I accept any issuer inside a framework?">
+  No. The framework defines the policy context, but your tenant registry defines the issuers you accept. Add each issuer explicitly.
+</Accordion>
+
+<Accordion title="Can one tenant trust a different issuer set than another tenant?">
+  Yes. Didit ID is multi-tenant, and each tenant manages its own trusted issuer and relying-party records.
+</Accordion>

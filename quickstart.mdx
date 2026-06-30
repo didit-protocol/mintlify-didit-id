@@ -1,47 +1,199 @@
 ---
 title: "Quickstart"
-description: "Begin with a guide on the fastest path to a successful outcome"
+description: "Issue and verify your first Didit ID credential in five minutes."
 ---
 
-Describe how someone begins using your product. What is the first thing they need to do? Are there any prerequisites?
+Issue a demo `AirlineLoyalty` SD-JWT VC, accept it with the demo holder endpoint, and verify a selective-disclosure presentation with Didit ID.
 
-A quickstart should take someone from zero to using your product. They'll get a quick win and a sense of what they can accomplish.
+This quickstart uses the local API at `http://localhost:8011/v1`. Management endpoints use `Authorization: Bearer $DIDIT_API_KEY`. Holder and verifier protocol endpoints are public.
 
-## Prerequisites
-
-Before you begin, you must have:
-
-- Requirement one (for example, Node.js 18+, a free account, an API key)
-- Requirement two (for example, a compatible device, a compatible browser, a compatible operating system)
-
-## Get started
+<Note>
+  The examples use `curl` and `jq`. Set `DIDIT_API_KEY` to a tenant API key from the Didit Console.
+</Note>
 
 <Steps>
-  <Step title="Install">
-    Describe how to install your product or sign up.
+  <Step title="Get a tenant API key">
+    Open the Didit Console, choose your tenant, and copy a tenant API key. Store it in your shell, then make one authenticated request to confirm the key works.
 
-    ```bash
-    npm install your-package
-    ```
+<CodeGroup>
+```bash cURL
+export DIDIT_API_BASE="http://localhost:8011/v1"
+export DIDIT_API_KEY="<tenant-api-key>"
+
+curl -sS "$DIDIT_API_BASE/credential-schemas" \
+  -H "Authorization: Bearer $DIDIT_API_KEY" | jq
+```
+</CodeGroup>
   </Step>
-  <Step title="Configure">
-    Describe any setup or configuration needed before first use.
 
-    ```bash
-    your-cli init
-    ```
+  <Step title="Create a credential schema and template">
+    Create a schema for an `AirlineLoyalty` credential. Then create a template that uses that schema and sets a one-hour credential lifetime.
+
+<CodeGroup>
+```bash cURL
+SCHEMA_ID="$(
+  curl -sS -X POST "$DIDIT_API_BASE/credential-schemas" \
+    -H "Authorization: Bearer $DIDIT_API_KEY" \
+    -H "Content-Type: application/json" \
+    --data '{
+      "name": "Loyalty",
+      "vct": "AirlineLoyalty",
+      "attributes": [
+        {
+          "name": "given_name",
+          "type": "string",
+          "sd": true
+        },
+        {
+          "name": "tier",
+          "type": "string",
+          "sd": true
+        }
+      ]
+    }' | jq -r '.uuid'
+)"
+
+TEMPLATE_ID="$(
+  jq -n --arg schema "$SCHEMA_ID" '{
+    schema: $schema,
+    name: "std",
+    validity_seconds: 3600
+  }' |
+  curl -sS -X POST "$DIDIT_API_BASE/credential-templates" \
+    -H "Authorization: Bearer $DIDIT_API_KEY" \
+    -H "Content-Type: application/json" \
+    --data @- | jq -r '.uuid'
+)"
+
+echo "SCHEMA_ID=$SCHEMA_ID"
+echo "TEMPLATE_ID=$TEMPLATE_ID"
+```
+</CodeGroup>
+
+    `SCHEMA_ID` identifies the credential type and selectively disclosable claims. `TEMPLATE_ID` is the issuer-side configuration you use when you create an offer.
   </Step>
-  <Step title="Run it">
-    Show the first thing a user does to see it working.
 
-    ```bash
-    your-cli start
-    ```
+  <Step title="Create a credential offer">
+    Create an OpenID4VCI credential offer from the template. The response includes the `offer_id`, the `credential_offer_uri`, the `pre_authorized_code`, and the `tx_code`.
+
+<CodeGroup>
+```bash cURL
+OFFER="$(
+  jq -n --arg template_id "$TEMPLATE_ID" '{
+    template_id: $template_id,
+    claims: {
+      given_name: "Ada",
+      tier: "gold"
+    }
+  }' |
+  curl -sS -X POST "$DIDIT_API_BASE/credential-offers" \
+    -H "Authorization: Bearer $DIDIT_API_KEY" \
+    -H "Content-Type: application/json" \
+    --data @-
+)"
+
+OFFER_ID="$(echo "$OFFER" | jq -r '.offer_id')"
+
+echo "$OFFER" | jq '{
+  offer_id,
+  credential_offer_uri,
+  credential_issuer,
+  pre_authorized_code,
+  tx_code
+}'
+```
+</CodeGroup>
+
+    See the [credential offer API reference](/api-reference/openid4vci/credential-offers-post) for the full response shape.
+  </Step>
+
+  <Step title="Accept the offer with the demo holder endpoint">
+    Accept the offer with `POST /credential-offers/{id}/accept`. This endpoint is a demo convenience for local testing. It runs the OpenID4VCI token, nonce, proof, and credential flow server-side with a fresh holder key.
+
+<CodeGroup>
+```bash cURL
+curl -sS -X POST "$DIDIT_API_BASE/credential-offers/$OFFER_ID/accept" \
+  -H "Content-Type: application/json" \
+  --data '{}' | jq '{
+    vct,
+    credential: .credential | {
+      id,
+      credential_name,
+      format,
+      status,
+      subject,
+      claims
+    }
+  }'
+```
+</CodeGroup>
+
+    Real wallets do not call this demo endpoint. They follow [OpenID4VCI issuance](/guides/issuance): redeem the `pre_authorized_code` and `tx_code` with `POST /oauth/token`, request a `c_nonce` with `POST /nonce`, then call `POST /credential` with a holder proof JWT.
+  </Step>
+
+  <Step title="Request and verify a presentation">
+    Create an OpenID4VP presentation request for the `tier` claim. Then use `POST /presentations/{id}/demo-present` to run a real server-side issue, present, and verify flow for that request.
+
+<CodeGroup>
+```bash cURL
+PRESENTATION="$(
+  curl -sS -X POST "$DIDIT_API_BASE/presentations/request" \
+    -H "Authorization: Bearer $DIDIT_API_KEY" \
+    -H "Content-Type: application/json" \
+    --data '{
+      "requested_vct": "AirlineLoyalty",
+      "requested_claims": ["tier"],
+      "aud": "checkin-rp",
+      "trusted_iss": ""
+    }'
+)"
+
+PRESENTATION_ID="$(echo "$PRESENTATION" | jq -r '.uuid')"
+
+echo "$PRESENTATION" | jq '{
+  uuid,
+  dcql,
+  requested_claims,
+  aud,
+  nonce,
+  status
+}'
+
+curl -sS -X POST "$DIDIT_API_BASE/presentations/$PRESENTATION_ID/demo-present" \
+  -H "Content-Type: application/json" \
+  --data '{}' | jq '{
+    verdict,
+    disclosed_claims,
+    checks
+  }'
+```
+</CodeGroup>
+
+    In production, deliver the request to a wallet with the W3C Digital Credentials API using `openid4vp-v1-signed`. The wallet submits the `vp_token` to `POST /presentations/{id}/response`.
   </Step>
 </Steps>
 
-<Tip>
-  Give people a way to get help. This could be a link to a support page, a chat with a customer support agent, or a forum for your product.
+## Read the verification result
 
-  Example: Need help? Reach out to us at [support@yourcompany.com](mailto:support@yourcompany.com).
-</Tip>
+<ResponseField name="verdict" type="string">
+  `verified` means Didit ID accepted the presentation.
+</ResponseField>
+
+<ResponseField name="disclosed_claims" type="object">
+  The claims the holder disclosed. In this quickstart, the verifier requests only `tier`, so `given_name` stays undisclosed.
+</ResponseField>
+
+<ResponseField name="checks" type="object">
+  The verification checks. A verified response includes successful checks for `signature`, `key_binding`, `aud`, `nonce`, `alg_allowlist`, `not_expired`, and `not_revoked`.
+</ResponseField>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Issue credentials" icon="send" href="/guides/issuance">
+    Build the full OpenID4VCI holder flow with token redemption, nonce binding, proof JWTs, and SD-JWT VC issuance.
+  </Card>
+  <Card title="Verify presentations" icon="shield-check" href="/guides/verification">
+    Build the full OpenID4VP verifier flow with DCQL, wallet delivery, `vp_token` submission, and verification logs.
+  </Card>
+</CardGroup>

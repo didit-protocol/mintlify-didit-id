@@ -1,0 +1,556 @@
+---
+title: "Issue credentials"
+description: "Issue SD-JWT VC credentials with OpenID4VCI or the direct management API."
+---
+
+Issue credentials when you need a holder to receive a verifiable credential that can later be presented with selective disclosure. Didit ID supports two issuance paths:
+
+<CardGroup cols={2}>
+  <Card title="Path A: OpenID4VCI" icon="send" href="#path-a-openid4vci">
+    Create a credential offer, let a wallet exchange the pre-authorized code, then issue an SD-JWT VC after the wallet proves holder key control.
+  </Card>
+  <Card title="Path B: Direct issuance" icon="key-round" href="#path-b-direct-management-issuance">
+    Issue from your backend with a `template_id`, holder public JWK, and claim values.
+  </Card>
+</CardGroup>
+
+Didit ID issues SD-JWT VC credentials with the `application/dc+sd-jwt` media type. Issuance follows [OpenID4VCI 1.0](/concepts/openid4vci), and verification later checks signature, holder key binding, audience, nonce, algorithm allowlist, expiry, revocation, and issuer trust.
+
+<Note>
+  Management endpoints use `Authorization: Bearer $DIDIT_API_KEY`. OpenID4VCI holder endpoints do not use your tenant API key. Never ship the tenant API key to a wallet or browser.
+</Note>
+
+## Before you issue
+
+You need a credential schema, a credential template, and holder data.
+
+- A schema defines the credential type with `vct` and the claim attributes that can appear in the credential.
+- A template gives issuance endpoints a reusable `template_id`.
+- Holder data supplies the claim values for this credential instance.
+- In Path A, the wallet creates the holder proof JWT.
+- In Path B, your backend provides the holder public JWK.
+
+Use the local development base URL:
+
+```bash
+export DIDIT_API_KEY="didit_tenant_api_key"
+export DIDIT_API_BASE_URL="http://localhost:8011/v1"
+```
+
+## Create a schema
+
+Schemas define the credential type and the attributes that can be selectively disclosed. Set `sd: true` for attributes the holder may disclose independently during presentation.
+
+<CodeGroup>
+```bash cURL
+curl -X POST "http://localhost:8011/v1/credential-schemas" \
+  -H "Authorization: Bearer $DIDIT_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Loyalty",
+    "vct": "AirlineLoyalty",
+    "attributes": [
+      {
+        "name": "given_name",
+        "type": "string",
+        "sd": true
+      },
+      {
+        "name": "tier",
+        "type": "string",
+        "sd": true
+      }
+    ]
+  }'
+```
+
+```js JavaScript
+const response = await fetch("http://localhost:8011/v1/credential-schemas", {
+  method: "POST",
+  headers: {
+    Authorization: `Bearer ${process.env.DIDIT_API_KEY}`,
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    name: "Loyalty",
+    vct: "AirlineLoyalty",
+    attributes: [
+      { name: "given_name", type: "string", sd: true },
+      { name: "tier", type: "string", sd: true },
+    ],
+  }),
+});
+
+const schema = await response.json();
+```
+</CodeGroup>
+
+The response includes the schema `uuid`, `vct`, and `format`.
+
+<ResponseField name="uuid" type="string">
+  The schema identifier.
+</ResponseField>
+
+<ResponseField name="vct" type="string">
+  The SD-JWT VC type. Verification requests use this value as `requested_vct`.
+</ResponseField>
+
+<ResponseField name="format" type="string">
+  The credential format. Didit ID returns `sd_jwt_vc`.
+</ResponseField>
+
+See [create a credential schema](/api-reference/credentials/credential-schemas-post) and [list credential schemas](/api-reference/credentials/credential-schemas-get).
+
+## Prepare a template
+
+Both issuance paths use `template_id`. Create and manage templates with the credential template endpoints, then use the template UUID in offer and direct issuance requests.
+
+<CodeGroup>
+```bash cURL
+curl "http://localhost:8011/v1/credential-templates" \
+  -H "Authorization: Bearer $DIDIT_API_KEY"
+```
+
+```js JavaScript
+const response = await fetch("http://localhost:8011/v1/credential-templates", {
+  headers: {
+    Authorization: `Bearer ${process.env.DIDIT_API_KEY}`,
+  },
+});
+
+const templates = await response.json();
+```
+</CodeGroup>
+
+See [create a credential template](/api-reference/credentials/credential-templates-post) and [list credential templates](/api-reference/credentials/credential-templates-get).
+
+```bash
+export TEMPLATE_ID="template_uuid"
+```
+
+<Tip>
+  Keep credential validity policy in the template you issue from. The documented offer request body uses `template_id` and `claims`; the direct issuance request body uses `template_id`, `holder_jwk`, and `claims`. Neither includes a per-request expiry field. During verification, Didit ID exposes the `not_expired` check.
+</Tip>
+
+## Path A: OpenID4VCI
+
+Use this path when a wallet receives the credential. Your backend creates an offer. The wallet exchanges the pre-authorized code, requests a credential nonce, signs an OpenID4VCI proof JWT with the holder private key, and receives the SD-JWT VC.
+
+<Steps>
+  <Step title="Create a credential offer">
+    Create an offer from your backend with a `template_id` and the claims for this holder.
+
+    <ParamField body="template_id" type="string" required>
+      The credential template UUID.
+    </ParamField>
+
+    <ParamField body="claims" type="object" required>
+      Claim values to issue into the credential.
+    </ParamField>
+
+    <CodeGroup>
+    ```bash cURL
+    curl -X POST "http://localhost:8011/v1/credential-offers" \
+      -H "Authorization: Bearer $DIDIT_API_KEY" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "template_id": "'"$TEMPLATE_ID"'",
+        "claims": {
+          "given_name": "Ada",
+          "tier": "gold"
+        }
+      }'
+    ```
+
+    ```js JavaScript
+    const response = await fetch("http://localhost:8011/v1/credential-offers", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${process.env.DIDIT_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        template_id: process.env.TEMPLATE_ID,
+        claims: {
+          given_name: "Ada",
+          tier: "gold",
+        },
+      }),
+    });
+
+    const offer = await response.json();
+    ```
+    </CodeGroup>
+
+    The response includes `offer_id`, `credential_offer_uri`, `credential_issuer`, `pre_authorized_code`, and `tx_code`.
+    Deliver `credential_offer_uri` to the wallet as a deep link or QR code.
+
+    See [create a credential offer](/api-reference/openid4vci/credential-offers-post).
+  </Step>
+
+  <Step title="Exchange the pre-authorized code">
+    The wallet calls the token endpoint with the OpenID4VCI pre-authorized code grant and the `tx_code` from the offer.
+
+    <Warning>
+      The request body key is `pre-authorized_code` with a hyphen.
+    </Warning>
+
+    <CodeGroup>
+    ```bash cURL
+    curl -X POST "http://localhost:8011/v1/oauth/token" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "grant_type": "urn:ietf:params:oauth:grant-type:pre-authorized_code",
+        "pre-authorized_code": "s8Ilre...",
+        "tx_code": "517082"
+      }'
+    ```
+
+    ```js JavaScript
+    const response = await fetch("http://localhost:8011/v1/oauth/token", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        grant_type: "urn:ietf:params:oauth:grant-type:pre-authorized_code",
+        "pre-authorized_code": "s8Ilre...",
+        tx_code: "517082",
+      }),
+    });
+
+    const token = await response.json();
+    ```
+    </CodeGroup>
+
+    The response includes `access_token`, `token_type`, and `expires_in`. The holder access token belongs to this OpenID4VCI issuance session. It is not your tenant API key. Set `HOLDER_ACCESS_TOKEN` to this `access_token` for the credential request.
+
+    See [token endpoint](/api-reference/openid4vci/oauth-token-post).
+  </Step>
+
+  <Step title="Request a credential nonce">
+    The wallet requests a `c_nonce` for the proof JWT. This nonce binds the proof to the current issuance attempt.
+
+    <CodeGroup>
+    ```bash cURL
+    curl -X POST "http://localhost:8011/v1/nonce" \
+      -H "Content-Type: application/json" \
+      -d '{}'
+    ```
+
+    ```js JavaScript
+    const response = await fetch("http://localhost:8011/v1/nonce", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({}),
+    });
+
+    const nonce = await response.json();
+    ```
+    </CodeGroup>
+
+    The response includes `c_nonce` and `c_nonce_expires_in`.
+
+    See [issue a credential nonce](/api-reference/openid4vci/nonce-post).
+  </Step>
+
+  <Step title="Submit the holder proof">
+    The wallet signs an OpenID4VCI proof JWT with the holder private key and submits it to the credential endpoint.
+
+    <Note>
+      The wallet produces the `openid4vci-proof+jwt`. Your backend should not create the production holder proof because the proof demonstrates holder key control.
+    </Note>
+
+    <ParamField body="proof.proof_type" type="string" required>
+      Use `jwt`.
+    </ParamField>
+
+    <ParamField body="proof.jwt" type="string" required>
+      The OpenID4VCI proof JWT signed by the wallet.
+    </ParamField>
+
+    <CodeGroup>
+    ```bash cURL
+    curl -X POST "http://localhost:8011/v1/credential" \
+      -H "Authorization: Bearer $HOLDER_ACCESS_TOKEN" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "proof": {
+          "proof_type": "jwt",
+          "jwt": "<openid4vci-proof+jwt>"
+        }
+      }'
+    ```
+
+    ```js JavaScript
+    const response = await fetch("http://localhost:8011/v1/credential", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${process.env.HOLDER_ACCESS_TOKEN}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        proof: {
+          proof_type: "jwt",
+          jwt: "<openid4vci-proof+jwt>",
+        },
+      }),
+    });
+
+    const issuedCredential = await response.json();
+    ```
+    </CodeGroup>
+
+    The response includes the SD-JWT VC compact string and `vct`.
+
+    <ResponseField name="credential" type="string">
+      The issued SD-JWT VC as `<jws>~<disclosure>~`.
+    </ResponseField>
+
+    <ResponseField name="vct" type="string">
+      The credential type, such as `AirlineLoyalty`.
+    </ResponseField>
+
+    See [credential endpoint](/api-reference/openid4vci/credential-post).
+  </Step>
+</Steps>
+
+### Issuer metadata
+
+Wallets can discover issuer capabilities and signing keys through the public issuer metadata endpoints.
+
+<CodeGroup>
+```bash cURL
+curl "http://localhost:8011/v1/issuers/airline-demo/.well-known/openid-credential-issuer"
+
+curl "http://localhost:8011/v1/issuers/airline-demo/.well-known/jwt-vc-issuer"
+```
+
+```js JavaScript
+const issuerMetadata = await fetch(
+  "http://localhost:8011/v1/issuers/airline-demo/.well-known/openid-credential-issuer"
+).then((response) => response.json());
+
+const issuerJwks = await fetch(
+  "http://localhost:8011/v1/issuers/airline-demo/.well-known/jwt-vc-issuer"
+).then((response) => response.json());
+```
+</CodeGroup>
+
+See [issuer metadata](/api-reference/openid4vci/issuers-slug-openid-credential-issuer-get) and [issuer JWKS](/api-reference/openid4vci/issuers-slug-jwt-vc-issuer-get).
+
+### Test without a wallet
+
+For demos, Didit ID can accept an offer with server-side proof of possession.
+
+<Warning>
+  Use `POST /credential-offers/{uuid}/accept` for demos only. Production issuance should use a wallet-generated proof JWT.
+</Warning>
+
+<CodeGroup>
+```bash cURL
+curl -X POST "http://localhost:8011/v1/credential-offers/$OFFER_ID/accept" \
+  -H "Content-Type: application/json" \
+  -d '{}'
+```
+
+```js JavaScript
+const response = await fetch(
+  `http://localhost:8011/v1/credential-offers/${process.env.OFFER_ID}/accept`,
+  {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({}),
+  }
+);
+
+const demoCredential = await response.json();
+```
+</CodeGroup>
+
+See [accept an offer](/api-reference/openid4vci/credential-offers-uuid-accept-post).
+
+## Path B: Direct management issuance
+
+Use direct issuance when your backend already has the holder public key and you want to issue without a wallet-mediated OpenID4VCI exchange.
+
+<Steps>
+  <Step title="Collect the holder public JWK">
+    Ask the holder system for its public JWK. Do not send a private key to Didit ID.
+
+    ```json
+    {
+      "kty": "EC",
+      "crv": "P-256",
+      "x": "<base64url-x-coordinate>",
+      "y": "<base64url-y-coordinate>"
+    }
+    ```
+  </Step>
+
+  <Step title="Issue the credential">
+    Call `POST /credentials/issue` with the template, holder public JWK, and claim values.
+
+    <ParamField body="template_id" type="string" required>
+      The credential template UUID.
+    </ParamField>
+
+    <ParamField body="holder_jwk" type="object" required>
+      The holder public JWK that binds the credential to the holder key.
+    </ParamField>
+
+    <ParamField body="claims" type="object" required>
+      Claim values to issue into the credential.
+    </ParamField>
+
+    <CodeGroup>
+    ```bash cURL
+    curl -X POST "http://localhost:8011/v1/credentials/issue" \
+      -H "Authorization: Bearer $DIDIT_API_KEY" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "template_id": "'"$TEMPLATE_ID"'",
+        "holder_jwk": {
+          "kty": "EC",
+          "crv": "P-256",
+          "x": "<base64url-x-coordinate>",
+          "y": "<base64url-y-coordinate>"
+        },
+        "claims": {
+          "given_name": "Ada",
+          "tier": "gold"
+        }
+      }'
+    ```
+
+    ```js JavaScript
+    const response = await fetch("http://localhost:8011/v1/credentials/issue", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${process.env.DIDIT_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        template_id: process.env.TEMPLATE_ID,
+        holder_jwk: {
+          kty: "EC",
+          crv: "P-256",
+          x: "<base64url-x-coordinate>",
+          y: "<base64url-y-coordinate>",
+        },
+        claims: {
+          given_name: "Ada",
+          tier: "gold",
+        },
+      }),
+    });
+
+    const credential = await response.json();
+    ```
+    </CodeGroup>
+
+    The response includes `credential_id`, `vct`, `sd_jwt`, and `status_idx`.
+
+    <ResponseField name="credential_id" type="string">
+      The issued credential identifier. Use it for lookup and lifecycle actions.
+    </ResponseField>
+
+    <ResponseField name="sd_jwt" type="string">
+      The issued SD-JWT VC compact string.
+    </ResponseField>
+
+    <ResponseField name="status_idx" type="number">
+      The credential status index used for Token Status List checks.
+    </ResponseField>
+
+    See [issue a credential directly](/api-reference/credentials/credentials-issue-post).
+  </Step>
+</Steps>
+
+## Selective disclosure
+
+Selective disclosure starts in the schema and is exercised during verification.
+
+- Mark attributes with `sd: true` in the schema.
+- Issue the full claim set in `claims`.
+- The issued SD-JWT VC includes disclosures for selectively disclosable attributes.
+- A verifier requests a subset with `requested_claims`.
+- The holder presents only the requested disclosures.
+
+For example, a credential can include `given_name` and `tier`, while a verifier later asks only for `tier`. The verification response returns `disclosed_claims` and a `checks` object. See [verify presentations](/guides/verification) and [SD-JWT VC](/concepts/sd-jwt-vc).
+
+## Validity and issuer keys
+
+Credential validity is enforced at verification time. Didit ID verification returns `not_expired` in the `checks` object.
+
+Issuer key validity is managed separately. Use [list issuer signing keys](/api-reference/keys/keys-get) and [key rotation impact](/api-reference/keys/keys-impact-get) before rotating keys. A rotated key remains available with `valid_until` so credentials signed under the previous key can remain verifiable during the overlap window.
+
+See [rotate the issuer signing key](/api-reference/keys/keys-rotate-post) for the key rotation endpoint.
+
+## Manage issued credentials
+
+Use the credential management endpoints to inspect and change credential lifecycle state.
+
+<CodeGroup>
+```bash cURL
+curl "http://localhost:8011/v1/credentials" \
+  -H "Authorization: Bearer $DIDIT_API_KEY"
+
+curl "http://localhost:8011/v1/credentials/$CREDENTIAL_ID" \
+  -H "Authorization: Bearer $DIDIT_API_KEY"
+
+curl -X POST "http://localhost:8011/v1/credentials/$CREDENTIAL_ID/suspend" \
+  -H "Authorization: Bearer $DIDIT_API_KEY"
+
+curl -X POST "http://localhost:8011/v1/credentials/$CREDENTIAL_ID/reactivate" \
+  -H "Authorization: Bearer $DIDIT_API_KEY"
+
+curl -X POST "http://localhost:8011/v1/credentials/$CREDENTIAL_ID/revoke" \
+  -H "Authorization: Bearer $DIDIT_API_KEY"
+```
+
+```js JavaScript
+const apiBaseUrl = "http://localhost:8011/v1";
+const headers = {
+  Authorization: `Bearer ${process.env.DIDIT_API_KEY}`,
+};
+
+const credentials = await fetch(`${apiBaseUrl}/credentials`, { headers }).then(
+  (response) => response.json()
+);
+
+const credential = await fetch(
+  `${apiBaseUrl}/credentials/${process.env.CREDENTIAL_ID}`,
+  { headers }
+).then((response) => response.json());
+
+await fetch(`${apiBaseUrl}/credentials/${process.env.CREDENTIAL_ID}/suspend`, {
+  method: "POST",
+  headers,
+});
+
+await fetch(`${apiBaseUrl}/credentials/${process.env.CREDENTIAL_ID}/reactivate`, {
+  method: "POST",
+  headers,
+});
+
+await fetch(`${apiBaseUrl}/credentials/${process.env.CREDENTIAL_ID}/revoke`, {
+  method: "POST",
+  headers,
+});
+```
+</CodeGroup>
+
+Revocation is enforced through Token Status List checks. Verification exposes this as `not_revoked`. Use suspension and reactivation for temporary lifecycle state changes according to your tenant policy.
+
+See [list issued credentials](/api-reference/credentials/credentials-get), [get an issued credential](/api-reference/credentials/credentials-uuid-get), [suspend a credential](/api-reference/credentials/credentials-uuid-suspend-post), [reactivate a credential](/api-reference/credentials/credentials-uuid-reactivate-post), and [revoke a credential](/api-reference/credentials/credentials-uuid-revoke-post).
+
+## Next steps
+
+- Build the verifier side with [verification](/guides/verification).
+- Review [Token Status Lists](/concepts/status-list) for revocation behavior.
+- Configure trusted issuers with the [trust registry](/guides/trust-registry).

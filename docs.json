@@ -1,72 +1,182 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "theme": "mint",
-  "name": "Mintlify Starter Kit",
+  "name": "Didit ID",
+  "description": "Issue and verify verifiable credentials \u2014 OpenID4VCI / OpenID4VP, SD-JWT VC.",
   "colors": {
-    "primary": "#16A34A",
-    "light": "#07C983",
-    "dark": "#15803D"
+    "primary": "#2567FF",
+    "light": "#90B1FF",
+    "dark": "#1B4FE0"
   },
-  "favicon": "/favicon.svg",
-  "navigation": {
-    "pages": [
+  "fonts": {
+    "heading": {
+      "family": "Inter",
+      "weight": 500
+    },
+    "body": {
+      "family": "Inter",
+      "weight": 400
+    }
+  },
+  "favicon": "/favicon.ico",
+  "logo": {
+    "light": "/logo/didit.svg",
+    "dark": "/logo/didit-white.svg",
+    "href": "https://didit.me"
+  },
+  "navbar": {
+    "links": [
       {
-        "group": "Getting Started",
-        "pages": [
-          "index",
-          "quickstart"
+        "label": "Support",
+        "href": "https://wa.me/+19544659728",
+        "icon": "comment-dots"
+      }
+    ],
+    "primary": {
+      "type": "button",
+      "label": "Console",
+      "href": "https://business.didit.me"
+    }
+  },
+  "openapi": [
+    "openapi.json"
+  ],
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "index",
+              "quickstart"
+            ]
+          },
+          {
+            "group": "Concepts",
+            "pages": [
+              "concepts/verifiable-credentials",
+              "concepts/sd-jwt-vc",
+              "concepts/openid4vci",
+              "concepts/openid4vp",
+              "concepts/status-list",
+              "concepts/trust-frameworks"
+            ]
+          },
+          {
+            "group": "Guides",
+            "pages": [
+              "guides/issuance",
+              "guides/verification",
+              "guides/holder-wallet",
+              "guides/trust-registry",
+              "guides/key-rotation",
+              "guides/multi-tenancy"
+            ]
+          },
+          {
+            "group": "Reference",
+            "pages": [
+              "reference/authentication",
+              "reference/errors",
+              "reference/sdks"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "OpenID4VCI Protocol",
+            "pages": [
+              "api-reference/openid4vci/credential-post",
+              "api-reference/openid4vci/credential-offers-post",
+              "api-reference/openid4vci/credential-offers-uuid-get",
+              "api-reference/openid4vci/credential-offers-uuid-accept-post",
+              "api-reference/openid4vci/issuers-slug-jwt-vc-issuer-get",
+              "api-reference/openid4vci/issuers-slug-openid-credential-issuer-get",
+              "api-reference/openid4vci/nonce-post",
+              "api-reference/openid4vci/oauth-token-post"
+            ]
+          },
+          {
+            "group": "Credentials",
+            "pages": [
+              "api-reference/credentials/credential-schemas-get",
+              "api-reference/credentials/credential-schemas-post",
+              "api-reference/credentials/credential-templates-get",
+              "api-reference/credentials/credential-templates-post",
+              "api-reference/credentials/credentials-get",
+              "api-reference/credentials/credentials-issue-post",
+              "api-reference/credentials/credentials-uuid-get",
+              "api-reference/credentials/credentials-uuid-reactivate-post",
+              "api-reference/credentials/credentials-uuid-revoke-post",
+              "api-reference/credentials/credentials-uuid-suspend-post"
+            ]
+          },
+          {
+            "group": "OpenID4VP Verification",
+            "pages": [
+              "api-reference/verification/presentations-request-post",
+              "api-reference/verification/presentations-uuid-get",
+              "api-reference/verification/presentations-uuid-demo-present-post",
+              "api-reference/verification/presentations-uuid-response-post",
+              "api-reference/verification/verifications-get",
+              "api-reference/verification/verifications-uuid-get"
+            ]
+          },
+          {
+            "group": "Trust Registry",
+            "pages": [
+              "api-reference/trust/relying-parties-get",
+              "api-reference/trust/relying-parties-post",
+              "api-reference/trust/relying-parties-uuid-delete",
+              "api-reference/trust/trust-frameworks-get",
+              "api-reference/trust/trusted-issuers-get",
+              "api-reference/trust/trusted-issuers-post",
+              "api-reference/trust/trusted-issuers-uuid-delete",
+              "api-reference/trust/trusted-issuers-uuid-validate-post"
+            ]
+          },
+          {
+            "group": "Issuer Keys",
+            "pages": [
+              "api-reference/keys/keys-get",
+              "api-reference/keys/keys-impact-get",
+              "api-reference/keys/keys-rotate-post"
+            ]
+          },
+          {
+            "group": "Status Lists",
+            "pages": [
+              "api-reference/status/status-lists-slug-uuid-get"
+            ]
+          }
         ]
       }
     ],
     "global": {
       "anchors": [
         {
-          "anchor": "Documentation",
-          "href": "https://mintlify.com/docs",
+          "anchor": "Didit Docs",
+          "href": "https://docs.didit.me",
           "icon": "book-open-cover"
         },
         {
-          "anchor": "Blog",
-          "href": "https://mintlify.com/blog",
-          "icon": "newspaper"
+          "anchor": "Console",
+          "href": "https://business.didit.me",
+          "icon": "gauge"
         }
       ]
     }
   },
-  "logo": {
-    "light": "/logo/light.svg",
-    "dark": "/logo/dark.svg"
-  },
-  "navbar": {
-    "links": [
-      {
-        "label": "Support",
-        "href": "mailto:hi@mintlify.com"
-      }
-    ],
-    "primary": {
-      "type": "button",
-      "label": "Dashboard",
-      "href": "https://app.mintlify.com"
-    }
-  },
-  "contextual": {
-    "options": [
-      "copy",
-      "view",
-      "chatgpt",
-      "claude",
-      "perplexity",
-      "mcp",
-      "cursor",
-      "vscode"
-    ]
-  },
   "footer": {
     "socials": {
-      "x": "https://x.com/mintlify",
-      "github": "https://github.com/mintlify",
-      "linkedin": "https://linkedin.com/company/mintlify"
+      "x": "https://x.com/getdidit",
+      "github": "https://github.com/didit-protocol",
+      "linkedin": "https://linkedin.com/company/91001155"
     }
   }
 }

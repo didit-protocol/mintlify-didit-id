@@ -1,0 +1,352 @@
+---
+title: "Verify presentations"
+description: "Request wallet presentations and verify disclosed SD-JWT VC claims with OpenID4VP."
+---
+
+Verify a credential by creating a presentation request, sending it to a holder wallet, and submitting the returned `vp_token` to Didit ID. The response gives you a final `verdict`, the disclosed claims, and the checks that determined the result.
+
+Didit ID uses OpenID4VP 1.0 with DCQL for presentation requests. Submitted presentations are SD-JWT VC presentations with holder key binding through a KB-JWT.
+
+<CardGroup cols={2}>
+  <Card title="Holder wallet" icon="wallet" href="/guides/holder-wallet">
+    Build the wallet-side acceptance, consent, selective disclosure, and presentation flow.
+  </Card>
+  <Card title="Trust frameworks" icon="network" href="/concepts/trust-frameworks">
+    Configure the trusted issuers and relying parties that affect the final verdict.
+  </Card>
+  <Card title="Create a request" icon="file-plus" href="/api-reference/verification/presentations-request-post">
+    See the generated reference for `POST /presentations/request`.
+  </Card>
+  <Card title="Submit a response" icon="shield-check" href="/api-reference/verification/presentations-uuid-response-post">
+    See the generated reference for `POST /presentations/{uuid}/response`.
+  </Card>
+</CardGroup>
+
+## Endpoint authentication
+
+Tenant operations use your tenant API key:
+
+- [`POST /presentations/request`](/api-reference/verification/presentations-request-post)
+- [`GET /verifications`](/api-reference/verification/verifications-get)
+- [`GET /verifications/{uuid}`](/api-reference/verification/verifications-uuid-get)
+
+Wallet-facing protocol endpoints are public and do not use the tenant API key:
+
+- [`GET /presentations/{uuid}`](/api-reference/verification/presentations-uuid-get)
+- [`POST /presentations/{uuid}/response`](/api-reference/verification/presentations-uuid-response-post)
+- [`POST /presentations/{uuid}/demo-present`](/api-reference/verification/presentations-uuid-demo-present-post)
+
+<Warning>
+  Do not expose `$DIDIT_API_KEY` to browsers or wallets. Create presentation requests and read verification logs from your backend.
+</Warning>
+
+## Verification flow
+
+<Steps>
+  <Step title="Create a presentation request">
+    Your backend calls `POST /presentations/request` with the credential type, requested claims, relying-party audience, and optional trusted issuer.
+  </Step>
+  <Step title="Deliver the request to the wallet">
+    Send the OpenID4VP request to the holder wallet. Browser integrations can use the W3C Digital Credentials API with `openid4vp-v1-signed`.
+  </Step>
+  <Step title="Receive the vp_token">
+    The wallet signs a key-bound presentation and submits the resulting `vp_token` to `POST /presentations/{uuid}/response`.
+  </Step>
+  <Step title="Use the verdict">
+    Didit ID returns `verdict`, `disclosed_claims`, and `checks`. Use `verdict` as the decision and store the response with your business event.
+  </Step>
+  <Step title="Read the verification log">
+    Use `GET /verifications` or `GET /verifications/{uuid}` from your backend to audit completed verification attempts.
+  </Step>
+</Steps>
+
+## Create a DCQL request
+
+Call `POST /presentations/request` from your backend. Didit ID creates a presentation record, generates a nonce, and builds the DCQL query for the wallet.
+
+<ParamField path="requested_vct" type="string" required>
+  The credential type to request. The example API uses `AirlineLoyalty`.
+</ParamField>
+
+<ParamField path="requested_claims" type="string[]" required>
+  The claim names the wallet may disclose, such as `tier`.
+</ParamField>
+
+<ParamField path="aud" type="string" required>
+  The relying-party audience. The wallet binds this value into the presentation so Didit ID can check the `aud` value.
+</ParamField>
+
+<ParamField path="trusted_iss" type="string">
+  Optional issuer filter. If you send it, the submitted credential must match that issuer and still pass your tenant trust registry policy.
+</ParamField>
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST "http://localhost:8011/v1/presentations/request" \
+  -H "Authorization: Bearer $DIDIT_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "requested_vct": "AirlineLoyalty",
+    "requested_claims": ["tier"],
+    "aud": "checkin-rp",
+    "trusted_iss": ""
+  }'
+```
+
+```js JavaScript
+const response = await fetch("http://localhost:8011/v1/presentations/request", {
+  method: "POST",
+  headers: {
+    Authorization: `Bearer ${process.env.DIDIT_API_KEY}`,
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    requested_vct: "AirlineLoyalty",
+    requested_claims: ["tier"],
+    aud: "checkin-rp",
+    trusted_iss: "",
+  }),
+});
+
+const presentation = await response.json();
+```
+
+</CodeGroup>
+
+The response contains the presentation identifier, transaction identifier, DCQL query, requested claims, audience, nonce, and current status.
+
+```json
+{
+  "uuid": "<uuid>",
+  "transaction_id": "<uuid>",
+  "dcql": {
+    "credentials": []
+  },
+  "requested_claims": ["tier"],
+  "aud": "checkin-rp",
+  "nonce": "NKQRYX...",
+  "status": "pending"
+}
+```
+
+## Deliver the request to a wallet
+
+Use the presentation response to build the OpenID4VP request that your wallet integration accepts. For browser integrations, call `navigator.credentials.get({ digital })` with the signed OpenID4VP protocol value.
+
+The generated OpenAPI spec returns the DCQL payload and nonce. It does not expose a separate endpoint that signs an OpenID4VP request object. If your wallet requires a signed request JWT, sign it in your verifier backend and include the `dcql`, `aud`, and `nonce` values from the presentation record.
+
+```js
+async function requestWalletPresentation({ signedOpenID4VPRequestJwt }) {
+  if (!("credentials" in navigator) || typeof navigator.credentials.get !== "function") {
+    return null;
+  }
+
+  return navigator.credentials.get({
+    digital: {
+      requests: [
+        {
+          protocol: "openid4vp-v1-signed",
+          data: {
+            request: signedOpenID4VPRequestJwt,
+          },
+        },
+      ],
+    },
+  });
+}
+```
+
+<Tip>
+  Keep the presentation `uuid` in your verifier session. You need it when the wallet returns the `vp_token`.
+</Tip>
+
+## Submit the vp_token
+
+Send the wallet's `vp_token` to `POST /presentations/{uuid}/response`. This endpoint is public because the holder wallet calls it during the OpenID4VP protocol flow.
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST "http://localhost:8011/v1/presentations/$PRESENTATION_ID/response" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "vp_token": "<sd-jwt-vc presentation with KB-JWT>"
+  }'
+```
+
+```js JavaScript
+const response = await fetch(
+  `http://localhost:8011/v1/presentations/${presentation.uuid}/response`,
+  {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      vp_token: walletResponse.data.vp_token,
+    }),
+  }
+);
+
+const result = await response.json();
+```
+
+</CodeGroup>
+
+The response returns the final decision and the claims the holder disclosed.
+
+```json
+{
+  "uuid": "<uuid>",
+  "verdict": "verified",
+  "disclosed_claims": {
+    "tier": "gold"
+  },
+  "checks": {
+    "signature": true,
+    "key_binding": true,
+    "aud": true,
+    "nonce": true,
+    "alg_allowlist": true,
+    "not_expired": true,
+    "not_revoked": true
+  },
+  "error": ""
+}
+```
+
+## Interpret the checks
+
+Use `verdict` as the high-level result. Use `checks` to explain failures, debug integrations, and show audit evidence.
+
+<ResponseField name="signature" type="boolean">
+  The SD-JWT VC issuer signature is valid against issuer key material.
+</ResponseField>
+
+<ResponseField name="key_binding" type="boolean">
+  The KB-JWT proves the presenter controls the holder key bound to the credential.
+</ResponseField>
+
+<ResponseField name="aud" type="boolean">
+  The presentation audience matches the `aud` value in the request.
+</ResponseField>
+
+<ResponseField name="nonce" type="boolean">
+  The wallet bound the presentation to the nonce generated for this request.
+</ResponseField>
+
+<ResponseField name="alg_allowlist" type="boolean">
+  The presentation uses an allowed signing algorithm.
+</ResponseField>
+
+<ResponseField name="not_expired" type="boolean">
+  The credential is still valid at verification time.
+</ResponseField>
+
+<ResponseField name="not_revoked" type="boolean">
+  The credential is not revoked according to its IETF Token Status List entry.
+</ResponseField>
+
+Issuer trust also contributes to the final `verdict`. A credential can pass the cryptographic checks and still fail if the issuer is outside your tenant trust registry.
+
+## Run a self-contained demo verification
+
+Use `POST /presentations/{uuid}/demo-present` to run a real server-side issue, present, and verify path for a presentation request. This is useful when you want to validate verifier configuration without wiring a browser wallet first.
+
+<Steps>
+  <Step title="Create the request">
+    Call `POST /presentations/request` with the claims you want to verify.
+  </Step>
+  <Step title="Run demo-present">
+    Call `POST /presentations/{uuid}/demo-present` with an empty JSON body.
+  </Step>
+  <Step title="Check the response">
+    Confirm the response contains `verdict`, `vct`, `verifier`, `disclosed_claims`, and `checks`.
+  </Step>
+</Steps>
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST "http://localhost:8011/v1/presentations/$PRESENTATION_ID/demo-present" \
+  -H "Content-Type: application/json" \
+  -d '{}'
+```
+
+```js JavaScript
+const response = await fetch(
+  `http://localhost:8011/v1/presentations/${presentation.uuid}/demo-present`,
+  {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({}),
+  }
+);
+
+const result = await response.json();
+```
+
+</CodeGroup>
+
+```json
+{
+  "verdict": "verified",
+  "vct": "AirlineLoyalty",
+  "verifier": "checkin-rp",
+  "disclosed_claims": {
+    "tier": "demo-tier"
+  },
+  "checks": {
+    "signature": true,
+    "key_binding": true
+  }
+}
+```
+
+## Poll request status
+
+Wallet or verifier clients can poll `GET /presentations/{uuid}` to read the current presentation request state.
+
+```bash
+curl "http://localhost:8011/v1/presentations/$PRESENTATION_ID"
+```
+
+Use polling when the wallet response happens out of band, such as a mobile handoff or fallback deep link.
+
+## Read the verification log
+
+Use `GET /verifications` to read the tenant verification log. Use `GET /verifications/{uuid}` when you need one verification result.
+
+<CodeGroup>
+
+```bash cURL
+curl "http://localhost:8011/v1/verifications" \
+  -H "Authorization: Bearer $DIDIT_API_KEY"
+```
+
+```js JavaScript
+const response = await fetch("http://localhost:8011/v1/verifications", {
+  headers: {
+    Authorization: `Bearer ${process.env.DIDIT_API_KEY}`,
+  },
+});
+
+const verifications = await response.json();
+```
+
+</CodeGroup>
+
+<Accordion title="Can I request more than one claim?">
+  Yes. Send every claim name in `requested_claims`. The wallet should disclose only the requested claims that the holder approves.
+</Accordion>
+
+<Accordion title="Should I accept a response when one check is false?">
+  No. Treat `verdict` as the authoritative decision. Use individual checks to explain why the verification failed.
+</Accordion>
+
+<Accordion title="Does trusted_iss replace the trust registry?">
+  No. `trusted_iss` narrows the request to a specific issuer. The submitted credential must still pass the tenant trust registry check.
+</Accordion>

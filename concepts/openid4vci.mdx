@@ -1,0 +1,340 @@
+---
+title: "OpenID4VCI issuance"
+description: "Understand how Didit ID implements OpenID4VCI 1.0 credential issuance."
+---
+
+OpenID4VCI is the wallet-facing protocol that lets you issue verifiable credentials to a holder. Didit ID implements OpenID4VCI 1.0 with the pre-authorized code grant, transaction codes, holder proof-of-possession, and SD-JWT VC credentials.
+
+Use this page to understand the protocol shape. Use the [issuance guide](/guides/issuance) when you are ready to build the full flow.
+
+<Note>
+  The development base URL is `http://localhost:8011/v1`. Management calls use `Authorization: Bearer $DIDIT_API_KEY`. Protocol and holder-facing endpoints do not use the tenant API key.
+</Note>
+
+## Issuance sequence
+
+<Steps>
+  <Step title="Create a credential offer">
+    Your backend creates an offer with `POST /credential-offers`. This is a tenant management call, so include `Authorization: Bearer $DIDIT_API_KEY`.
+
+    The request selects a credential template and provides the claims to issue. The response includes an `offer_id`, a `credential_offer_uri`, the `credential_issuer`, a `pre_authorized_code`, and a `tx_code`.
+
+    See [create a credential offer](/api-reference/openid4vci/credential-offers-post).
+  </Step>
+  <Step title="Deliver the offer to the holder">
+    Send the `credential_offer_uri` to the holder wallet. The wallet can also fetch a holder preview with `GET /credential-offers/{uuid}`.
+
+    Didit ID also exposes `POST /credential-offers/{uuid}/accept` for demo flows that accept an offer with server-side proof-of-possession.
+
+    See [get a credential offer](/api-reference/openid4vci/credential-offers-uuid-get) and [accept an offer](/api-reference/openid4vci/credential-offers-uuid-accept-post).
+  </Step>
+  <Step title="Exchange the pre-authorized code">
+    The wallet exchanges the `pre_authorized_code` and `tx_code` at `POST /oauth/token`.
+
+    The grant type is `urn:ietf:params:oauth:grant-type:pre-authorized_code`. The response returns an OAuth access token, token type, and expiration.
+
+    See [token endpoint](/api-reference/openid4vci/oauth-token-post).
+  </Step>
+  <Step title="Request a credential nonce">
+    The wallet requests a fresh credential nonce with `POST /nonce`. Didit ID returns `c_nonce` and `c_nonce_expires_in`.
+
+    In OpenID4VCI 1.0, Didit ID issues the credential nonce from `/nonce`. Do not expect `c_nonce` in the token response.
+
+    See [issue a c_nonce](/api-reference/openid4vci/nonce-post).
+  </Step>
+  <Step title="Build the holder proof">
+    The wallet signs an `openid4vci-proof+jwt` proof with the holder private key. The proof header carries the holder public key. Didit ID uses that public key as the credential confirmation key and binds it into the SD-JWT VC `cnf` claim.
+
+    The proof payload includes the issuer audience and the `c_nonce`. This proves that the holder controls the key that will later present the credential.
+  </Step>
+  <Step title="Request the credential">
+    The wallet calls `POST /credential` with `{ "proof": { "proof_type": "jwt", "jwt": "<openid4vci-proof+jwt>" } }`.
+
+    Didit ID returns the issued SD-JWT VC as `credential` and the credential type as `vct`. The credential uses the `application/dc+sd-jwt` media type.
+
+    See [credential endpoint](/api-reference/openid4vci/credential-post).
+  </Step>
+</Steps>
+
+## Credential offer
+
+`POST /credential-offers` starts issuance from your tenant backend. It is the only endpoint in this sequence that uses the tenant API key.
+
+<ParamField path="template_id" type="string" required>
+  The credential template to issue from.
+</ParamField>
+
+<ParamField path="claims" type="object" required>
+  The claims to place into the credential. The claim names must match the selected template.
+</ParamField>
+
+<ResponseField name="offer_id" type="string">
+  The server identifier for the credential offer.
+</ResponseField>
+
+<ResponseField name="credential_offer_uri" type="string">
+  The wallet-facing OpenID4VCI offer URI.
+</ResponseField>
+
+<ResponseField name="credential_issuer" type="string">
+  The issuer URL for this offer, such as `https://.../v1/issuers/airline-demo`.
+</ResponseField>
+
+<ResponseField name="pre_authorized_code" type="string">
+  The code that the wallet exchanges at `POST /oauth/token`.
+</ResponseField>
+
+<ResponseField name="tx_code" type="string">
+  The transaction code that the wallet submits with the pre-authorized code.
+</ResponseField>
+
+<CodeGroup>
+
+```bash cURL
+curl -s -X POST http://localhost:8011/v1/credential-offers \
+  -H "Authorization: Bearer $DIDIT_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "template_id": "<uuid>",
+    "claims": {
+      "given_name": "Ada",
+      "tier": "gold"
+    }
+  }'
+```
+
+```javascript JavaScript
+const offerResponse = await fetch("http://localhost:8011/v1/credential-offers", {
+  method: "POST",
+  headers: {
+    Authorization: `Bearer ${process.env.DIDIT_API_KEY}`,
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    template_id: "<uuid>",
+    claims: {
+      given_name: "Ada",
+      tier: "gold",
+    },
+  }),
+});
+
+const offer = await offerResponse.json();
+```
+
+</CodeGroup>
+
+<Warning>
+  Treat the `pre_authorized_code` and `tx_code` as sensitive holder handoff values. Send them only to the intended wallet or holder channel.
+</Warning>
+
+## Token and nonce
+
+The wallet redeems the offer at `POST /oauth/token` with the pre-authorized code grant. The response contains the OAuth access token for the issuance transaction.
+
+<ParamField path="grant_type" type="string" required>
+  Must be `urn:ietf:params:oauth:grant-type:pre-authorized_code`.
+</ParamField>
+
+<ParamField path="pre-authorized_code" type="string" required>
+  The `pre_authorized_code` from the credential offer response.
+</ParamField>
+
+<ParamField path="tx_code" type="string" required>
+  The transaction code from the credential offer response.
+</ParamField>
+
+<ResponseField name="access_token" type="string">
+  The OAuth access token returned for the issuance transaction.
+</ResponseField>
+
+<ResponseField name="token_type" type="string">
+  The token type. Didit ID returns `bearer`.
+</ResponseField>
+
+<ResponseField name="expires_in" type="integer">
+  The token lifetime in seconds. The example response returns `300`.
+</ResponseField>
+
+<CodeGroup>
+
+```bash cURL
+curl -s -X POST http://localhost:8011/v1/oauth/token \
+  -H "Content-Type: application/json" \
+  -d '{
+    "grant_type": "urn:ietf:params:oauth:grant-type:pre-authorized_code",
+    "pre-authorized_code": "s8Ilre...",
+    "tx_code": "517082"
+  }'
+```
+
+```javascript JavaScript
+const tokenResponse = await fetch("http://localhost:8011/v1/oauth/token", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    grant_type: "urn:ietf:params:oauth:grant-type:pre-authorized_code",
+    "pre-authorized_code": "s8Ilre...",
+    tx_code: "517082",
+  }),
+});
+
+const token = await tokenResponse.json();
+```
+
+</CodeGroup>
+
+After the token exchange, request a credential nonce from `POST /nonce`.
+
+<ResponseField name="c_nonce" type="string">
+  The nonce the wallet must place in the OpenID4VCI proof JWT.
+</ResponseField>
+
+<ResponseField name="c_nonce_expires_in" type="integer">
+  The nonce lifetime in seconds. The example response returns `60`.
+</ResponseField>
+
+<CodeGroup>
+
+```bash cURL
+curl -s -X POST http://localhost:8011/v1/nonce \
+  -H "Content-Type: application/json" \
+  -d '{}'
+```
+
+```javascript JavaScript
+const nonceResponse = await fetch("http://localhost:8011/v1/nonce", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({}),
+});
+
+const nonce = await nonceResponse.json();
+```
+
+</CodeGroup>
+
+<Note>
+  Didit ID follows the OpenID4VCI 1.0 nonce model. Call `/nonce` and use the returned `c_nonce` in the proof JWT. The token response contains `access_token`, `token_type`, and `expires_in`, not `c_nonce`.
+</Note>
+
+## Holder proof
+
+`POST /credential` requires a proof-of-possession JWT. The wallet signs this proof with the holder private key and sends it as `proof.jwt`.
+
+The proof header carries the holder public key. Didit ID reads that key and binds the issued SD-JWT VC to it through the credential `cnf` claim. Later, during presentation, the holder proves control of the same key with a KB-JWT.
+
+Proof header:
+
+```json
+{
+  "typ": "openid4vci-proof+jwt",
+  "alg": "ES256",
+  "jwk": {
+    "kty": "EC",
+    "crv": "P-256",
+    "x": "...",
+    "y": "..."
+  }
+}
+```
+
+Proof payload:
+
+```json
+{
+  "aud": "https://.../v1/issuers/airline-demo",
+  "iat": 1710000000,
+  "nonce": "NKQRYX..."
+}
+```
+
+<ParamField path="proof.proof_type" type="string" required>
+  Must be `jwt`.
+</ParamField>
+
+<ParamField path="proof.jwt" type="string" required>
+  The signed `openid4vci-proof+jwt` proof.
+</ParamField>
+
+<ResponseField name="credential" type="string">
+  The issued SD-JWT VC compact serialization, such as `<jws>~<disclosure>~`.
+</ResponseField>
+
+<ResponseField name="vct" type="string">
+  The Verifiable Credential Type for the issued credential, such as `AirlineLoyalty`.
+</ResponseField>
+
+<CodeGroup>
+
+```bash cURL
+curl -s -X POST http://localhost:8011/v1/credential \
+  -H "Content-Type: application/json" \
+  -d '{
+    "proof": {
+      "proof_type": "jwt",
+      "jwt": "<openid4vci-proof+jwt>"
+    }
+  }'
+```
+
+```javascript JavaScript
+const credentialResponse = await fetch("http://localhost:8011/v1/credential", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    proof: {
+      proof_type: "jwt",
+      jwt: "<openid4vci-proof+jwt>",
+    },
+  }),
+});
+
+const issuedCredential = await credentialResponse.json();
+```
+
+</CodeGroup>
+
+## Issuer metadata
+
+Wallets use issuer metadata to discover the issuer configuration and keys for the credential flow.
+
+<CardGroup cols={2}>
+  <Card title="OpenID credential issuer metadata" icon="file-code" href="/api-reference/openid4vci/issuers-slug-openid-credential-issuer-get">
+    Fetch `GET /issuers/{slug}/.well-known/openid-credential-issuer`.
+  </Card>
+  <Card title="SD-JWT VC issuer JWKS" icon="key" href="/api-reference/openid4vci/issuers-slug-jwt-vc-issuer-get">
+    Fetch `GET /issuers/{slug}/.well-known/jwt-vc-issuer`.
+  </Card>
+</CardGroup>
+
+`/.well-known/openid-credential-issuer` exposes the OpenID4VCI issuer metadata for the tenant issuer. `/.well-known/jwt-vc-issuer` exposes the issuer JWKS used to verify SD-JWT VC signatures.
+
+## Related pages
+
+<CardGroup cols={2}>
+  <Card title="Issuance guide" icon="send" href="/guides/issuance">
+    Build the end-to-end issuance flow.
+  </Card>
+  <Card title="SD-JWT VC" icon="badge-check" href="/concepts/sd-jwt-vc">
+    Learn how Didit ID represents credentials with selective disclosure.
+  </Card>
+  <Card title="Create a credential offer" icon="plus" href="/api-reference/openid4vci/credential-offers-post">
+    Create an offer from a credential template and claims.
+  </Card>
+  <Card title="Token endpoint" icon="key" href="/api-reference/openid4vci/oauth-token-post">
+    Exchange a pre-authorized code and transaction code.
+  </Card>
+  <Card title="Nonce endpoint" icon="shield-check" href="/api-reference/openid4vci/nonce-post">
+    Issue the `c_nonce` for the holder proof.
+  </Card>
+  <Card title="Credential endpoint" icon="badge-check" href="/api-reference/openid4vci/credential-post">
+    Submit the holder proof and receive the SD-JWT VC.
+  </Card>
+</CardGroup>

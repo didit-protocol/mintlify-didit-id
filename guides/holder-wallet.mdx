@@ -1,0 +1,372 @@
+---
+title: "Holder wallet"
+description: "Build the holder-side flow for accepting offers, approving disclosures, and presenting credentials."
+---
+
+Build a holder wallet that accepts OpenID4VCI credential offers, shows a consent and selective-disclosure screen, and presents SD-JWT VC credentials through OpenID4VP. The wallet never needs the tenant API key. It uses public holder and verifier protocol endpoints.
+
+<CardGroup cols={2}>
+  <Card title="Verify presentations" icon="shield-check" href="/guides/verification">
+    Build the verifier-side flow that creates presentation requests and reads verdicts.
+  </Card>
+  <Card title="Issue credentials" icon="send" href="/guides/issuance">
+    Build the issuer-side OpenID4VCI flow that creates credential offers.
+  </Card>
+  <Card title="Accept an offer" icon="badge-plus" href="/api-reference/openid4vci/credential-offers-uuid-accept-post">
+    See the generated reference for the demo holder accept endpoint.
+  </Card>
+  <Card title="Submit a presentation" icon="file-check" href="/api-reference/verification/presentations-uuid-response-post">
+    See the generated reference for submitting an OpenID4VP `vp_token`.
+  </Card>
+</CardGroup>
+
+## Holder flow
+
+<Steps>
+  <Step title="Receive a credential offer">
+    The issuer sends the holder a `credential_offer_uri` created by `POST /credential-offers`.
+  </Step>
+  <Step title="Preview and accept">
+    The wallet previews the offer with `GET /credential-offers/{uuid}` or uses the demo accept endpoint, `POST /credential-offers/{uuid}/accept`.
+  </Step>
+  <Step title="Request a credential">
+    A production wallet exchanges the pre-authorized code at `POST /oauth/token`, gets a `c_nonce` from `POST /nonce`, and submits a holder proof to `POST /credential`.
+  </Step>
+  <Step title="Store the SD-JWT VC">
+    Store the returned `credential` string and the holder key that will sign future KB-JWT presentations.
+  </Step>
+  <Step title="Approve presentation requests">
+    When a verifier requests claims, show the relying party, issuer, credential type, requested claims, and disclosure choices before signing.
+  </Step>
+  <Step title="Present the credential">
+    Return a key-bound `vp_token` to `POST /presentations/{uuid}/response`.
+  </Step>
+</Steps>
+
+## Accept an offer
+
+Credential offers are created by issuers with [`POST /credential-offers`](/api-reference/openid4vci/credential-offers-post). The holder receives a `credential_offer_uri` plus the pre-authorized flow values needed to request the credential.
+
+```json
+{
+  "offer_id": "<uuid>",
+  "credential_offer_uri": "openid-credential-offer://...",
+  "credential_issuer": "https://.../v1/issuers/airline-demo",
+  "pre_authorized_code": "s8Ilre...",
+  "tx_code": "517082"
+}
+```
+
+Use [`GET /credential-offers/{uuid}`](/api-reference/openid4vci/credential-offers-uuid-get) when the wallet needs to preview the offer before acceptance.
+
+```bash
+curl "http://localhost:8011/v1/credential-offers/$OFFER_ID"
+```
+
+For demos, use [`POST /credential-offers/{uuid}/accept`](/api-reference/openid4vci/credential-offers-uuid-accept-post). This endpoint runs a server-side proof-of-possession path so you can test offer acceptance without implementing local wallet signing first.
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST "http://localhost:8011/v1/credential-offers/$OFFER_ID/accept" \
+  -H "Content-Type: application/json" \
+  -d '{}'
+```
+
+```js JavaScript
+const response = await fetch(
+  `http://localhost:8011/v1/credential-offers/${offerId}/accept`,
+  {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({}),
+  }
+);
+
+if (!response.ok) {
+  throw new Error("Offer acceptance failed");
+}
+```
+
+</CodeGroup>
+
+## Request the credential in a production wallet
+
+Production wallets follow the OpenID4VCI protocol endpoints directly. Exchange the pre-authorized code and `tx_code` for an access token, request a credential nonce, then submit a holder proof JWT.
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST "http://localhost:8011/v1/oauth/token" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "grant_type": "urn:ietf:params:oauth:grant-type:pre-authorized_code",
+    "pre-authorized_code": "s8Ilre...",
+    "tx_code": "517082"
+  }'
+```
+
+```js JavaScript
+const tokenResponse = await fetch("http://localhost:8011/v1/oauth/token", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    grant_type: "urn:ietf:params:oauth:grant-type:pre-authorized_code",
+    "pre-authorized_code": "s8Ilre...",
+    tx_code: "517082",
+  }),
+});
+
+const token = await tokenResponse.json();
+```
+
+</CodeGroup>
+
+The token response includes the holder protocol access token.
+
+```json
+{
+  "access_token": "5a0W4g...",
+  "token_type": "bearer",
+  "expires_in": 300
+}
+```
+
+Next, request a credential nonce.
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST "http://localhost:8011/v1/nonce" \
+  -H "Content-Type: application/json" \
+  -d '{}'
+```
+
+```js JavaScript
+const nonceResponse = await fetch("http://localhost:8011/v1/nonce", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({}),
+});
+
+const nonce = await nonceResponse.json();
+```
+
+</CodeGroup>
+
+Submit the holder proof to [`POST /credential`](/api-reference/openid4vci/credential-post). The proof JWT should bind the credential request to the holder key and the `c_nonce`.
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST "http://localhost:8011/v1/credential" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "proof": {
+      "proof_type": "jwt",
+      "jwt": "<openid4vci-proof+jwt>"
+    }
+  }'
+```
+
+```js JavaScript
+const credentialResponse = await fetch("http://localhost:8011/v1/credential", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    proof: {
+      proof_type: "jwt",
+      jwt: openid4vciProofJwt,
+    },
+  }),
+});
+
+const issuedCredential = await credentialResponse.json();
+```
+
+</CodeGroup>
+
+The credential response includes the compact SD-JWT VC string and its credential type.
+
+```json
+{
+  "credential": "<jws>~<disclosure>~",
+  "vct": "AirlineLoyalty"
+}
+```
+
+Store the `credential` value with the holder key that created the proof. The same holder key signs the KB-JWT when the wallet presents the credential.
+
+## Build the consent screen
+
+Before presenting a credential, show the holder exactly what the verifier asks for and what the wallet will disclose.
+
+<ParamField path="relying_party" type="string">
+  Show the verifier identity from the OpenID4VP request. For Didit ID requests, this is the `aud` value.
+</ParamField>
+
+<ParamField path="credential_type" type="string">
+  Show the requested `vct`, such as `AirlineLoyalty`.
+</ParamField>
+
+<ParamField path="issuer" type="string">
+  Show the issuer from the credential. Warn the holder if the issuer does not match the verifier request.
+</ParamField>
+
+<ParamField path="requested_claims" type="string[]">
+  Show every requested claim from `requested_claims` and let the holder review each disclosure.
+</ParamField>
+
+<ParamField path="session_binding" type="string">
+  Bind the presentation to the verifier `nonce` and `aud`. Do not reuse an approval across requests.
+</ParamField>
+
+<Warning>
+  Do not disclose claims that were not requested. A selective-disclosure presentation should include only approved disclosures plus the KB-JWT needed for holder key binding.
+</Warning>
+
+## Present with the Digital Credentials API
+
+Use the W3C Digital Credentials API when it is available in the browser. The verifier backend creates the presentation request with [`POST /presentations/request`](/api-reference/verification/presentations-request-post), then gives the browser a signed OpenID4VP request object for the wallet.
+
+```js
+async function requestWithDigitalCredentials({ signedOpenID4VPRequestJwt }) {
+  if (!("credentials" in navigator) || typeof navigator.credentials.get !== "function") {
+    return null;
+  }
+
+  try {
+    return await navigator.credentials.get({
+      digital: {
+        requests: [
+          {
+            protocol: "openid4vp-v1-signed",
+            data: {
+              request: signedOpenID4VPRequestJwt,
+            },
+          },
+        ],
+      },
+    });
+  } catch (error) {
+    if (error.name === "NotAllowedError") {
+      return null;
+    }
+
+    throw error;
+  }
+}
+```
+
+The wallet matches the DCQL query against stored credentials, shows consent, creates an SD-JWT VC presentation with a KB-JWT, and returns the OpenID4VP `vp_token`.
+
+Submit that token to Didit ID:
+
+```js
+async function submitPresentationResponse({ presentationId, vpToken }) {
+  const response = await fetch(
+    `http://localhost:8011/v1/presentations/${presentationId}/response`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        vp_token: vpToken,
+      }),
+    }
+  );
+
+  return response.json();
+}
+```
+
+## Add a Didit Wallet fallback
+
+Use a Didit Wallet fallback when `navigator.credentials.get({ digital })` is unavailable, the holder cancels the browser prompt, or the wallet lives on another device.
+
+The fallback URL is wallet integration configuration, not a Didit ID API endpoint. Set it to your Didit Wallet universal link or deep link and pass the signed OpenID4VP request plus the presentation id.
+
+```js
+function openDiditWalletFallback({ fallbackUrl, presentationId, signedOpenID4VPRequestJwt }) {
+  const url = new URL(fallbackUrl);
+  url.searchParams.set("presentation_id", presentationId);
+  url.searchParams.set("request", signedOpenID4VPRequestJwt);
+
+  window.location.assign(url.toString());
+}
+
+async function presentWithFallback({
+  fallbackUrl,
+  presentationId,
+  signedOpenID4VPRequestJwt,
+}) {
+  const credential = await requestWithDigitalCredentials({
+    signedOpenID4VPRequestJwt,
+  });
+
+  if (!credential) {
+    openDiditWalletFallback({
+      fallbackUrl,
+      presentationId,
+      signedOpenID4VPRequestJwt,
+    });
+    return;
+  }
+
+  const vpToken = credential.data?.vp_token;
+
+  return submitPresentationResponse({
+    presentationId,
+    vpToken,
+  });
+}
+```
+
+<Note>
+  The exact browser result shape depends on the wallet integration. Extract the OpenID4VP `vp_token` returned by your wallet before calling `POST /presentations/{uuid}/response`.
+</Note>
+
+## Poll after a handoff
+
+If the fallback opens a mobile wallet or another device, poll the presentation request from the browser or backend until the wallet submits the response.
+
+```js
+async function pollPresentation({ presentationId }) {
+  const response = await fetch(
+    `http://localhost:8011/v1/presentations/${presentationId}`
+  );
+
+  return response.json();
+}
+```
+
+## Wallet implementation checklist
+
+- Keep tenant API keys out of the wallet.
+- Store the SD-JWT VC credential string and the holder key together.
+- Sign the OpenID4VCI proof with the holder key that will control the credential.
+- Show the verifier, issuer, credential type, requested claims, and session binding before presentation.
+- Disclose only claims the holder approved.
+- Bind every presentation to the verifier `aud` and `nonce`.
+- Submit the final `vp_token` to `POST /presentations/{uuid}/response`.
+
+<Accordion title="Is POST /credential-offers/{uuid}/accept production wallet logic?">
+  No. It is a demo holder endpoint with server-side proof of possession. Production wallets should run the OpenID4VCI token, nonce, and credential endpoints with their own holder key.
+</Accordion>
+
+<Accordion title="Does the wallet need DIDIT_API_KEY?">
+  No. The holder wallet uses public protocol endpoints. Only tenant management operations use `Authorization: Bearer $DIDIT_API_KEY`.
+</Accordion>
+
+<Accordion title="Can I present without the Digital Credentials API?">
+  Yes. Use a Didit Wallet universal link or deep link fallback. The fallback must still return or submit a valid OpenID4VP `vp_token`.
+</Accordion>

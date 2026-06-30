@@ -1,0 +1,180 @@
+---
+title: "Key rotation"
+description: "Rotate issuer signing keys without breaking credentials issued under earlier kids."
+---
+
+Use issuer key rotation to move new credentials to a fresh signing key while keeping existing credentials verifiable. Didit ID uses a `kid`-pinned, overlapping-validity model: credentials issued under a rotated key keep verifying until that key's `valid_until`, while credentials issued after rotation use the new active key.
+
+Issuer key endpoints are tenant-scoped management endpoints. Send `Authorization: Bearer $DIDIT_API_KEY`.
+
+## How rotation works
+
+Each issued SD-JWT VC is pinned to the issuer signing key identified by the credential header `kid`.
+
+- `active` keys sign new credentials.
+- `rotated` keys no longer sign new credentials.
+- Credentials issued under a rotated key keep verifying until `valid_until`.
+- Verifiers resolve public issuer keys through the issuer JWKS endpoint, [`GET /issuers/{slug}/.well-known/jwt-vc-issuer`](/api-reference/openid4vci/issuers-slug-jwt-vc-issuer-get).
+
+<Note>
+  Rotation does not rewrite existing credentials. It changes which key signs credentials issued after the rotation.
+</Note>
+
+## Inspect keys and preview impact
+
+Preview rotation before you create a new key. [`GET /keys/impact`](/api-reference/keys/keys-impact-get) reports credentials under the current key, so you know how many credentials will remain pinned to the key that is about to rotate.
+
+<Steps>
+  <Step title="List issuer signing keys">
+    Use [`GET /keys`](/api-reference/keys/keys-get) to see active and rotated keys for the tenant.
+
+    <CodeGroup>
+      ```bash cURL
+      curl http://localhost:8011/v1/keys \
+        -H "Authorization: Bearer $DIDIT_API_KEY"
+      ```
+
+      ```js JavaScript
+      const response = await fetch("http://localhost:8011/v1/keys", {
+        headers: {
+          Authorization: `Bearer ${process.env.DIDIT_API_KEY}`,
+        },
+      });
+
+      const keys = await response.json();
+      ```
+    </CodeGroup>
+  </Step>
+
+  <Step title="Preview the rotation impact">
+    Check how many credentials are currently signed by the active key.
+
+    <CodeGroup>
+      ```bash cURL
+      curl http://localhost:8011/v1/keys/impact \
+        -H "Authorization: Bearer $DIDIT_API_KEY"
+      ```
+
+      ```js JavaScript
+      const response = await fetch("http://localhost:8011/v1/keys/impact", {
+        headers: {
+          Authorization: `Bearer ${process.env.DIDIT_API_KEY}`,
+        },
+      });
+
+      const impact = await response.json();
+      ```
+    </CodeGroup>
+  </Step>
+</Steps>
+
+## Rotate the active key
+
+Call [`POST /keys/rotate`](/api-reference/keys/keys-rotate-post) to create a new active key and move the previous active key to `rotated`.
+
+<CodeGroup>
+  ```bash cURL
+  curl -X POST http://localhost:8011/v1/keys/rotate \
+    -H "Authorization: Bearer $DIDIT_API_KEY" \
+    -H "Content-Type: application/json" \
+    -d '{}'
+  ```
+
+  ```js JavaScript
+  const response = await fetch("http://localhost:8011/v1/keys/rotate", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${process.env.DIDIT_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({}),
+  });
+
+  const rotation = await response.json();
+  ```
+</CodeGroup>
+
+The OpenAPI example returns the new active key, the rotated key, and the rotation impact.
+
+```json Example response
+{
+  "new_key": {
+    "kid": "oilDLO...",
+    "alg": "ES256",
+    "status": "active"
+  },
+  "rotated_key": {
+    "kid": "zOJCDk...",
+    "status": "rotated",
+    "valid_until": "2027-06-30T00:00:00Z"
+  },
+  "impact": {
+    "credentials_under_previous_key": 7,
+    "note": "Existing credentials remain valid under the rotated key until valid_until."
+  }
+}
+```
+
+<ResponseField name="new_key.kid" type="string">
+  `kid` for the new active signing key. New credentials use this key.
+</ResponseField>
+
+<ResponseField name="new_key.alg" type="string">
+  Signing algorithm for the new active key, such as `ES256`.
+</ResponseField>
+
+<ResponseField name="rotated_key.kid" type="string">
+  `kid` for the previous active key. Existing credentials stay pinned to this value.
+</ResponseField>
+
+<ResponseField name="rotated_key.valid_until" type="string">
+  Timestamp until which credentials issued under the rotated key can continue to verify.
+</ResponseField>
+
+<ResponseField name="impact.credentials_under_previous_key" type="integer">
+  Number of credentials currently signed under the key that was rotated.
+</ResponseField>
+
+## Verify the public key set
+
+After rotation, fetch the issuer JWKS for the tenant issuer slug. The active key and still-valid rotated keys must be discoverable by verifiers.
+
+<CodeGroup>
+  ```bash cURL
+  curl http://localhost:8011/v1/issuers/$ISSUER_SLUG/.well-known/jwt-vc-issuer
+  ```
+
+  ```js JavaScript
+  const issuerSlug = process.env.ISSUER_SLUG;
+
+  const response = await fetch(
+    `http://localhost:8011/v1/issuers/${issuerSlug}/.well-known/jwt-vc-issuer`
+  );
+
+  const jwks = await response.json();
+  ```
+</CodeGroup>
+
+## Operational checklist
+
+<Steps>
+  <Step title="Preview impact">
+    Call `GET /keys/impact` and review how many credentials will remain pinned to the current key.
+  </Step>
+
+  <Step title="Rotate the key">
+    Call `POST /keys/rotate`. New credentials issued through [OpenID4VCI](/guides/issuance) or direct issuance use the new active key.
+  </Step>
+
+  <Step title="Keep rotated keys available">
+    Do not treat a rotated key as immediately dead. Credentials signed with its `kid` continue to verify until `valid_until`.
+  </Step>
+
+  <Step title="Monitor verification">
+    Use [verification logs](/api-reference/verification/verifications-get) and failed presentation responses to confirm wallets and verifiers can resolve both active and rotated keys.
+  </Step>
+</Steps>
+
+<Warning>
+  If a verifier caches issuer keys, make sure its cache refresh policy can pick up the new active `kid` and retain rotated keys until `valid_until`.
+</Warning>

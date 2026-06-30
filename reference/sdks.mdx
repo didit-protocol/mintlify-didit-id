@@ -1,0 +1,188 @@
+---
+title: "SDKs"
+description: "Use the JavaScript SDK shape for issuance and verification, and track native SDK fast-follow support."
+---
+
+The JavaScript SDK wraps the same REST endpoints documented in the API reference. Use it from a trusted backend for tenant management calls, and keep holder or verifier protocol exchanges public.
+
+<Note>
+  The SDK method names below describe the JavaScript SDK shape. Each method maps directly to a documented REST endpoint, so you can switch between SDK calls and raw HTTP without changing the flow.
+</Note>
+
+## Configure the JavaScript client
+
+Configure the client with the Didit ID base URL and your tenant API key.
+
+```js
+const didit = createDiditIdClient({
+  baseUrl: "http://localhost:8011/v1",
+  apiKey: process.env.DIDIT_API_KEY,
+});
+```
+
+<ParamField body="baseUrl" type="string" required>
+  API base URL. Use `http://localhost:8011/v1` for local development.
+</ParamField>
+
+<ParamField body="apiKey" type="string" required>
+  Tenant API key used for management endpoints. The SDK sends it as `Authorization: Bearer <tenant API key>`.
+</ParamField>
+
+## Issue credentials
+
+Use the issuance client to create an OpenID4VCI credential offer or to issue directly with a holder JWK.
+
+| SDK method | REST endpoint | Use it when |
+| --- | --- | --- |
+| `didit.issuance.createOffer()` | [`POST /credential-offers`](/api-reference/openid4vci/credential-offers-post) | You want a wallet to complete the OpenID4VCI flow with a credential offer, `pre-authorized_code`, and `tx_code`. |
+| `didit.credentials.issue()` | [`POST /credentials/issue`](/api-reference/credentials/credentials-issue-post) | You already have the holder JWK and want to issue directly from your backend. |
+
+<CodeGroup>
+```js JavaScript SDK
+const offer = await didit.issuance.createOffer({
+  templateId: "<uuid>",
+  claims: {
+    given_name: "Ada",
+    tier: "gold",
+  },
+});
+
+console.log(offer.offerId);
+console.log(offer.credentialOfferUri);
+console.log(offer.txCode);
+```
+
+```bash cURL
+curl -X POST "http://localhost:8011/v1/credential-offers" \
+  -H "Authorization: Bearer $DIDIT_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "template_id": "<uuid>",
+    "claims": {
+      "given_name": "Ada",
+      "tier": "gold"
+    }
+  }'
+```
+</CodeGroup>
+
+The offer response maps to the REST fields `offer_id`, `credential_offer_uri`, `credential_issuer`, `pre_authorized_code`, and `tx_code`.
+
+For direct issuance, provide the template, holder key, and claims.
+
+<CodeGroup>
+```js JavaScript SDK
+const credential = await didit.credentials.issue({
+  templateId: "<uuid>",
+  holderJwk: {
+    kty: "EC",
+    crv: "P-256",
+    x: "...",
+    y: "...",
+  },
+  claims: {
+    given_name: "Ada",
+    tier: "gold",
+  },
+});
+
+console.log(credential.credentialId);
+console.log(credential.vct);
+console.log(credential.sdJwt);
+```
+
+```bash cURL
+curl -X POST "http://localhost:8011/v1/credentials/issue" \
+  -H "Authorization: Bearer $DIDIT_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "template_id": "<uuid>",
+    "holder_jwk": {
+      "kty": "EC",
+      "crv": "P-256",
+      "x": "...",
+      "y": "..."
+    },
+    "claims": {
+      "given_name": "Ada",
+      "tier": "gold"
+    }
+  }'
+```
+</CodeGroup>
+
+Direct issuance returns `credential_id`, `vct`, `sd_jwt`, and `status_idx`.
+
+## Verify presentations
+
+Use the verification client to create a DCQL-backed OpenID4VP presentation request, then submit the holder wallet response.
+
+| SDK method | REST endpoint | Use it when |
+| --- | --- | --- |
+| `didit.verification.createRequest()` | [`POST /presentations/request`](/api-reference/verification/presentations-request-post) | Your backend needs to request a credential type and claim set from a wallet. |
+| `didit.verification.submitResponse()` | [`POST /presentations/{uuid}/response`](/api-reference/verification/presentations-uuid-response-post) | A wallet sends a `vp_token` for verification. This endpoint is public. |
+| `didit.verification.get()` | [`GET /presentations/{uuid}`](/api-reference/verification/presentations-uuid-get) | You need to poll the presentation request status. This endpoint is public. |
+| `didit.verification.getResult()` | [`GET /verifications/{uuid}`](/api-reference/verification/verifications-uuid-get) | Your backend needs to retrieve a persisted verification result. |
+
+<CodeGroup>
+```js JavaScript SDK
+const request = await didit.verification.createRequest({
+  requestedVct: "AirlineLoyalty",
+  requestedClaims: ["tier"],
+  aud: "checkin-rp",
+  trustedIss: "",
+});
+
+deliverToWallet({
+  protocol: "openid4vp-v1-signed",
+  presentationId: request.uuid,
+  dcql: request.dcql,
+  nonce: request.nonce,
+});
+```
+
+```bash cURL
+curl -X POST "http://localhost:8011/v1/presentations/request" \
+  -H "Authorization: Bearer $DIDIT_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "requested_vct": "AirlineLoyalty",
+    "requested_claims": ["tier"],
+    "aud": "checkin-rp",
+    "trusted_iss": ""
+  }'
+```
+</CodeGroup>
+
+The presentation request response includes `uuid`, `transaction_id`, `dcql`, `requested_claims`, `aud`, `nonce`, and `status`.
+
+When the wallet returns a signed OpenID4VP response, submit the `vp_token`.
+
+<CodeGroup>
+```js JavaScript SDK
+const result = await didit.verification.submitResponse({
+  presentationId: request.uuid,
+  vpToken: "<sd-jwt-vc presentation with KB-JWT>",
+});
+
+if (result.verdict === "verified") {
+  console.log(result.disclosedClaims);
+}
+```
+
+```bash cURL
+curl -X POST "http://localhost:8011/v1/presentations/<uuid>/response" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "vp_token": "<sd-jwt-vc presentation with KB-JWT>"
+  }'
+```
+</CodeGroup>
+
+Verification returns `verdict`, `disclosed_claims`, and `checks`. Didit ID validates signature, holder key binding, audience, nonce, algorithm allowlist, expiry, and Token Status List revocation. See [errors](/reference/errors) for failed-check handling.
+
+## Native SDKs
+
+React Native, Flutter, iOS, and Android SDKs are documented as a fast-follow. They are not yet live.
+
+Use the JavaScript SDK shape or the REST API today. For mobile holder integrations, call the public OpenID4VCI and OpenID4VP endpoints from the wallet layer and keep tenant management calls on your backend.

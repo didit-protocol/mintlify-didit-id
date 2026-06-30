@@ -1,0 +1,204 @@
+---
+title: "SD-JWT VC"
+description: "Learn how Didit ID represents credentials with SD-JWT VC draft-16."
+---
+
+SD-JWT VC is the credential format Didit ID issues and verifies. It combines an issuer-signed JWT with selectively disclosable claim values, then adds an optional key-binding JWT when the holder presents the credential.
+
+Didit ID uses [SD-JWT VC draft-16](https://datatracker.ietf.org/doc/draft-ietf-oauth-sd-jwt-vc/) with the `application/dc+sd-jwt` media type. Issuance returns the credential string from [`POST /credential`](/api-reference/openid4vci/credential-post) or `sd_jwt` from [`POST /credentials/issue`](/api-reference/credentials/credentials-issue-post). Verification accepts the presented credential as `vp_token` at [`POST /presentations/{uuid}/response`](/api-reference/verification/presentations-uuid-response-post).
+
+<Note>
+  The raw credential returned at issuance does not need a KB-JWT. The KB-JWT is added during presentation so the holder can prove possession of the key bound in the credential.
+</Note>
+
+## Wire format
+
+An SD-JWT VC is a tilde-separated string.
+
+```text
+<issuer-signed-jws>~<disclosure-1>~<disclosure-2>~
+```
+
+During presentation, the wallet appends a KB-JWT after the selected disclosures.
+
+```text
+<issuer-signed-jws>~<selected-disclosure>~<kb-jwt>
+```
+
+<ParamField body="issuer-signed-jws" type="string" required>
+  A compact JWS signed by the issuer. It contains the public credential claims, digest references for selectively disclosable claims, issuer metadata, holder key binding, and status information.
+</ParamField>
+
+<ParamField body="disclosure" type="string" required>
+  A base64url-encoded disclosure value kept by the holder. Each disclosure reveals one selectively disclosable claim value when included in a presentation.
+</ParamField>
+
+<ParamField body="kb-jwt" type="string">
+  The optional key-binding JWT used at presentation time. It proves the holder controls the private key corresponding to the public key in `cnf`.
+</ParamField>
+
+## Issuer-signed JWS
+
+The issuer-signed JWS is the signed part of the credential. It is the object verifiers can validate against the issuer JWKS at [`GET /issuers/{slug}/.well-known/jwt-vc-issuer`](/api-reference/openid4vci/issuers-slug-jwt-vc-issuer-get).
+
+The JOSE header identifies the SD-JWT VC component with `typ: "dc+sd-jwt"` and pins the issuer signing key with `kid`.
+
+```json
+{
+  "alg": "ES256",
+  "kid": "oilDLO...",
+  "typ": "dc+sd-jwt"
+}
+```
+
+This simplified payload shows the claims that matter for Didit ID integrations:
+
+```json
+{
+  "iss": "http://localhost:8011/v1/issuers/airline-demo",
+  "vct": "AirlineLoyalty",
+  "_sd_alg": "sha-256",
+  "_sd": ["rR8z3...", "4nN7x..."],
+  "cnf": {
+    "jwk": {
+      "kty": "EC",
+      "crv": "P-256",
+      "x": "...",
+      "y": "..."
+    }
+  },
+  "status": {
+    "status_list": {
+      "idx": 0,
+      "uri": "http://localhost:8011/v1/status-lists/airline-demo/<uuid>"
+    }
+  }
+}
+```
+
+<ParamField body="iss" type="string" required>
+  The issuer identifier. Didit ID exposes issuer metadata at [`GET /issuers/{slug}/.well-known/openid-credential-issuer`](/api-reference/openid4vci/issuers-slug-openid-credential-issuer-get).
+</ParamField>
+
+<ParamField body="vct" type="string" required>
+  The verifiable credential type. You define it on a credential schema, receive it in issuance responses, and request it during verification as `requested_vct`.
+</ParamField>
+
+<ParamField body="_sd_alg" type="string">
+  The digest algorithm used for selective disclosure commitments. Didit ID uses the digest values during presentation verification.
+</ParamField>
+
+<ParamField body="_sd" type="string[]">
+  The digest commitments for selectively disclosable claims. The holder must provide the matching disclosure for each claim they reveal.
+</ParamField>
+
+<ParamField body="cnf" type="object" required>
+  The holder confirmation claim. It binds the credential to a holder public key so the holder can prove possession with a KB-JWT during presentation.
+</ParamField>
+
+<ParamField body="status" type="object">
+  The Token Status List reference. It points to the whole status list and index Didit ID checks when evaluating `not_revoked`.
+</ParamField>
+
+## Disclosures and `_sd` digests
+
+Selective disclosure is built from two pieces:
+
+- The issuer-signed JWS contains `_sd` digests instead of selected claim values.
+- The holder keeps the disclosure values that match those digests.
+
+When the holder presents a credential, the wallet includes only the disclosures required by the verifier. Didit ID hashes each provided disclosure, checks that the digest appears in `_sd`, and returns the revealed values in `disclosed_claims`.
+
+For example, if a verifier requests only `tier`, the wallet can include the `tier` disclosure and omit `given_name`. The signature still covers the original digest commitments, so the verifier can trust the revealed `tier` value without learning the omitted claim.
+
+<Tip>
+  Model fields as selectively disclosable when a verifier may need them independently. A field such as `tier` can be disclosed without revealing `given_name` or other profile attributes.
+</Tip>
+
+## Holder key binding with `cnf`
+
+Holder key binding prevents a copied credential string from being useful by itself. The credential contains a `cnf` claim with the holder public key. The holder must later sign a KB-JWT with the corresponding private key.
+
+Didit ID gets the holder key in one of two ways:
+
+- In OpenID4VCI, the holder sends a proof JWT to [`POST /credential`](/api-reference/openid4vci/credential-post).
+- In direct issuance, your backend sends `holder_jwk` to [`POST /credentials/issue`](/api-reference/credentials/credentials-issue-post).
+
+At verification time, Didit ID validates `key_binding` by checking the KB-JWT against the `cnf` key and the presentation request context.
+
+## Presentation binding
+
+A presentation is not just a credential plus disclosures. It is also bound to the verifier request.
+
+The verifier creates a request with [`POST /presentations/request`](/api-reference/verification/presentations-request-post). The request includes `requested_vct`, `requested_claims`, `aud`, and optional `trusted_iss`. Didit ID builds a DCQL query and nonce. The wallet then signs a KB-JWT that binds the presentation to that audience and nonce.
+
+```json
+{
+  "nonce": "NKQRYX...",
+  "aud": "checkin-rp",
+  "iat": 1777056848,
+  "sd_hash": "hwQH4n..."
+}
+```
+
+<ResponseField name="checks.signature" type="boolean">
+  The issuer-signed JWS validates against the issuer key.
+</ResponseField>
+
+<ResponseField name="checks.key_binding" type="boolean">
+  The KB-JWT validates against the holder key in `cnf`.
+</ResponseField>
+
+<ResponseField name="checks.aud" type="boolean">
+  The KB-JWT audience matches the presentation request `aud`.
+</ResponseField>
+
+<ResponseField name="checks.nonce" type="boolean">
+  The KB-JWT is bound to the nonce generated for the presentation request.
+</ResponseField>
+
+## Token status list
+
+Didit ID uses [IETF Token Status List](https://datatracker.ietf.org/doc/draft-ietf-oauth-status-list/) for revocation and suspension checks. The credential `status` claim references a status list URI and an index. Verifiers fetch the whole list through [`GET /status-lists/{slug}/{uuid}`](/api-reference/status/status-lists-slug-uuid-get) and check the indexed value.
+
+Fetching the whole list protects holder privacy better than fetching a credential-specific status endpoint. A verifier checks a list and index, not a one-off URL that identifies the holder.
+
+Didit ID returns `checks.not_revoked` during presentation verification. Credential lifecycle endpoints update the status entry:
+
+- [`POST /credentials/{uuid}/revoke`](/api-reference/credentials/credentials-uuid-revoke-post) marks a credential revoked.
+- [`POST /credentials/{uuid}/suspend`](/api-reference/credentials/credentials-uuid-suspend-post) marks a credential suspended.
+- [`POST /credentials/{uuid}/reactivate`](/api-reference/credentials/credentials-uuid-reactivate-post) restores an active credential status.
+
+## Credential type with `vct`
+
+The `vct` claim identifies the credential type. Didit ID uses it across the full lifecycle:
+
+- Schemas define `vct`, such as `AirlineLoyalty`.
+- Issuance responses return `vct` with the credential.
+- Presentation requests use `requested_vct` to ask for the credential type.
+- Verification results include the disclosed claims that matched the requested type.
+
+Use stable `vct` values. Treat them as public contract identifiers between issuers, wallets, and verifiers.
+
+## Issuer keys and `kid`
+
+Issuer-signed JWS headers are `kid`-pinned to the signing key. Didit ID publishes issuer keys through the issuer JWKS and manages key rotation through the issuer key APIs.
+
+When you rotate keys with [`POST /keys/rotate`](/api-reference/keys/keys-rotate-post), Didit ID creates a new active key and keeps the previous key in a rotated state with `valid_until`. Existing credentials under the rotated key remain verifiable until that validity window ends.
+
+## How it fits with Didit ID flows
+
+<CardGroup cols={2}>
+  <Card title="Issue SD-JWT VCs" icon="send" href="/api-reference/openid4vci/credential-post">
+    Return `<jws>~<disclosure>~` credentials through OpenID4VCI after holder proof-of-possession.
+  </Card>
+  <Card title="Verify presentations" icon="shield-check" href="/api-reference/verification/presentations-uuid-response-post">
+    Validate selected disclosures, KB-JWT binding, issuer signature, expiry, status, and trust.
+  </Card>
+  <Card title="Manage credentials" icon="badge" href="/api-reference/credentials/credentials-issue-post">
+    Issue directly, list issued credentials, and update lifecycle state for revocation checks.
+  </Card>
+  <Card title="Learn the model" icon="triangle" href="/concepts/verifiable-credentials">
+    Review how issuers, holders, and verifiers interact in Didit ID.
+  </Card>
+</CardGroup>

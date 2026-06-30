@@ -1,0 +1,5243 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Didit Credentials API",
+    "version": "1.0.0",
+    "description": "OpenID4VCI 1.0 issuance + OpenID4VP 1.0 verification (SD-JWT VC, draft-16) with a multi-tenant management plane: credentials, presentations, verifications, a trust registry (frameworks, trusted issuers, relying parties), and issuer key rotation. Management endpoints authenticate with a tenant API key (`Authorization: Bearer <key>`); the OpenID4VCI/VP protocol + holder/verifier endpoints are public."
+  },
+  "paths": {
+    "/v1/credential-schemas": {
+      "get": {
+        "operationId": "v1_credential_schemas_retrieve",
+        "tags": [
+          "Credentials"
+        ],
+        "responses": {
+          "200": {
+            "description": "No response body"
+          }
+        },
+        "summary": "List credential schemas",
+        "description": "List credential schemas",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "v1_credential_schemas_create",
+        "tags": [
+          "Credentials"
+        ],
+        "responses": {
+          "200": {
+            "description": "No response body"
+          },
+          "201": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "example": {
+                  "uuid": "<uuid>",
+                  "vct": "AirlineLoyalty",
+                  "format": "sd_jwt_vc"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Create a credential schema",
+        "description": "Create a credential schema",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "example": {
+                "name": "Loyalty",
+                "vct": "AirlineLoyalty",
+                "attributes": [
+                  {
+                    "name": "given_name",
+                    "type": "string",
+                    "sd": true
+                  },
+                  {
+                    "name": "tier",
+                    "type": "string",
+                    "sd": true
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/credential-templates": {
+      "get": {
+        "operationId": "v1_credential_templates_retrieve",
+        "tags": [
+          "Credentials"
+        ],
+        "responses": {
+          "200": {
+            "description": "No response body"
+          }
+        },
+        "summary": "List credential templates",
+        "description": "List credential templates",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "v1_credential_templates_create",
+        "tags": [
+          "Credentials"
+        ],
+        "responses": {
+          "200": {
+            "description": "No response body"
+          }
+        },
+        "summary": "Create a credential template",
+        "description": "Create a credential template",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/credentials/issue": {
+      "post": {
+        "operationId": "v1_credentials_issue_create",
+        "tags": [
+          "Credentials"
+        ],
+        "responses": {
+          "200": {
+            "description": "No response body"
+          },
+          "201": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "example": {
+                  "credential_id": "<uuid>",
+                  "vct": "AirlineLoyalty",
+                  "sd_jwt": "<jws>~\u2026",
+                  "status_idx": 0
+                }
+              }
+            }
+          }
+        },
+        "summary": "Issue a credential directly (management)",
+        "description": "Issue a credential directly (management)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "example": {
+                "template_id": "<uuid>",
+                "holder_jwk": {
+                  "kty": "EC",
+                  "crv": "P-256",
+                  "x": "\u2026",
+                  "y": "\u2026"
+                },
+                "claims": {
+                  "given_name": "Ada",
+                  "tier": "gold"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/credentials": {
+      "get": {
+        "operationId": "v1_credentials_retrieve",
+        "tags": [
+          "Credentials"
+        ],
+        "responses": {
+          "200": {
+            "description": "No response body"
+          }
+        },
+        "summary": "List issued credentials",
+        "description": "List issued credentials",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/credentials/{uuid}": {
+      "get": {
+        "operationId": "v1_credentials_retrieve_2",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "uuid",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true
+          }
+        ],
+        "tags": [
+          "Credentials"
+        ],
+        "responses": {
+          "200": {
+            "description": "No response body"
+          }
+        },
+        "summary": "Get an issued credential",
+        "description": "Get an issued credential",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/credentials/{uuid}/revoke": {
+      "post": {
+        "operationId": "v1_credentials_revoke_create",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "uuid",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true
+          }
+        ],
+        "tags": [
+          "Credentials"
+        ],
+        "responses": {
+          "200": {
+            "description": "No response body"
+          }
+        },
+        "summary": "Revoke a credential",
+        "description": "Revoke a credential",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/credentials/{uuid}/suspend": {
+      "post": {
+        "operationId": "v1_credentials_suspend_create",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "uuid",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true
+          }
+        ],
+        "tags": [
+          "Credentials"
+        ],
+        "responses": {
+          "200": {
+            "description": "No response body"
+          }
+        },
+        "summary": "Suspend a credential",
+        "description": "Suspend a credential",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/credentials/{uuid}/reactivate": {
+      "post": {
+        "operationId": "v1_credentials_reactivate_create",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "uuid",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true
+          }
+        ],
+        "tags": [
+          "Credentials"
+        ],
+        "responses": {
+          "200": {
+            "description": "No response body"
+          }
+        },
+        "summary": "Reactivate a credential",
+        "description": "Reactivate a credential",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/presentations/request": {
+      "post": {
+        "operationId": "v1_presentations_request_create",
+        "tags": [
+          "OpenID4VP Verification"
+        ],
+        "responses": {
+          "200": {
+            "description": "No response body"
+          },
+          "201": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "example": {
+                  "uuid": "<uuid>",
+                  "transaction_id": "<uuid>",
+                  "dcql": {
+                    "credentials": []
+                  },
+                  "requested_claims": [
+                    "tier"
+                  ],
+                  "aud": "checkin-rp",
+                  "nonce": "NKQRYX\u2026",
+                  "status": "pending"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Create an OpenID4VP presentation request (DCQL)",
+        "description": "Create an OpenID4VP presentation request (DCQL)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "example": {
+                "requested_vct": "AirlineLoyalty",
+                "requested_claims": [
+                  "tier"
+                ],
+                "aud": "checkin-rp",
+                "trusted_iss": ""
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/presentations/{uuid}": {
+      "get": {
+        "operationId": "v1_presentations_retrieve",
+        "description": "Poll a presentation request (holder + status)",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "uuid",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true
+          }
+        ],
+        "tags": [
+          "OpenID4VP Verification"
+        ],
+        "responses": {
+          "200": {
+            "description": "No response body"
+          }
+        },
+        "summary": "Poll a presentation request (holder + status)",
+        "security": []
+      }
+    },
+    "/v1/presentations/{uuid}/response": {
+      "post": {
+        "operationId": "v1_presentations_response_create",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "uuid",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true
+          }
+        ],
+        "tags": [
+          "OpenID4VP Verification"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "example": {
+                  "uuid": "<uuid>",
+                  "verdict": "verified",
+                  "disclosed_claims": {
+                    "tier": "gold"
+                  },
+                  "checks": {
+                    "signature": true,
+                    "key_binding": true,
+                    "aud": true,
+                    "nonce": true,
+                    "alg_allowlist": true,
+                    "not_expired": true,
+                    "not_revoked": true
+                  },
+                  "error": ""
+                }
+              }
+            }
+          }
+        },
+        "summary": "Submit a vp_token for verification",
+        "description": "Submit a vp_token for verification",
+        "security": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "example": {
+                "vp_token": "<sd-jwt-vc presentation with KB-JWT>"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/presentations/{uuid}/demo-present": {
+      "post": {
+        "operationId": "v1_presentations_demo_present_create",
+        "description": "Demo: real server-side present + verify",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "uuid",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true
+          }
+        ],
+        "tags": [
+          "OpenID4VP Verification"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "example": {
+                  "verdict": "verified",
+                  "vct": "AirlineLoyalty",
+                  "verifier": "checkin-rp",
+                  "disclosed_claims": {
+                    "tier": "demo-tier"
+                  },
+                  "checks": {
+                    "signature": true,
+                    "key_binding": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Demo: real server-side present + verify",
+        "security": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "example": {}
+            }
+          }
+        }
+      }
+    },
+    "/v1/verifications": {
+      "get": {
+        "operationId": "v1_verifications_retrieve",
+        "tags": [
+          "OpenID4VP Verification"
+        ],
+        "responses": {
+          "200": {
+            "description": "No response body"
+          }
+        },
+        "summary": "List verifications (log)",
+        "description": "List verifications (log)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/verifications/{uuid}": {
+      "get": {
+        "operationId": "v1_verifications_retrieve_2",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "uuid",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true
+          }
+        ],
+        "tags": [
+          "OpenID4VP Verification"
+        ],
+        "responses": {
+          "200": {
+            "description": "No response body"
+          }
+        },
+        "summary": "Get a verification result",
+        "description": "Get a verification result",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/status-lists/{slug}/{uuid}": {
+      "get": {
+        "operationId": "v1_status_lists_retrieve",
+        "description": "Fetch a Token Status List (whole list)",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "uuid",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true
+          }
+        ],
+        "tags": [
+          "Status Lists"
+        ],
+        "responses": {
+          "200": {
+            "description": "No response body"
+          }
+        },
+        "summary": "Fetch a Token Status List (whole list)",
+        "security": []
+      }
+    },
+    "/v1/trust-frameworks": {
+      "get": {
+        "operationId": "v1_trust_frameworks_retrieve",
+        "tags": [
+          "Trust Registry"
+        ],
+        "responses": {
+          "200": {
+            "description": "No response body"
+          }
+        },
+        "summary": "List trust frameworks",
+        "description": "List trust frameworks",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/trusted-issuers": {
+      "get": {
+        "operationId": "v1_trusted_issuers_retrieve",
+        "tags": [
+          "Trust Registry"
+        ],
+        "responses": {
+          "200": {
+            "description": "No response body"
+          }
+        },
+        "summary": "List trusted issuers",
+        "description": "List trusted issuers",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "v1_trusted_issuers_create",
+        "tags": [
+          "Trust Registry"
+        ],
+        "responses": {
+          "200": {
+            "description": "No response body"
+          },
+          "201": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "example": {
+                  "id": "<uuid>",
+                  "name": "Gov PID",
+                  "iss": "https://pid.gov.example",
+                  "trust_anchor": "did-web",
+                  "status": "active"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Add a trusted issuer",
+        "description": "Add a trusted issuer",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "example": {
+                "name": "Gov PID",
+                "iss": "https://pid.gov.example",
+                "trust_anchor": "did-web",
+                "framework": "eidas2"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/trusted-issuers/{uuid}": {
+      "delete": {
+        "operationId": "v1_trusted_issuers_destroy",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "uuid",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true
+          }
+        ],
+        "tags": [
+          "Trust Registry"
+        ],
+        "responses": {
+          "204": {
+            "description": "No response body"
+          }
+        },
+        "summary": "Remove a trusted issuer",
+        "description": "Remove a trusted issuer",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/trusted-issuers/{uuid}/validate": {
+      "post": {
+        "operationId": "v1_trusted_issuers_validate_create",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "uuid",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true
+          }
+        ],
+        "tags": [
+          "Trust Registry"
+        ],
+        "responses": {
+          "200": {
+            "description": "No response body"
+          }
+        },
+        "summary": "Validate a trusted issuer",
+        "description": "Validate a trusted issuer",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/relying-parties": {
+      "get": {
+        "operationId": "v1_relying_parties_retrieve",
+        "tags": [
+          "Trust Registry"
+        ],
+        "responses": {
+          "200": {
+            "description": "No response body"
+          }
+        },
+        "summary": "List relying parties",
+        "description": "List relying parties",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "v1_relying_parties_create",
+        "tags": [
+          "Trust Registry"
+        ],
+        "responses": {
+          "200": {
+            "description": "No response body"
+          }
+        },
+        "summary": "Register a relying party",
+        "description": "Register a relying party",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/relying-parties/{uuid}": {
+      "delete": {
+        "operationId": "v1_relying_parties_destroy",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "uuid",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true
+          }
+        ],
+        "tags": [
+          "Trust Registry"
+        ],
+        "responses": {
+          "204": {
+            "description": "No response body"
+          }
+        },
+        "summary": "Remove a relying party",
+        "description": "Remove a relying party",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/keys": {
+      "get": {
+        "operationId": "v1_keys_retrieve",
+        "tags": [
+          "Issuer Keys"
+        ],
+        "responses": {
+          "200": {
+            "description": "No response body"
+          }
+        },
+        "summary": "List issuer signing keys",
+        "description": "List issuer signing keys",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/keys/rotate": {
+      "post": {
+        "operationId": "v1_keys_rotate_create",
+        "tags": [
+          "Issuer Keys"
+        ],
+        "responses": {
+          "200": {
+            "description": "No response body"
+          },
+          "201": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "example": {
+                  "new_key": {
+                    "kid": "oilDLO\u2026",
+                    "alg": "ES256",
+                    "status": "active"
+                  },
+                  "rotated_key": {
+                    "kid": "zOJCDk\u2026",
+                    "status": "rotated",
+                    "valid_until": "2027-06-30T00:00:00Z"
+                  },
+                  "impact": {
+                    "credentials_under_previous_key": 7,
+                    "note": "Existing credentials remain valid under the rotated key until valid_until."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Rotate the issuer signing key",
+        "description": "Rotate the issuer signing key",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "example": {}
+            }
+          }
+        }
+      }
+    },
+    "/v1/keys/impact": {
+      "get": {
+        "operationId": "v1_keys_impact_retrieve",
+        "tags": [
+          "Issuer Keys"
+        ],
+        "responses": {
+          "200": {
+            "description": "No response body"
+          }
+        },
+        "summary": "Key-rotation impact (credentials under current key)",
+        "description": "Key-rotation impact (credentials under current key)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/credential-offers": {
+      "post": {
+        "operationId": "v1_credential_offers_create",
+        "description": "Create a credential offer",
+        "tags": [
+          "OpenID4VCI Protocol"
+        ],
+        "responses": {
+          "200": {
+            "description": "No response body"
+          },
+          "201": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "example": {
+                  "offer_id": "<uuid>",
+                  "credential_offer_uri": "openid-credential-offer://\u2026",
+                  "credential_issuer": "https://\u2026/v1/issuers/airline-demo",
+                  "pre_authorized_code": "s8Ilre\u2026",
+                  "tx_code": "517082"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Create a credential offer",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "example": {
+                "template_id": "<uuid>",
+                "claims": {
+                  "given_name": "Ada",
+                  "tier": "gold"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/credential-offers/{uuid}": {
+      "get": {
+        "operationId": "v1_credential_offers_retrieve",
+        "description": "Get a credential offer (holder preview)",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "uuid",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true
+          }
+        ],
+        "tags": [
+          "OpenID4VCI Protocol"
+        ],
+        "responses": {
+          "200": {
+            "description": "No response body"
+          }
+        },
+        "summary": "Get a credential offer (holder preview)",
+        "security": []
+      }
+    },
+    "/v1/credential-offers/{uuid}/accept": {
+      "post": {
+        "operationId": "v1_credential_offers_accept_create",
+        "description": "Accept an offer (demo: server-side PoP)",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "uuid",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true
+          }
+        ],
+        "tags": [
+          "OpenID4VCI Protocol"
+        ],
+        "responses": {
+          "200": {
+            "description": "No response body"
+          }
+        },
+        "summary": "Accept an offer (demo: server-side PoP)",
+        "security": []
+      }
+    },
+    "/v1/oauth/token": {
+      "post": {
+        "operationId": "v1_oauth_token_create",
+        "description": "Token endpoint (pre-authorized_code grant)",
+        "tags": [
+          "OpenID4VCI Protocol"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "example": {
+                  "access_token": "5a0W4g\u2026",
+                  "token_type": "bearer",
+                  "expires_in": 300
+                }
+              }
+            }
+          }
+        },
+        "summary": "Token endpoint (pre-authorized_code grant)",
+        "security": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "example": {
+                "grant_type": "urn:ietf:params:oauth:grant-type:pre-authorized_code",
+                "pre-authorized_code": "s8Ilre\u2026",
+                "tx_code": "517082"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/nonce": {
+      "post": {
+        "operationId": "v1_nonce_create",
+        "description": "Issue a c_nonce for the credential proof",
+        "tags": [
+          "OpenID4VCI Protocol"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "example": {
+                  "c_nonce": "NKQRYX\u2026",
+                  "c_nonce_expires_in": 60
+                }
+              }
+            }
+          }
+        },
+        "summary": "Issue a c_nonce for the credential proof",
+        "security": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "example": {}
+            }
+          }
+        }
+      }
+    },
+    "/v1/credential": {
+      "post": {
+        "operationId": "v1_credential_create",
+        "description": "Credential endpoint (holder proof-of-possession \u2192 SD-JWT VC)",
+        "tags": [
+          "OpenID4VCI Protocol"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "example": {
+                  "credential": "<jws>~<disclosure>~",
+                  "vct": "AirlineLoyalty"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Credential endpoint (holder proof-of-possession \u2192 SD-JWT VC)",
+        "security": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "example": {
+                "proof": {
+                  "proof_type": "jwt",
+                  "jwt": "<openid4vci-proof+jwt>"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/issuers/{slug}/.well-known/openid-credential-issuer": {
+      "get": {
+        "operationId": "v1_issuers_.well_known_openid_credential_issuer_retrieve",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "tags": [
+          "OpenID4VCI Protocol"
+        ],
+        "responses": {
+          "200": {
+            "description": "No response body"
+          }
+        },
+        "summary": "OpenID4VCI issuer metadata",
+        "description": "OpenID4VCI issuer metadata",
+        "security": []
+      }
+    },
+    "/v1/issuers/{slug}/.well-known/jwt-vc-issuer": {
+      "get": {
+        "operationId": "v1_issuers_.well_known_jwt_vc_issuer_retrieve",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "tags": [
+          "OpenID4VCI Protocol"
+        ],
+        "responses": {
+          "200": {
+            "description": "No response body"
+          }
+        },
+        "summary": "SD-JWT VC issuer JWKS",
+        "description": "SD-JWT VC issuer JWKS",
+        "security": []
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ActionEnum": {
+        "enum": [
+          "R",
+          "W",
+          "D",
+          "L",
+          "C"
+        ],
+        "type": "string"
+      },
+      "ApplicationAdditionalData": {
+        "type": "object",
+        "properties": {
+          "sub": {
+            "type": "string"
+          },
+          "client_id": {
+            "type": "string"
+          },
+          "organization_id": {
+            "type": "string"
+          },
+          "organization_name": {
+            "type": "string"
+          },
+          "organization_email": {
+            "type": "string"
+          },
+          "business_legal_name": {
+            "type": "string"
+          },
+          "website_url": {
+            "type": "string"
+          },
+          "terms_of_service_url": {
+            "type": "string"
+          },
+          "console_industry": {
+            "type": "string"
+          },
+          "console_country": {
+            "type": "string"
+          },
+          "console_ip_country": {
+            "type": "string"
+          },
+          "console_job_role": {
+            "type": "string"
+          },
+          "console_product_interested": {
+            "type": "string"
+          },
+          "console_estimated_yearly_verifications": {
+            "type": "string"
+          },
+          "application_name": {
+            "type": "string"
+          },
+          "application_mode": {
+            "type": "string"
+          },
+          "claims": {
+            "type": "array",
+            "items": {},
+            "readOnly": true
+          },
+          "is_internal_organization": {
+            "type": "boolean"
+          },
+          "allow_free_usage": {
+            "type": "boolean"
+          },
+          "customer_id": {
+            "type": "string",
+            "readOnly": true
+          },
+          "organization_creator_identifier": {
+            "type": "string",
+            "nullable": true,
+            "readOnly": true
+          },
+          "organization_members_emails": {
+            "type": "array",
+            "items": {},
+            "readOnly": true
+          }
+        },
+        "required": [
+          "allow_free_usage",
+          "application_mode",
+          "application_name",
+          "business_legal_name",
+          "claims",
+          "client_id",
+          "console_country",
+          "console_estimated_yearly_verifications",
+          "console_industry",
+          "console_ip_country",
+          "console_job_role",
+          "console_product_interested",
+          "customer_id",
+          "is_internal_organization",
+          "organization_creator_identifier",
+          "organization_email",
+          "organization_id",
+          "organization_members_emails",
+          "organization_name",
+          "sub",
+          "terms_of_service_url",
+          "website_url"
+        ]
+      },
+      "ApplicationApiKey": {
+        "type": "object",
+        "properties": {
+          "uuid": {
+            "type": "string",
+            "format": "uuid",
+            "readOnly": true
+          },
+          "label": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "api_key": {
+            "type": "string",
+            "readOnly": true
+          },
+          "secret_prefix": {
+            "type": "string",
+            "readOnly": true
+          },
+          "created_by_identifier": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "last_used_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true,
+            "nullable": true
+          },
+          "revoked_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true,
+            "nullable": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          }
+        },
+        "required": [
+          "api_key",
+          "created_at",
+          "created_by_identifier",
+          "label",
+          "last_used_at",
+          "revoked_at",
+          "secret_prefix",
+          "uuid"
+        ]
+      },
+      "ApplicationApiKeyRequest": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255
+          }
+        },
+        "required": [
+          "label"
+        ]
+      },
+      "ApplicationInfo": {
+        "type": "object",
+        "properties": {
+          "uuid": {
+            "type": "string",
+            "format": "uuid",
+            "readOnly": true
+          },
+          "name": {
+            "type": "string",
+            "readOnly": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "description": "Description of the application"
+          },
+          "website_url": {
+            "type": "string",
+            "readOnly": true
+          },
+          "terms_url": {
+            "type": "string"
+          },
+          "privacy_url": {
+            "type": "string"
+          },
+          "redirect_uris": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "logo": {
+            "type": "string",
+            "nullable": true,
+            "description": "Path in S3 of the logo of the application",
+            "maxLength": 255
+          },
+          "client_id": {
+            "type": "string",
+            "readOnly": true
+          },
+          "mode": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ModeEnum"
+              }
+            ],
+            "description": "Environment for this application. Sandbox apps are organization-level test apps created automatically alongside the default live app."
+          }
+        },
+        "required": [
+          "client_id",
+          "name",
+          "uuid",
+          "website_url"
+        ]
+      },
+      "ApplicationIsAppAlreadySetup": {
+        "type": "object",
+        "properties": {
+          "is_app_already_setup": {
+            "type": "boolean",
+            "default": false
+          }
+        }
+      },
+      "ApplicationModel": {
+        "type": "object",
+        "properties": {
+          "uuid": {
+            "type": "string",
+            "format": "uuid",
+            "readOnly": true
+          },
+          "permissions": {
+            "type": "array",
+            "items": {},
+            "nullable": true,
+            "readOnly": true
+          },
+          "name": {
+            "type": "string"
+          },
+          "client_id": {
+            "type": "string",
+            "readOnly": true
+          },
+          "client_secret": {
+            "type": "string",
+            "readOnly": true
+          },
+          "website_url": {
+            "type": "string"
+          },
+          "redirect_uris": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "client_secret_updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "client_secret_last_used_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "terms_url": {
+            "type": "string"
+          },
+          "privacy_url": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "description": "Description of the application"
+          },
+          "logo": {
+            "type": "string",
+            "nullable": true,
+            "description": "Path in S3 of the logo of the application",
+            "maxLength": 255
+          },
+          "is_app_already_setup": {
+            "type": "boolean",
+            "description": "Whether the application is already setup in the Business Console"
+          },
+          "default_scopes": {
+            "type": "object",
+            "additionalProperties": {},
+            "description": "Default scopes for the application. user_id is always required."
+          },
+          "mode": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ModeEnum"
+              }
+            ],
+            "description": "Environment for this application. Sandbox apps are organization-level test apps created automatically alongside the default live app."
+          }
+        },
+        "required": [
+          "client_id",
+          "client_secret",
+          "client_secret_last_used_at",
+          "client_secret_updated_at",
+          "created_at",
+          "name",
+          "permissions",
+          "uuid"
+        ]
+      },
+      "ApplicationModelRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "website_url": {
+            "type": "string",
+            "minLength": 1
+          },
+          "redirect_uris": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "image": {
+            "type": "string",
+            "format": "binary",
+            "writeOnly": true,
+            "description": "ID document image for OCR processing."
+          },
+          "terms_url": {
+            "type": "string",
+            "minLength": 1
+          },
+          "privacy_url": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "description": "Description of the application"
+          },
+          "logo": {
+            "type": "string",
+            "nullable": true,
+            "description": "Path in S3 of the logo of the application",
+            "maxLength": 255
+          },
+          "is_app_already_setup": {
+            "type": "boolean",
+            "description": "Whether the application is already setup in the Business Console"
+          },
+          "default_scopes": {
+            "type": "object",
+            "additionalProperties": {},
+            "description": "Default scopes for the application. user_id is always required."
+          },
+          "mode": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ModeEnum"
+              }
+            ],
+            "description": "Environment for this application. Sandbox apps are organization-level test apps created automatically alongside the default live app."
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "ApplicationPatch": {
+        "type": "object",
+        "properties": {
+          "uuid": {
+            "type": "string",
+            "format": "uuid",
+            "readOnly": true
+          },
+          "permissions": {
+            "type": "array",
+            "items": {},
+            "nullable": true,
+            "readOnly": true
+          },
+          "name": {
+            "type": "string"
+          },
+          "client_id": {
+            "type": "string",
+            "readOnly": true
+          },
+          "client_secret": {
+            "type": "string",
+            "readOnly": true
+          },
+          "website_url": {
+            "type": "string"
+          },
+          "redirect_uris": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "client_secret_updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "client_secret_last_used_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "terms_url": {
+            "type": "string"
+          },
+          "privacy_url": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "description": "Description of the application"
+          },
+          "logo": {
+            "type": "string",
+            "nullable": true,
+            "description": "Path in S3 of the logo of the application",
+            "maxLength": 255
+          },
+          "is_app_already_setup": {
+            "type": "boolean",
+            "description": "Whether the application is already setup in the Business Console"
+          },
+          "default_scopes": {
+            "type": "object",
+            "additionalProperties": {},
+            "description": "Default scopes for the application. user_id is always required."
+          },
+          "mode": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ModeEnum"
+              }
+            ],
+            "description": "Environment for this application. Sandbox apps are organization-level test apps created automatically alongside the default live app."
+          }
+        },
+        "required": [
+          "client_id",
+          "client_secret",
+          "client_secret_last_used_at",
+          "client_secret_updated_at",
+          "created_at",
+          "name",
+          "permissions",
+          "uuid"
+        ]
+      },
+      "ApplicationUpdateDefaultScopes": {
+        "type": "object",
+        "properties": {
+          "default_scopes": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "boolean"
+            }
+          }
+        },
+        "required": [
+          "default_scopes"
+        ]
+      },
+      "AuthorizationRequestRequest": {
+        "type": "object",
+        "properties": {
+          "wallet_address": {
+            "type": "string",
+            "minLength": 42,
+            "description": "The user's wallet address",
+            "maxLength": 42
+          },
+          "scope": {
+            "type": "string",
+            "default": "",
+            "description": "The scope of the requested authorization",
+            "maxLength": 1000
+          },
+          "claims": {
+            "type": "string",
+            "default": "",
+            "description": "The user's requested claims",
+            "maxLength": 10000
+          }
+        },
+        "required": [
+          "wallet_address"
+        ]
+      },
+      "AuthorizationResponse": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "The authorization code to be used to obtain access and identity tokens",
+            "maxLength": 100
+          },
+          "policy": {
+            "type": "string",
+            "description": "The policy to be signed by the user in their wallet",
+            "maxLength": 10000
+          },
+          "nonce": {
+            "type": "string",
+            "description": "The nonce value to be included in the ID token",
+            "maxLength": 50
+          },
+          "scope": {
+            "type": "string",
+            "description": "The scope of the requested authorization",
+            "maxLength": 1000
+          },
+          "claims": {
+            "type": "string",
+            "description": "The user's requested claims",
+            "maxLength": 10000
+          },
+          "expires_at": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "The timestamp at which the authorization code will expire"
+          }
+        },
+        "required": [
+          "claims",
+          "code",
+          "expires_at",
+          "nonce",
+          "policy",
+          "scope"
+        ]
+      },
+      "BlankEnum": {
+        "enum": [
+          ""
+        ]
+      },
+      "ConsoleEstimatedYearlyVerificationsEnum": {
+        "enum": [
+          "0 - 1,000",
+          "1,001 - 20,000",
+          "20,001 - 50,000",
+          "+50,000",
+          "Under 1,000 / month",
+          "1,000 \u2013 5,000 / month",
+          "5,000 \u2013 50,000 / month",
+          "50,000+ / month",
+          "under1k",
+          "1kTo5k",
+          "5kTo50k",
+          "50kPlus"
+        ],
+        "type": "string"
+      },
+      "ConsoleIndustryEnum": {
+        "enum": [
+          "Fintech",
+          "Crypto",
+          "Gambling",
+          "Marketplaces",
+          "Online Travel",
+          "Telco",
+          "HR/Gig Platforms",
+          "E-commerce",
+          "Edtech",
+          "Gaming",
+          "Government",
+          "Healthcare",
+          "Media",
+          "Professional Services",
+          "Reseller",
+          "Software Development",
+          "Transportation",
+          "Fintech (neobank, lending, payments, EMI)",
+          "Crypto & Web3 (exchange, wallet, on/off-ramp)",
+          "Marketplaces (gig, delivery, creator economy)",
+          "iGaming (sports betting, online casino)",
+          "Banking",
+          "Insurance",
+          "Telecom",
+          "Government & public sector",
+          "Travel & hospitality",
+          "Mobility (rideshare, scooters, fleet)",
+          "Tokenization & RWA",
+          "Biometric payments",
+          "Access control & physical security",
+          "Other",
+          "fintech",
+          "cryptoWeb3",
+          "marketplaces",
+          "mobility",
+          "iGaming",
+          "banking",
+          "insurance",
+          "telecom",
+          "healthcare",
+          "governmentPublicSector",
+          "travelHospitality",
+          "ecommerce",
+          "edtech",
+          "tokenizationRwa",
+          "biometricPayments",
+          "accessControl",
+          "other"
+        ],
+        "type": "string"
+      },
+      "ConsoleJobRoleEnum": {
+        "enum": [
+          "Founder/CEO",
+          "Executive (C-Level)",
+          "Product Manager",
+          "Developer/Engineer",
+          "Compliance Officer",
+          "Other",
+          "Founder / CEO",
+          "Risk & Fraud / Compliance",
+          "CTO / Developer / PM",
+          "founderCeo",
+          "riskFraudCompliance",
+          "ctoDeveloperPm",
+          "other"
+        ],
+        "type": "string"
+      },
+      "CreateVerificationSessionRequest": {
+        "type": "object",
+        "properties": {
+          "vendor_data": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1
+          },
+          "workflow_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "portrait_image": {
+            "type": "string",
+            "writeOnly": true,
+            "nullable": true,
+            "minLength": 1,
+            "description": "Base64 encoded portrait image. Max 2MB. Required for Biometric Authentication workflow with Face Match enabled, disallowed for others."
+          }
+        },
+        "required": [
+          "vendor_data",
+          "workflow_id"
+        ]
+      },
+      "CreateVerificationSessionResponse": {
+        "type": "object",
+        "properties": {
+          "session_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "ID for the session."
+          },
+          "url": {
+            "type": "string",
+            "description": "URL for the session."
+          }
+        },
+        "required": [
+          "session_id",
+          "url"
+        ]
+      },
+      "DataSession": {
+        "type": "object",
+        "properties": {
+          "session_id": {
+            "type": "string",
+            "format": "uuid",
+            "readOnly": true
+          },
+          "session_number": {
+            "type": "integer",
+            "description": "The session number of the data session (incremental for each application)"
+          },
+          "scope": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "vendor_data": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "url": {
+            "type": "string",
+            "readOnly": true
+          },
+          "session_token": {
+            "type": "string",
+            "nullable": true,
+            "readOnly": true
+          },
+          "status": {
+            "type": "string",
+            "readOnly": true
+          },
+          "application": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NestedSessionApplication"
+              }
+            ],
+            "readOnly": true
+          }
+        },
+        "required": [
+          "application",
+          "scope",
+          "session_id",
+          "session_token",
+          "status",
+          "url"
+        ]
+      },
+      "DataSessionDecision": {
+        "type": "object",
+        "properties": {
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "session_id": {
+            "type": "string",
+            "format": "uuid",
+            "readOnly": true
+          },
+          "session_number": {
+            "type": "integer",
+            "description": "The session number of the data session (incremental for each application)"
+          },
+          "scope": {
+            "type": "string",
+            "nullable": true,
+            "description": "The scope of the data session",
+            "maxLength": 255
+          },
+          "vendor_data": {
+            "type": "string",
+            "nullable": true,
+            "description": "The vendor data of the data session",
+            "maxLength": 255
+          },
+          "status": {
+            "$ref": "#/components/schemas/StatusAadEnum"
+          },
+          "user_data": {
+            "type": "object",
+            "additionalProperties": {},
+            "nullable": true,
+            "readOnly": true
+          }
+        },
+        "required": [
+          "created_at",
+          "session_id",
+          "user_data"
+        ]
+      },
+      "DataSessionInformation": {
+        "type": "object",
+        "properties": {
+          "session_id": {
+            "type": "string",
+            "format": "uuid",
+            "readOnly": true
+          },
+          "session_number": {
+            "type": "integer",
+            "description": "The session number of the data session (incremental for each application)"
+          },
+          "scope": {
+            "type": "string",
+            "nullable": true,
+            "description": "The scope of the data session",
+            "maxLength": 255
+          },
+          "vendor_data": {
+            "type": "string",
+            "nullable": true,
+            "description": "The vendor data of the data session",
+            "maxLength": 255
+          },
+          "status": {
+            "$ref": "#/components/schemas/StatusAadEnum"
+          },
+          "application": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ApplicationInfo"
+              }
+            ],
+            "readOnly": true
+          }
+        },
+        "required": [
+          "application",
+          "session_id"
+        ]
+      },
+      "DataSessionRequest": {
+        "type": "object",
+        "properties": {
+          "session_number": {
+            "type": "integer",
+            "description": "The session number of the data session (incremental for each application)"
+          },
+          "scope": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "vendor_data": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255
+          }
+        },
+        "required": [
+          "scope"
+        ]
+      },
+      "DataSessionStatus": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/StatusAadEnum"
+          },
+          "code": {
+            "type": "string",
+            "readOnly": true
+          },
+          "state": {
+            "type": "string",
+            "readOnly": true
+          },
+          "redirect_uri": {
+            "type": "string",
+            "readOnly": true
+          }
+        },
+        "required": [
+          "code",
+          "redirect_uri",
+          "state"
+        ]
+      },
+      "DataSessionStatusUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/DataSessionStatusUpdateStatusEnum"
+          },
+          "approved_fields": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "include_code": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "DataSessionStatusUpdateStatusEnum": {
+        "enum": [
+          "confirmed",
+          "declined"
+        ],
+        "type": "string"
+      },
+      "Device": {
+        "type": "object",
+        "description": "Serializer for device information.",
+        "properties": {
+          "uuid": {
+            "type": "string",
+            "format": "uuid",
+            "readOnly": true
+          },
+          "device_name": {
+            "type": "string",
+            "readOnly": true
+          },
+          "device_fingerprint": {
+            "type": "string",
+            "readOnly": true
+          },
+          "ip_address": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "user_agent": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "last_used_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "is_current": {
+            "type": "boolean",
+            "readOnly": true,
+            "default": false
+          }
+        },
+        "required": [
+          "created_at",
+          "device_fingerprint",
+          "device_name",
+          "ip_address",
+          "is_current",
+          "last_used_at",
+          "user_agent",
+          "uuid"
+        ]
+      },
+      "DeviceListResponse": {
+        "type": "object",
+        "description": "Response serializer for device list.",
+        "properties": {
+          "devices": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Device"
+            }
+          },
+          "total_count": {
+            "type": "integer"
+          },
+          "max_devices": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "devices",
+          "max_devices",
+          "total_count"
+        ]
+      },
+      "DomainVerificationCheckRequest": {
+        "type": "object",
+        "description": "Serializer for checking domain verification status.",
+        "properties": {
+          "domain": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The domain to check verification for",
+            "maxLength": 255
+          }
+        },
+        "required": [
+          "domain"
+        ]
+      },
+      "DomainVerificationCheckResponse": {
+        "type": "object",
+        "description": "Response for domain verification check.",
+        "properties": {
+          "domain": {
+            "type": "string"
+          },
+          "verified": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "domain",
+          "message",
+          "verified"
+        ]
+      },
+      "DomainVerificationInitiateRequest": {
+        "type": "object",
+        "description": "Serializer for initiating domain verification.",
+        "properties": {
+          "domain": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The email domain to verify (e.g., 'company.com')",
+            "maxLength": 255
+          }
+        },
+        "required": [
+          "domain"
+        ]
+      },
+      "DomainVerificationResponse": {
+        "type": "object",
+        "description": "Response for domain verification initiation.",
+        "properties": {
+          "domain": {
+            "type": "string"
+          },
+          "txt_record_name": {
+            "type": "string",
+            "description": "The DNS record name (usually @ or the domain itself)"
+          },
+          "txt_record_value": {
+            "type": "string",
+            "description": "The value to add to the TXT record"
+          },
+          "instructions": {
+            "type": "string",
+            "description": "Instructions for adding the DNS record"
+          }
+        },
+        "required": [
+          "domain",
+          "instructions",
+          "txt_record_name",
+          "txt_record_value"
+        ]
+      },
+      "EmailConfirmationRequest": {
+        "type": "object",
+        "description": "Serializer for email confirmation.",
+        "properties": {
+          "token": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Legacy email confirmation token"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "minLength": 1,
+            "description": "The email address being confirmed",
+            "maxLength": 254
+          },
+          "code": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The 8-digit email confirmation code",
+            "pattern": "^\\d{8}$"
+          },
+          "confirmation_session": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Opaque confirmation session returned by registration or resend",
+            "pattern": "^[A-Za-z0-9_-]{32,128}$"
+          },
+          "device_fingerprint": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1,
+            "description": "Unique fingerprint to identify the device (for multi-device support)",
+            "maxLength": 255
+          }
+        }
+      },
+      "EmailOTPVerify": {
+        "type": "object",
+        "properties": {
+          "otp": {
+            "type": "string",
+            "description": "The OTP to be verified",
+            "maxLength": 8
+          },
+          "email_address": {
+            "type": "string",
+            "format": "email",
+            "description": "The email address to be verified",
+            "maxLength": 255
+          },
+          "device_fingerprint": {
+            "type": "string",
+            "nullable": true,
+            "description": "Unique fingerprint to identify the device",
+            "maxLength": 255
+          }
+        },
+        "required": [
+          "email_address",
+          "otp"
+        ]
+      },
+      "EmailOTPVerifyRequest": {
+        "type": "object",
+        "properties": {
+          "otp": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The OTP to be verified",
+            "maxLength": 8
+          },
+          "email_address": {
+            "type": "string",
+            "format": "email",
+            "minLength": 1,
+            "description": "The email address to be verified",
+            "maxLength": 255
+          },
+          "device_fingerprint": {
+            "type": "string",
+            "nullable": true,
+            "description": "Unique fingerprint to identify the device",
+            "maxLength": 255
+          }
+        },
+        "required": [
+          "email_address",
+          "otp"
+        ]
+      },
+      "ForgotPasswordRequestRequest": {
+        "type": "object",
+        "description": "Serializer for forgot password request.",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "minLength": 1,
+            "description": "The email address of the user",
+            "maxLength": 254
+          },
+          "redirect_url": {
+            "type": "string",
+            "format": "uri",
+            "minLength": 1,
+            "description": "The URL to redirect the user to for password reset"
+          }
+        },
+        "required": [
+          "email",
+          "redirect_url"
+        ]
+      },
+      "GrantTypeEnum": {
+        "enum": [
+          "connect_wallet",
+          "refresh_token",
+          "client_credentials",
+          "authorization_code",
+          "urn:ietf:params:oauth:grant-type:token-exchange"
+        ],
+        "type": "string"
+      },
+      "InvitationDecisionRequest": {
+        "type": "object",
+        "properties": {
+          "accepted": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "accepted"
+        ]
+      },
+      "InvitationMemberList": {
+        "type": "object",
+        "properties": {
+          "uuid": {
+            "type": "string",
+            "format": "uuid",
+            "readOnly": true
+          },
+          "full_name": {
+            "type": "string",
+            "readOnly": true
+          },
+          "identifier": {
+            "type": "string",
+            "readOnly": true
+          },
+          "accessible_applications": {
+            "type": "string",
+            "readOnly": true
+          },
+          "role": {
+            "type": "string",
+            "readOnly": true
+          }
+        },
+        "required": [
+          "accessible_applications",
+          "full_name",
+          "identifier",
+          "role",
+          "uuid"
+        ]
+      },
+      "InvitationModel": {
+        "type": "object",
+        "properties": {
+          "uuid": {
+            "type": "string",
+            "format": "uuid",
+            "readOnly": true
+          },
+          "organization_name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 254
+          },
+          "sent_by": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "expired_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "accepted": {
+            "type": "boolean"
+          },
+          "applications": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "organization": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "role": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "applications",
+          "email",
+          "expired_at",
+          "organization",
+          "organization_name",
+          "role",
+          "sent_by",
+          "timestamp",
+          "uuid"
+        ]
+      },
+      "InvitationPreview": {
+        "type": "object",
+        "properties": {
+          "uuid": {
+            "type": "string",
+            "format": "uuid",
+            "readOnly": true
+          },
+          "organization_name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 254
+          },
+          "expired_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "role": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "readOnly": true
+          }
+        },
+        "required": [
+          "email",
+          "expired_at",
+          "organization_name",
+          "role",
+          "status",
+          "uuid"
+        ]
+      },
+      "InviteMember": {
+        "type": "object",
+        "properties": {
+          "emails": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "email",
+              "maxLength": 254
+            },
+            "maxItems": 5,
+            "minItems": 1
+          },
+          "role": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "app_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        },
+        "required": [
+          "app_ids",
+          "emails",
+          "role"
+        ]
+      },
+      "InviteMemberRequest": {
+        "type": "object",
+        "properties": {
+          "emails": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "email",
+              "minLength": 1,
+              "maxLength": 254
+            },
+            "maxItems": 5,
+            "minItems": 1
+          },
+          "role": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "app_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        },
+        "required": [
+          "app_ids",
+          "emails",
+          "role"
+        ]
+      },
+      "KPI": {
+        "type": "object",
+        "properties": {
+          "users": {
+            "type": "integer"
+          },
+          "mau": {
+            "type": "integer"
+          },
+          "dau": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "dau",
+          "mau",
+          "users"
+        ]
+      },
+      "Key": {
+        "type": "object",
+        "properties": {
+          "crv": {
+            "type": "string"
+          },
+          "kty": {
+            "type": "string"
+          },
+          "x": {
+            "type": "string"
+          },
+          "y": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "crv",
+          "kty",
+          "x",
+          "y"
+        ]
+      },
+      "KeysData": {
+        "type": "object",
+        "properties": {
+          "keys": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Key"
+            }
+          }
+        },
+        "required": [
+          "keys"
+        ]
+      },
+      "LoginRequestRequest": {
+        "type": "object",
+        "description": "Serializer for user login request.",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "minLength": 1,
+            "description": "The email address of the user",
+            "maxLength": 254
+          },
+          "password": {
+            "type": "string",
+            "writeOnly": true,
+            "minLength": 1,
+            "description": "The password for the account",
+            "maxLength": 128
+          },
+          "device_fingerprint": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1,
+            "description": "Unique fingerprint to identify the device (for multi-device support)",
+            "maxLength": 255
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ]
+      },
+      "LoginResponse": {
+        "type": "object",
+        "description": "Response serializer for successful login.",
+        "properties": {
+          "access_token": {
+            "type": "string"
+          },
+          "refresh_token": {
+            "type": "string"
+          },
+          "expires_in": {
+            "type": "integer"
+          },
+          "token_type": {
+            "type": "string"
+          },
+          "id_token": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "access_token",
+          "expires_in",
+          "refresh_token",
+          "token_type"
+        ]
+      },
+      "MagicLinkVerifyRequest": {
+        "type": "object",
+        "properties": {
+          "verification_token": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The verification token sent to the user's email address."
+          },
+          "code_verifier": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The original secret used to create the code challenge."
+          }
+        },
+        "required": [
+          "code_verifier",
+          "verification_token"
+        ]
+      },
+      "MagicLinkVerifyResponse": {
+        "type": "object",
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "description": "The access token to be used to access protected resources",
+            "maxLength": 5000
+          },
+          "expires_in": {
+            "type": "integer",
+            "minimum": 0,
+            "default": 3600,
+            "description": "The remaining lifetime of the access token in seconds"
+          },
+          "id_token": {
+            "type": "string",
+            "description": "The ID token to be used to obtain user information",
+            "maxLength": 5000
+          },
+          "refresh_token": {
+            "type": "string",
+            "description": "The refresh token to be used to obtain new access tokens",
+            "maxLength": 5000
+          },
+          "invitation_uuid": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The invitation UUID if the user was invited"
+          }
+        },
+        "required": [
+          "access_token"
+        ]
+      },
+      "MeApplication": {
+        "type": "object",
+        "properties": {
+          "uuid": {
+            "type": "string",
+            "format": "uuid",
+            "readOnly": true
+          },
+          "name": {
+            "type": "string"
+          },
+          "client_id": {
+            "type": "string",
+            "readOnly": true
+          },
+          "api_key": {
+            "type": "string",
+            "readOnly": true
+          },
+          "website_url": {
+            "type": "string"
+          },
+          "redirect_uris": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "terms_url": {
+            "type": "string",
+            "description": "External reference to the terms of service of the client.",
+            "maxLength": 255
+          },
+          "privacy_url": {
+            "type": "string",
+            "description": "External reference to the privacy policy of the client.",
+            "maxLength": 255
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "description": "Description of the application"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          }
+        },
+        "required": [
+          "api_key",
+          "client_id",
+          "created_at",
+          "uuid"
+        ]
+      },
+      "MeApplicationRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "website_url": {
+            "type": "string"
+          },
+          "redirect_uris": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "terms_url": {
+            "type": "string",
+            "description": "External reference to the terms of service of the client.",
+            "maxLength": 255
+          },
+          "privacy_url": {
+            "type": "string",
+            "description": "External reference to the privacy policy of the client.",
+            "maxLength": 255
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "description": "Description of the application"
+          }
+        }
+      },
+      "MeOrganization": {
+        "type": "object",
+        "properties": {
+          "uuid": {
+            "type": "string",
+            "format": "uuid",
+            "readOnly": true
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 256
+          },
+          "contact_email": {
+            "type": "string",
+            "format": "email",
+            "description": "Contact email of the organization. Used for billing purposes.",
+            "maxLength": 254
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          }
+        },
+        "required": [
+          "contact_email",
+          "created_at",
+          "name",
+          "uuid"
+        ]
+      },
+      "MeOrganizationRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          },
+          "contact_email": {
+            "type": "string",
+            "format": "email",
+            "minLength": 1,
+            "description": "Contact email of the organization. Used for billing purposes.",
+            "maxLength": 254
+          }
+        },
+        "required": [
+          "contact_email",
+          "name"
+        ]
+      },
+      "ModeEnum": {
+        "enum": [
+          "live",
+          "sandbox"
+        ],
+        "type": "string"
+      },
+      "NestedSessionApplication": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "readOnly": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "description": "Description of the application"
+          },
+          "website_url": {
+            "type": "string",
+            "readOnly": true
+          },
+          "logo": {
+            "type": "string",
+            "nullable": true,
+            "description": "Path in S3 of the logo of the application",
+            "maxLength": 255
+          },
+          "client_id": {
+            "type": "string",
+            "readOnly": true
+          }
+        },
+        "required": [
+          "client_id",
+          "name",
+          "website_url"
+        ]
+      },
+      "NestedSessionApplicationRequest": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "description": "Description of the application"
+          },
+          "logo": {
+            "type": "string",
+            "nullable": true,
+            "description": "Path in S3 of the logo of the application",
+            "maxLength": 255
+          }
+        }
+      },
+      "NullEnum": {
+        "enum": [
+          null
+        ]
+      },
+      "OrganizationApplication": {
+        "type": "object",
+        "properties": {
+          "uuid": {
+            "type": "string",
+            "format": "uuid",
+            "readOnly": true
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "uuid"
+        ]
+      },
+      "OrganizationInfo": {
+        "type": "object",
+        "properties": {
+          "uuid": {
+            "type": "string",
+            "format": "uuid",
+            "readOnly": true
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 256
+          },
+          "icon": {
+            "type": "string",
+            "nullable": true,
+            "description": "Path in S3 of the icon of the organization",
+            "maxLength": 256
+          },
+          "billing_address_line1": {
+            "type": "string",
+            "nullable": true,
+            "description": "Billing address line 1 of the organization",
+            "maxLength": 256
+          },
+          "billing_address_line2": {
+            "type": "string",
+            "nullable": true,
+            "description": "Billing address line 2 of the organization",
+            "maxLength": 256
+          },
+          "billing_city": {
+            "type": "string",
+            "nullable": true,
+            "description": "Billing city of the organization",
+            "maxLength": 128
+          },
+          "billing_state": {
+            "type": "string",
+            "nullable": true,
+            "description": "Billing state of the organization",
+            "maxLength": 128
+          },
+          "billing_postal_code": {
+            "type": "string",
+            "nullable": true,
+            "description": "Billing postal code of the organization",
+            "maxLength": 32
+          },
+          "billing_country": {
+            "type": "string",
+            "nullable": true,
+            "description": "Billing country of the organization (ISO 3166-1 alpha-2 code)",
+            "maxLength": 2
+          },
+          "contact_email": {
+            "type": "string",
+            "format": "email",
+            "description": "Contact email of the organization. Used for billing purposes.",
+            "maxLength": 254
+          },
+          "phone_number": {
+            "type": "string",
+            "nullable": true,
+            "description": "Phone number of the organization",
+            "maxLength": 20
+          },
+          "tax_id": {
+            "type": "string",
+            "nullable": true,
+            "description": "Tax ID of the organization",
+            "maxLength": 64
+          },
+          "business_legal_name": {
+            "type": "string",
+            "nullable": true,
+            "description": "Business legal name of the organization",
+            "maxLength": 256
+          },
+          "website_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "Website URL of the organization"
+          },
+          "terms_of_service_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "Terms of service URL of the organization"
+          },
+          "user_role": {
+            "type": "string",
+            "readOnly": true
+          },
+          "user_permissions": {
+            "type": "string",
+            "readOnly": true
+          },
+          "application_count": {
+            "type": "string",
+            "readOnly": true
+          },
+          "owners_identifier": {
+            "type": "string",
+            "readOnly": true
+          },
+          "enforce_2fa": {
+            "type": "boolean",
+            "description": "Flag to indicate if the organization enforces 2FA for all members."
+          },
+          "console_industry": {
+            "nullable": true,
+            "description": "Industry of the organization.",
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ConsoleIndustryEnum"
+              },
+              {
+                "$ref": "#/components/schemas/BlankEnum"
+              },
+              {
+                "$ref": "#/components/schemas/NullEnum"
+              }
+            ]
+          },
+          "console_country": {
+            "type": "string",
+            "nullable": true,
+            "description": "Country of the organization, from the console form.",
+            "maxLength": 128
+          },
+          "console_ip_country": {
+            "type": "string",
+            "nullable": true,
+            "description": "Country resolved from the console request IP during organization creation.",
+            "maxLength": 128
+          },
+          "console_job_role": {
+            "nullable": true,
+            "description": "Job role of the organization.",
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ConsoleJobRoleEnum"
+              },
+              {
+                "$ref": "#/components/schemas/BlankEnum"
+              },
+              {
+                "$ref": "#/components/schemas/NullEnum"
+              }
+            ]
+          },
+          "console_product_interested": {
+            "type": "object",
+            "additionalProperties": {},
+            "nullable": true,
+            "description": "Products the organization is interested in."
+          },
+          "console_estimated_yearly_verifications": {
+            "nullable": true,
+            "description": "Estimated yearly verifications.",
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ConsoleEstimatedYearlyVerificationsEnum"
+              },
+              {
+                "$ref": "#/components/schemas/BlankEnum"
+              },
+              {
+                "$ref": "#/components/schemas/NullEnum"
+              }
+            ]
+          },
+          "is_form_completed": {
+            "type": "string",
+            "readOnly": true
+          }
+        },
+        "required": [
+          "application_count",
+          "contact_email",
+          "is_form_completed",
+          "name",
+          "owners_identifier",
+          "user_permissions",
+          "user_role",
+          "uuid"
+        ]
+      },
+      "OrganizationMember": {
+        "type": "object",
+        "properties": {
+          "uuid": {
+            "type": "string",
+            "format": "uuid",
+            "readOnly": true
+          },
+          "user_id": {
+            "type": "string",
+            "readOnly": true
+          },
+          "full_name": {
+            "type": "string",
+            "readOnly": true
+          },
+          "identifier": {
+            "type": "string",
+            "readOnly": true
+          },
+          "is_reseller": {
+            "type": "string",
+            "readOnly": true
+          },
+          "is_active": {
+            "type": "string",
+            "readOnly": true
+          },
+          "accessible_applications": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrganizationApplication"
+            }
+          },
+          "role": {
+            "type": "string",
+            "readOnly": true
+          },
+          "has_2fa_enabled": {
+            "type": "string",
+            "readOnly": true
+          }
+        },
+        "required": [
+          "accessible_applications",
+          "full_name",
+          "has_2fa_enabled",
+          "identifier",
+          "is_active",
+          "is_reseller",
+          "role",
+          "user_id",
+          "uuid"
+        ]
+      },
+      "OrganizationMemberUpdate": {
+        "type": "object",
+        "properties": {
+          "role": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "accessible_applications": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        },
+        "required": [
+          "accessible_applications",
+          "role"
+        ]
+      },
+      "OrganizationMemberUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "role": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "accessible_applications": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        },
+        "required": [
+          "accessible_applications",
+          "role"
+        ]
+      },
+      "OrganizationModel": {
+        "type": "object",
+        "properties": {
+          "uuid": {
+            "type": "string",
+            "format": "uuid",
+            "readOnly": true
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 256
+          },
+          "icon": {
+            "type": "string",
+            "nullable": true,
+            "description": "Path in S3 of the icon of the organization",
+            "maxLength": 256
+          },
+          "billing_address_line1": {
+            "type": "string",
+            "nullable": true,
+            "description": "Billing address line 1 of the organization",
+            "maxLength": 256
+          },
+          "billing_address_line2": {
+            "type": "string",
+            "nullable": true,
+            "description": "Billing address line 2 of the organization",
+            "maxLength": 256
+          },
+          "billing_city": {
+            "type": "string",
+            "nullable": true,
+            "description": "Billing city of the organization",
+            "maxLength": 128
+          },
+          "billing_state": {
+            "type": "string",
+            "nullable": true,
+            "description": "Billing state of the organization",
+            "maxLength": 128
+          },
+          "billing_postal_code": {
+            "type": "string",
+            "nullable": true,
+            "description": "Billing postal code of the organization",
+            "maxLength": 32
+          },
+          "billing_country": {
+            "type": "string",
+            "nullable": true,
+            "description": "Billing country of the organization (ISO 3166-1 alpha-2 code)",
+            "maxLength": 2
+          },
+          "contact_email": {
+            "type": "string",
+            "format": "email",
+            "description": "Contact email of the organization. Used for billing purposes.",
+            "maxLength": 254
+          },
+          "phone_number": {
+            "type": "string",
+            "nullable": true,
+            "description": "Phone number of the organization",
+            "maxLength": 20
+          },
+          "tax_id": {
+            "type": "string",
+            "nullable": true,
+            "description": "Tax ID of the organization",
+            "maxLength": 64
+          },
+          "business_legal_name": {
+            "type": "string",
+            "nullable": true,
+            "description": "Business legal name of the organization",
+            "maxLength": 256
+          },
+          "website_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "Website URL of the organization"
+          },
+          "terms_of_service_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "Terms of service URL of the organization"
+          },
+          "user_role": {
+            "type": "string",
+            "readOnly": true
+          },
+          "user_permissions": {
+            "type": "string",
+            "readOnly": true
+          },
+          "application_count": {
+            "type": "string",
+            "readOnly": true
+          },
+          "owners_identifier": {
+            "type": "string",
+            "readOnly": true
+          },
+          "enforce_2fa": {
+            "type": "boolean",
+            "description": "Flag to indicate if the organization enforces 2FA for all members."
+          },
+          "console_industry": {
+            "nullable": true,
+            "description": "Industry of the organization.",
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ConsoleIndustryEnum"
+              },
+              {
+                "$ref": "#/components/schemas/BlankEnum"
+              },
+              {
+                "$ref": "#/components/schemas/NullEnum"
+              }
+            ]
+          },
+          "console_country": {
+            "type": "string",
+            "nullable": true,
+            "description": "Country of the organization, from the console form.",
+            "maxLength": 128
+          },
+          "console_ip_country": {
+            "type": "string",
+            "nullable": true,
+            "description": "Country resolved from the console request IP during organization creation.",
+            "maxLength": 128
+          },
+          "console_job_role": {
+            "nullable": true,
+            "description": "Job role of the organization.",
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ConsoleJobRoleEnum"
+              },
+              {
+                "$ref": "#/components/schemas/BlankEnum"
+              },
+              {
+                "$ref": "#/components/schemas/NullEnum"
+              }
+            ]
+          },
+          "console_product_interested": {
+            "type": "object",
+            "additionalProperties": {},
+            "nullable": true,
+            "description": "Products the organization is interested in."
+          },
+          "console_estimated_yearly_verifications": {
+            "nullable": true,
+            "description": "Estimated yearly verifications.",
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ConsoleEstimatedYearlyVerificationsEnum"
+              },
+              {
+                "$ref": "#/components/schemas/BlankEnum"
+              },
+              {
+                "$ref": "#/components/schemas/NullEnum"
+              }
+            ]
+          },
+          "is_form_completed": {
+            "type": "string",
+            "readOnly": true
+          }
+        },
+        "required": [
+          "application_count",
+          "contact_email",
+          "is_form_completed",
+          "name",
+          "owners_identifier",
+          "user_permissions",
+          "user_role",
+          "uuid"
+        ]
+      },
+      "OrganizationModelRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          },
+          "icon": {
+            "type": "string",
+            "nullable": true,
+            "description": "Path in S3 of the icon of the organization",
+            "maxLength": 256
+          },
+          "billing_address_line1": {
+            "type": "string",
+            "nullable": true,
+            "description": "Billing address line 1 of the organization",
+            "maxLength": 256
+          },
+          "billing_address_line2": {
+            "type": "string",
+            "nullable": true,
+            "description": "Billing address line 2 of the organization",
+            "maxLength": 256
+          },
+          "billing_city": {
+            "type": "string",
+            "nullable": true,
+            "description": "Billing city of the organization",
+            "maxLength": 128
+          },
+          "billing_state": {
+            "type": "string",
+            "nullable": true,
+            "description": "Billing state of the organization",
+            "maxLength": 128
+          },
+          "billing_postal_code": {
+            "type": "string",
+            "nullable": true,
+            "description": "Billing postal code of the organization",
+            "maxLength": 32
+          },
+          "billing_country": {
+            "type": "string",
+            "nullable": true,
+            "description": "Billing country of the organization (ISO 3166-1 alpha-2 code)",
+            "maxLength": 2
+          },
+          "contact_email": {
+            "type": "string",
+            "format": "email",
+            "minLength": 1,
+            "description": "Contact email of the organization. Used for billing purposes.",
+            "maxLength": 254
+          },
+          "phone_number": {
+            "type": "string",
+            "nullable": true,
+            "description": "Phone number of the organization",
+            "maxLength": 20
+          },
+          "tax_id": {
+            "type": "string",
+            "nullable": true,
+            "description": "Tax ID of the organization",
+            "maxLength": 64
+          },
+          "business_legal_name": {
+            "type": "string",
+            "nullable": true,
+            "description": "Business legal name of the organization",
+            "maxLength": 256
+          },
+          "website_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "Website URL of the organization"
+          },
+          "terms_of_service_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "Terms of service URL of the organization"
+          },
+          "image": {
+            "type": "string",
+            "format": "binary",
+            "writeOnly": true,
+            "description": "Icon image for the organization."
+          },
+          "enforce_2fa": {
+            "type": "boolean",
+            "description": "Flag to indicate if the organization enforces 2FA for all members."
+          },
+          "console_industry": {
+            "nullable": true,
+            "description": "Industry of the organization.",
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ConsoleIndustryEnum"
+              },
+              {
+                "$ref": "#/components/schemas/BlankEnum"
+              },
+              {
+                "$ref": "#/components/schemas/NullEnum"
+              }
+            ]
+          },
+          "console_country": {
+            "type": "string",
+            "nullable": true,
+            "description": "Country of the organization, from the console form.",
+            "maxLength": 128
+          },
+          "console_ip_country": {
+            "type": "string",
+            "nullable": true,
+            "description": "Country resolved from the console request IP during organization creation.",
+            "maxLength": 128
+          },
+          "console_job_role": {
+            "nullable": true,
+            "description": "Job role of the organization.",
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ConsoleJobRoleEnum"
+              },
+              {
+                "$ref": "#/components/schemas/BlankEnum"
+              },
+              {
+                "$ref": "#/components/schemas/NullEnum"
+              }
+            ]
+          },
+          "console_product_interested": {
+            "type": "object",
+            "additionalProperties": {},
+            "nullable": true,
+            "description": "Products the organization is interested in."
+          },
+          "console_estimated_yearly_verifications": {
+            "nullable": true,
+            "description": "Estimated yearly verifications.",
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ConsoleEstimatedYearlyVerificationsEnum"
+              },
+              {
+                "$ref": "#/components/schemas/BlankEnum"
+              },
+              {
+                "$ref": "#/components/schemas/NullEnum"
+              }
+            ]
+          },
+          "attribution_ft": {
+            "type": "object",
+            "additionalProperties": {},
+            "writeOnly": true,
+            "description": "First touch attribution data captured when creating the organization."
+          },
+          "attribution_lt": {
+            "type": "object",
+            "additionalProperties": {},
+            "writeOnly": true,
+            "description": "Last touch attribution data captured when creating the organization."
+          }
+        },
+        "required": [
+          "contact_email",
+          "name"
+        ]
+      },
+      "PaginatedDataSessionList": {
+        "type": "object",
+        "required": [
+          "count",
+          "results"
+        ],
+        "properties": {
+          "count": {
+            "type": "integer",
+            "example": 123
+          },
+          "next": {
+            "type": "string",
+            "nullable": true,
+            "format": "uri",
+            "example": "http://api.example.org/accounts/?offset=400&limit=100"
+          },
+          "previous": {
+            "type": "string",
+            "nullable": true,
+            "format": "uri",
+            "example": "http://api.example.org/accounts/?offset=200&limit=100"
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DataSession"
+            }
+          }
+        }
+      },
+      "PaginatedMeApplicationList": {
+        "type": "object",
+        "required": [
+          "count",
+          "results"
+        ],
+        "properties": {
+          "count": {
+            "type": "integer",
+            "example": 123
+          },
+          "next": {
+            "type": "string",
+            "nullable": true,
+            "format": "uri",
+            "example": "http://api.example.org/accounts/?offset=400&limit=100"
+          },
+          "previous": {
+            "type": "string",
+            "nullable": true,
+            "format": "uri",
+            "example": "http://api.example.org/accounts/?offset=200&limit=100"
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MeApplication"
+            }
+          }
+        }
+      },
+      "PaginatedMeOrganizationList": {
+        "type": "object",
+        "required": [
+          "count",
+          "results"
+        ],
+        "properties": {
+          "count": {
+            "type": "integer",
+            "example": 123
+          },
+          "next": {
+            "type": "string",
+            "nullable": true,
+            "format": "uri",
+            "example": "http://api.example.org/accounts/?offset=400&limit=100"
+          },
+          "previous": {
+            "type": "string",
+            "nullable": true,
+            "format": "uri",
+            "example": "http://api.example.org/accounts/?offset=200&limit=100"
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MeOrganization"
+            }
+          }
+        }
+      },
+      "PaginatedUserApplicationListList": {
+        "type": "object",
+        "required": [
+          "count",
+          "results"
+        ],
+        "properties": {
+          "count": {
+            "type": "integer",
+            "example": 123
+          },
+          "next": {
+            "type": "string",
+            "nullable": true,
+            "format": "uri",
+            "example": "http://api.example.org/accounts/?offset=400&limit=100"
+          },
+          "previous": {
+            "type": "string",
+            "nullable": true,
+            "format": "uri",
+            "example": "http://api.example.org/accounts/?offset=200&limit=100"
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserApplicationList"
+            }
+          }
+        }
+      },
+      "PasswordResetRequest": {
+        "type": "object",
+        "description": "Serializer for password reset.",
+        "properties": {
+          "token": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The password reset token"
+          },
+          "new_password": {
+            "type": "string",
+            "writeOnly": true,
+            "minLength": 8,
+            "description": "The new password (min 8 chars, max 128 chars, must include at least one digit and one special char)",
+            "maxLength": 128
+          }
+        },
+        "required": [
+          "new_password",
+          "token"
+        ]
+      },
+      "PatchedApplicationApiKeyRequest": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255
+          }
+        }
+      },
+      "PatchedApplicationIsAppAlreadySetupRequest": {
+        "type": "object",
+        "properties": {
+          "is_app_already_setup": {
+            "type": "boolean",
+            "default": false
+          }
+        }
+      },
+      "PatchedApplicationPatchRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "website_url": {
+            "type": "string",
+            "minLength": 1
+          },
+          "redirect_uris": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "image": {
+            "type": "string",
+            "format": "binary",
+            "writeOnly": true,
+            "description": "ID document image for OCR processing."
+          },
+          "terms_url": {
+            "type": "string",
+            "minLength": 1
+          },
+          "privacy_url": {
+            "type": "string",
+            "minLength": 1
+          },
+          "rotate_secret": {
+            "type": "boolean",
+            "writeOnly": true,
+            "default": false
+          },
+          "rotate_secret_key": {
+            "type": "boolean",
+            "writeOnly": true,
+            "default": false
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "description": "Description of the application"
+          },
+          "logo": {
+            "type": "string",
+            "nullable": true,
+            "description": "Path in S3 of the logo of the application",
+            "maxLength": 255
+          },
+          "is_app_already_setup": {
+            "type": "boolean",
+            "description": "Whether the application is already setup in the Business Console"
+          },
+          "default_scopes": {
+            "type": "object",
+            "additionalProperties": {},
+            "description": "Default scopes for the application. user_id is always required."
+          },
+          "mode": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ModeEnum"
+              }
+            ],
+            "description": "Environment for this application. Sandbox apps are organization-level test apps created automatically alongside the default live app."
+          }
+        }
+      },
+      "PatchedApplicationUpdateDefaultScopesRequest": {
+        "type": "object",
+        "properties": {
+          "default_scopes": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "boolean"
+            }
+          }
+        }
+      },
+      "PatchedMeApplicationRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "website_url": {
+            "type": "string"
+          },
+          "redirect_uris": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "terms_url": {
+            "type": "string",
+            "description": "External reference to the terms of service of the client.",
+            "maxLength": 255
+          },
+          "privacy_url": {
+            "type": "string",
+            "description": "External reference to the privacy policy of the client.",
+            "maxLength": 255
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "description": "Description of the application"
+          }
+        }
+      },
+      "PatchedOrganizationMemberUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "role": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "accessible_applications": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        }
+      },
+      "PatchedOrganizationModelRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          },
+          "icon": {
+            "type": "string",
+            "nullable": true,
+            "description": "Path in S3 of the icon of the organization",
+            "maxLength": 256
+          },
+          "billing_address_line1": {
+            "type": "string",
+            "nullable": true,
+            "description": "Billing address line 1 of the organization",
+            "maxLength": 256
+          },
+          "billing_address_line2": {
+            "type": "string",
+            "nullable": true,
+            "description": "Billing address line 2 of the organization",
+            "maxLength": 256
+          },
+          "billing_city": {
+            "type": "string",
+            "nullable": true,
+            "description": "Billing city of the organization",
+            "maxLength": 128
+          },
+          "billing_state": {
+            "type": "string",
+            "nullable": true,
+            "description": "Billing state of the organization",
+            "maxLength": 128
+          },
+          "billing_postal_code": {
+            "type": "string",
+            "nullable": true,
+            "description": "Billing postal code of the organization",
+            "maxLength": 32
+          },
+          "billing_country": {
+            "type": "string",
+            "nullable": true,
+            "description": "Billing country of the organization (ISO 3166-1 alpha-2 code)",
+            "maxLength": 2
+          },
+          "contact_email": {
+            "type": "string",
+            "format": "email",
+            "minLength": 1,
+            "description": "Contact email of the organization. Used for billing purposes.",
+            "maxLength": 254
+          },
+          "phone_number": {
+            "type": "string",
+            "nullable": true,
+            "description": "Phone number of the organization",
+            "maxLength": 20
+          },
+          "tax_id": {
+            "type": "string",
+            "nullable": true,
+            "description": "Tax ID of the organization",
+            "maxLength": 64
+          },
+          "business_legal_name": {
+            "type": "string",
+            "nullable": true,
+            "description": "Business legal name of the organization",
+            "maxLength": 256
+          },
+          "website_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "Website URL of the organization"
+          },
+          "terms_of_service_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "Terms of service URL of the organization"
+          },
+          "image": {
+            "type": "string",
+            "format": "binary",
+            "writeOnly": true,
+            "description": "Icon image for the organization."
+          },
+          "enforce_2fa": {
+            "type": "boolean",
+            "description": "Flag to indicate if the organization enforces 2FA for all members."
+          },
+          "console_industry": {
+            "nullable": true,
+            "description": "Industry of the organization.",
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ConsoleIndustryEnum"
+              },
+              {
+                "$ref": "#/components/schemas/BlankEnum"
+              },
+              {
+                "$ref": "#/components/schemas/NullEnum"
+              }
+            ]
+          },
+          "console_country": {
+            "type": "string",
+            "nullable": true,
+            "description": "Country of the organization, from the console form.",
+            "maxLength": 128
+          },
+          "console_ip_country": {
+            "type": "string",
+            "nullable": true,
+            "description": "Country resolved from the console request IP during organization creation.",
+            "maxLength": 128
+          },
+          "console_job_role": {
+            "nullable": true,
+            "description": "Job role of the organization.",
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ConsoleJobRoleEnum"
+              },
+              {
+                "$ref": "#/components/schemas/BlankEnum"
+              },
+              {
+                "$ref": "#/components/schemas/NullEnum"
+              }
+            ]
+          },
+          "console_product_interested": {
+            "type": "object",
+            "additionalProperties": {},
+            "nullable": true,
+            "description": "Products the organization is interested in."
+          },
+          "console_estimated_yearly_verifications": {
+            "nullable": true,
+            "description": "Estimated yearly verifications.",
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ConsoleEstimatedYearlyVerificationsEnum"
+              },
+              {
+                "$ref": "#/components/schemas/BlankEnum"
+              },
+              {
+                "$ref": "#/components/schemas/NullEnum"
+              }
+            ]
+          },
+          "attribution_ft": {
+            "type": "object",
+            "additionalProperties": {},
+            "writeOnly": true,
+            "description": "First touch attribution data captured when creating the organization."
+          },
+          "attribution_lt": {
+            "type": "object",
+            "additionalProperties": {},
+            "writeOnly": true,
+            "description": "Last touch attribution data captured when creating the organization."
+          }
+        }
+      },
+      "PatchedTransferOwnerRequest": {
+        "type": "object",
+        "properties": {
+          "new_owner_id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "Permission": {
+        "type": "object",
+        "properties": {
+          "uuid": {
+            "type": "string",
+            "format": "uuid",
+            "readOnly": true
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "action": {
+            "$ref": "#/components/schemas/ActionEnum"
+          },
+          "action_label": {
+            "type": "string",
+            "readOnly": true
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 300
+          }
+        },
+        "required": [
+          "action",
+          "action_label",
+          "description",
+          "name",
+          "uuid"
+        ]
+      },
+      "ProviderEnum": {
+        "enum": [
+          "okta",
+          "onelogin",
+          "azure_ad",
+          "google_workspace",
+          "ping_identity",
+          "auth0",
+          "jumpcloud",
+          "duo",
+          "custom"
+        ],
+        "type": "string"
+      },
+      "RegisterRequestRequest": {
+        "type": "object",
+        "description": "Serializer for user registration request.",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "minLength": 1,
+            "description": "The email address to register with",
+            "maxLength": 254
+          },
+          "password": {
+            "type": "string",
+            "writeOnly": true,
+            "minLength": 8,
+            "description": "The password for the account (min 8 chars, max 128 chars, must include at least one digit and one special char)",
+            "maxLength": 128
+          },
+          "redirect_url": {
+            "type": "string",
+            "format": "uri",
+            "minLength": 1,
+            "description": "The URL to redirect the user to after email confirmation"
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ]
+      },
+      "ResendConfirmationRequest": {
+        "type": "object",
+        "description": "Serializer for resending confirmation email.",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "minLength": 1,
+            "description": "The email address to resend confirmation to",
+            "maxLength": 254
+          },
+          "confirmation_session": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Current opaque confirmation session",
+            "pattern": "^[A-Za-z0-9_-]{32,128}$"
+          },
+          "redirect_url": {
+            "type": "string",
+            "format": "uri",
+            "minLength": 1,
+            "description": "The URL to redirect the user to after email confirmation"
+          }
+        },
+        "required": [
+          "email"
+        ]
+      },
+      "RoleCreate": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "slug": {
+            "type": "string",
+            "maxLength": 100,
+            "pattern": "^[-a-zA-Z0-9_]+$"
+          },
+          "description": {
+            "type": "string",
+            "default": ""
+          },
+          "permission_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        },
+        "required": [
+          "name",
+          "slug"
+        ]
+      },
+      "RoleCreateRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "slug": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
+            "pattern": "^[-a-zA-Z0-9_]+$"
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1,
+            "default": ""
+          },
+          "permission_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        },
+        "required": [
+          "name",
+          "slug"
+        ]
+      },
+      "RoleList": {
+        "type": "object",
+        "properties": {
+          "uuid": {
+            "type": "string",
+            "format": "uuid",
+            "readOnly": true
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "slug": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "description": {
+            "type": "string"
+          },
+          "is_system": {
+            "type": "boolean"
+          },
+          "member_count": {
+            "type": "string",
+            "readOnly": true
+          }
+        },
+        "required": [
+          "member_count",
+          "name",
+          "slug",
+          "uuid"
+        ]
+      },
+      "SAMLCheckSlugRequest": {
+        "type": "object",
+        "description": "Serializer for checking if an organization slug has SAML configured.",
+        "properties": {
+          "slug": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The organization slug to check for SAML configuration.",
+            "pattern": "^[-a-zA-Z0-9_]+$"
+          }
+        },
+        "required": [
+          "slug"
+        ]
+      },
+      "SAMLCheckSlugResponse": {
+        "type": "object",
+        "description": "Response for SAML slug check.",
+        "properties": {
+          "has_saml": {
+            "type": "boolean",
+            "description": "Whether the organization has SAML configured"
+          },
+          "organization_name": {
+            "type": "string",
+            "description": "Name of the organization"
+          },
+          "organization_slug": {
+            "type": "string",
+            "description": "Organization slug"
+          },
+          "provider": {
+            "type": "string",
+            "description": "SAML provider type"
+          },
+          "enforce_sso": {
+            "type": "boolean",
+            "description": "Whether SSO is enforced"
+          }
+        },
+        "required": [
+          "has_saml"
+        ]
+      },
+      "SAMLConfigDetail": {
+        "type": "object",
+        "description": "Detailed SAML configuration (for reading).",
+        "properties": {
+          "uuid": {
+            "type": "string",
+            "format": "uuid",
+            "readOnly": true
+          },
+          "configured": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "organization_uuid": {
+            "type": "string",
+            "format": "uuid",
+            "readOnly": true
+          },
+          "organization_name": {
+            "type": "string",
+            "readOnly": true
+          },
+          "organization_slug": {
+            "type": "string",
+            "readOnly": true
+          },
+          "provider": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProviderEnum"
+              }
+            ],
+            "readOnly": true,
+            "description": "The SAML identity provider type."
+          },
+          "provider_display": {
+            "type": "string",
+            "readOnly": true
+          },
+          "idp_entity_id": {
+            "type": "string",
+            "readOnly": true,
+            "description": "The Entity ID of the Identity Provider (from IdP metadata)."
+          },
+          "idp_sso_url": {
+            "type": "string",
+            "format": "uri",
+            "readOnly": true,
+            "description": "The Single Sign-On URL of the Identity Provider."
+          },
+          "idp_slo_url": {
+            "type": "string",
+            "format": "uri",
+            "readOnly": true,
+            "nullable": true,
+            "description": "The Single Logout URL of the Identity Provider (optional)."
+          },
+          "is_enabled": {
+            "type": "boolean",
+            "readOnly": true,
+            "description": "Whether SAML SSO is enabled for this organization."
+          },
+          "enforce_sso": {
+            "type": "boolean",
+            "readOnly": true,
+            "description": "Require all organization members to use SAML SSO (disable password login)."
+          },
+          "allowed_email_domains": {
+            "type": "object",
+            "additionalProperties": {},
+            "readOnly": true,
+            "description": "List of VERIFIED email domains allowed to authenticate via this SAML configuration. Domains must be verified via DNS TXT record before they can be added here. Example: ['company.com', 'subsidiary.company.com']. "
+          },
+          "has_verified_domains": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "pending_domains": {
+            "type": "array",
+            "items": {},
+            "readOnly": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          }
+        },
+        "required": [
+          "allowed_email_domains",
+          "configured",
+          "created_at",
+          "enforce_sso",
+          "has_verified_domains",
+          "idp_entity_id",
+          "idp_slo_url",
+          "idp_sso_url",
+          "is_enabled",
+          "organization_name",
+          "organization_slug",
+          "organization_uuid",
+          "pending_domains",
+          "provider",
+          "provider_display",
+          "updated_at",
+          "uuid"
+        ]
+      },
+      "SAMLConfigUpdateRequest": {
+        "type": "object",
+        "description": "Serializer for creating/updating SAML configuration.\n\nNOTE: allowed_email_domains cannot be set directly here.\nDomains must be verified via DNS TXT record before they can be used.\nUse the domain verification endpoints to add domains.",
+        "properties": {
+          "provider": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProviderEnum"
+              }
+            ],
+            "description": "The identity provider type (okta, onelogin, azure_ad, etc.)"
+          },
+          "idp_entity_id": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The Entity ID of your Identity Provider (from IdP metadata)",
+            "maxLength": 512
+          },
+          "idp_sso_url": {
+            "type": "string",
+            "format": "uri",
+            "minLength": 1,
+            "description": "The Single Sign-On URL of your Identity Provider",
+            "maxLength": 1024
+          },
+          "idp_slo_url": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true,
+            "description": "The Single Logout URL of your Identity Provider (optional)",
+            "maxLength": 1024
+          },
+          "idp_x509_cert": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The X.509 certificate of your Identity Provider (PEM format). Required for new configurations."
+          },
+          "is_enabled": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether to enable SAML SSO. NOTE: Requires at least one verified domain. Verify domain ownership first using the domain verification endpoints."
+          },
+          "enforce_sso": {
+            "type": "boolean",
+            "default": false,
+            "description": "Enforce SAML authentication for the entire organization (disable password login for all members)"
+          },
+          "attribute_mapping": {
+            "type": "object",
+            "additionalProperties": {},
+            "description": "Custom mapping of SAML attributes to user fields"
+          }
+        },
+        "required": [
+          "idp_entity_id",
+          "idp_sso_url",
+          "provider"
+        ]
+      },
+      "SAMLInitiateRequest": {
+        "type": "object",
+        "description": "Serializer for initiating SAML login.",
+        "properties": {
+          "organization_slug": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The organization slug for SSO.",
+            "pattern": "^[-a-zA-Z0-9_]+$"
+          },
+          "redirect_uri": {
+            "type": "string",
+            "format": "uri",
+            "minLength": 1,
+            "description": "The URL to redirect to after SAML authentication."
+          },
+          "device_fingerprint": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 1,
+            "description": "Unique fingerprint to identify the device (for multi-device support).",
+            "maxLength": 255
+          }
+        },
+        "required": [
+          "organization_slug",
+          "redirect_uri"
+        ]
+      },
+      "SAMLInitiateResponse": {
+        "type": "object",
+        "description": "Response for SAML initiation.",
+        "properties": {
+          "redirect_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "URL to redirect user to for SAML authentication"
+          },
+          "state": {
+            "type": "string",
+            "description": "State token for CSRF protection"
+          },
+          "organization_name": {
+            "type": "string",
+            "description": "Organization name"
+          },
+          "organization_slug": {
+            "type": "string",
+            "description": "Organization slug"
+          }
+        },
+        "required": [
+          "organization_name",
+          "organization_slug",
+          "redirect_url",
+          "state"
+        ]
+      },
+      "SAMLMetadataParseRequest": {
+        "type": "object",
+        "description": "Serializer for parsing IdP metadata.",
+        "properties": {
+          "metadata_url": {
+            "type": "string",
+            "format": "uri",
+            "minLength": 1,
+            "description": "URL to fetch IdP metadata from."
+          },
+          "metadata_xml": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Raw IdP metadata XML."
+          }
+        }
+      },
+      "SAMLMetadataParseResponse": {
+        "type": "object",
+        "description": "Response for parsed IdP metadata.",
+        "properties": {
+          "idp_entity_id": {
+            "type": "string"
+          },
+          "idp_sso_url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "idp_slo_url": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true
+          },
+          "idp_x509_cert": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "idp_entity_id",
+          "idp_sso_url",
+          "idp_x509_cert"
+        ]
+      },
+      "SAMLSPInfo": {
+        "type": "object",
+        "description": "Service Provider information for IdP configuration.",
+        "properties": {
+          "entity_id": {
+            "type": "string",
+            "format": "uri",
+            "description": "The Entity ID (Audience URI) to configure in your IdP"
+          },
+          "acs_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "The Assertion Consumer Service URL - where IdP sends SAML Response"
+          },
+          "metadata_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "URL to download SP metadata XML"
+          },
+          "supported_providers": {
+            "type": "array",
+            "items": {},
+            "description": "List of supported identity providers"
+          }
+        },
+        "required": [
+          "acs_url",
+          "entity_id",
+          "metadata_url",
+          "supported_providers"
+        ]
+      },
+      "SAMLTokenExchangeRequest": {
+        "type": "object",
+        "description": "Serializer for exchanging SAML authorization code for tokens.",
+        "properties": {
+          "code": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The one-time authorization code received after SAML authentication.",
+            "maxLength": 64
+          }
+        },
+        "required": [
+          "code"
+        ]
+      },
+      "SAMLTokenExchangeResponse": {
+        "type": "object",
+        "description": "Response for SAML token exchange.",
+        "properties": {
+          "access_token": {
+            "type": "string"
+          },
+          "refresh_token": {
+            "type": "string"
+          },
+          "id_token": {
+            "type": "string"
+          },
+          "token_type": {
+            "type": "string"
+          },
+          "expires_in": {
+            "type": "integer"
+          },
+          "is_new_user": {
+            "type": "boolean"
+          },
+          "requires_2fa": {
+            "type": "boolean"
+          },
+          "requires_2fa_setup": {
+            "type": "boolean"
+          },
+          "temp_token": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "StaffOrganizationSearch": {
+        "type": "object",
+        "description": "Serializer for staff organization search results.\nReturns detailed organization information for staff users.",
+        "properties": {
+          "uuid": {
+            "type": "string",
+            "format": "uuid",
+            "readOnly": true
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the organization",
+            "maxLength": 256
+          },
+          "icon": {
+            "type": "string",
+            "nullable": true,
+            "description": "Path in S3 of the icon of the organization",
+            "maxLength": 256
+          },
+          "contact_email": {
+            "type": "string",
+            "format": "email",
+            "description": "Contact email of the organization. Used for billing purposes.",
+            "maxLength": 254
+          },
+          "console_country": {
+            "type": "string",
+            "nullable": true,
+            "description": "Country of the organization, from the console form.",
+            "maxLength": 128
+          },
+          "console_ip_country": {
+            "type": "string",
+            "nullable": true,
+            "description": "Country resolved from the console request IP during organization creation.",
+            "maxLength": 128
+          },
+          "console_industry": {
+            "nullable": true,
+            "description": "Industry of the organization.",
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ConsoleIndustryEnum"
+              },
+              {
+                "$ref": "#/components/schemas/BlankEnum"
+              },
+              {
+                "$ref": "#/components/schemas/NullEnum"
+              }
+            ]
+          },
+          "website_url": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true,
+            "description": "Website URL of the organization",
+            "maxLength": 200
+          },
+          "business_legal_name": {
+            "type": "string",
+            "nullable": true,
+            "description": "Business legal name of the organization",
+            "maxLength": 256
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "deleted_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "application_count": {
+            "type": "string",
+            "readOnly": true
+          },
+          "creator_email": {
+            "type": "string",
+            "readOnly": true
+          },
+          "member_count": {
+            "type": "string",
+            "readOnly": true
+          }
+        },
+        "required": [
+          "application_count",
+          "contact_email",
+          "created_at",
+          "creator_email",
+          "member_count",
+          "name",
+          "uuid"
+        ]
+      },
+      "StatusAadEnum": {
+        "enum": [
+          "initialized",
+          "retrieved",
+          "declined",
+          "confirmed",
+          "expired"
+        ],
+        "type": "string"
+      },
+      "TokenRequestRequest": {
+        "type": "object",
+        "properties": {
+          "grant_type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GrantTypeEnum"
+              }
+            ],
+            "description": "The grant type for the access token request"
+          },
+          "code": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The authorization code received in the authorization response",
+            "maxLength": 100
+          },
+          "wallet_signature": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The wallet signature of the authorization policy",
+            "maxLength": 1000
+          },
+          "refresh_token": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The refresh token to be used to obtain new access token",
+            "maxLength": 5000
+          },
+          "client_id": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The client ID of the application",
+            "maxLength": 100
+          },
+          "redirect_uri": {
+            "type": "string",
+            "format": "uri",
+            "minLength": 1,
+            "description": "The redirect URI of the application"
+          },
+          "subject_token": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The user's console access token to exchange for a scoped MCP token",
+            "maxLength": 5000
+          },
+          "scope": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Space-delimited scopes requested for the exchanged token",
+            "maxLength": 255
+          }
+        },
+        "required": [
+          "grant_type"
+        ]
+      },
+      "TokenResponse": {
+        "type": "object",
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "description": "The access token to be used to access protected resources",
+            "maxLength": 5000
+          },
+          "expires_in": {
+            "type": "integer",
+            "minimum": 0,
+            "default": 3600,
+            "description": "The remaining lifetime of the access token in seconds"
+          },
+          "id_token": {
+            "type": "string",
+            "description": "The ID token to be used to obtain user information",
+            "maxLength": 5000
+          },
+          "refresh_token": {
+            "type": "string",
+            "description": "The refresh token to be used to obtain new access tokens",
+            "maxLength": 5000
+          }
+        },
+        "required": [
+          "access_token"
+        ]
+      },
+      "TransferOwner": {
+        "type": "object",
+        "properties": {
+          "new_owner_id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "new_owner_id"
+        ]
+      },
+      "TransferOwnerRequest": {
+        "type": "object",
+        "properties": {
+          "new_owner_id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "new_owner_id"
+        ]
+      },
+      "Trends": {
+        "type": "object",
+        "properties": {
+          "timestamp": {
+            "type": "string",
+            "format": "date"
+          },
+          "mau": {
+            "type": "integer"
+          },
+          "dau": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "dau",
+          "mau",
+          "timestamp"
+        ]
+      },
+      "UserApplicationList": {
+        "type": "object",
+        "properties": {
+          "picture": {
+            "type": "string",
+            "readOnly": true
+          },
+          "full_name": {
+            "type": "string",
+            "readOnly": true
+          },
+          "user_href": {
+            "type": "string",
+            "readOnly": true
+          },
+          "is_verified": {
+            "type": "boolean"
+          },
+          "identifier": {
+            "type": "string"
+          },
+          "uuid": {
+            "type": "string",
+            "format": "uuid",
+            "readOnly": true
+          },
+          "last_login": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Date and time when the user last logged in "
+          },
+          "is_connection_removed": {
+            "type": "string",
+            "readOnly": true
+          }
+        },
+        "required": [
+          "full_name",
+          "identifier",
+          "is_connection_removed",
+          "is_verified",
+          "picture",
+          "user_href",
+          "uuid"
+        ]
+      },
+      "UserConnection": {
+        "type": "object",
+        "properties": {
+          "uuid": {
+            "type": "string",
+            "format": "uuid",
+            "readOnly": true
+          },
+          "application": {
+            "$ref": "#/components/schemas/ApplicationInfo"
+          },
+          "delegated_permissions": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true,
+            "description": "Permissions that the user delegated to the application"
+          },
+          "last_login": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Date and time when the user last logged in "
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          }
+        },
+        "required": [
+          "created_at",
+          "delegated_permissions",
+          "uuid"
+        ]
+      },
+      "UserConnectionDestroy": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "UserConnectionDestroyRequest": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "UserMe": {
+        "type": "object",
+        "properties": {
+          "identifier": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "has_2fa_enabled": {
+            "type": "string",
+            "readOnly": true
+          },
+          "totp_device": {
+            "type": "string",
+            "readOnly": true
+          },
+          "is_staff": {
+            "type": "boolean",
+            "title": "Staff status",
+            "description": "Designates whether the user can log into this admin site."
+          },
+          "is_reseller": {
+            "type": "boolean",
+            "description": "Flag indicating if the user can create multiple organizations. Only staff can set this."
+          }
+        },
+        "required": [
+          "has_2fa_enabled",
+          "identifier",
+          "totp_device"
+        ]
+      },
+      "ValidateTokenExternalAppRequestRequest": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The access token to be validated",
+            "maxLength": 5000
+          },
+          "api_key": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The API key to be validated",
+            "maxLength": 64
+          }
+        }
+      },
+      "ValidateTokenExternalAppResponse": {
+        "type": "object",
+        "properties": {
+          "iss": {
+            "type": "string",
+            "format": "uri",
+            "description": "The access token issuer https://didit.me"
+          },
+          "iat": {
+            "type": "integer",
+            "description": "The time the token was issued"
+          },
+          "sub": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The user's unique identifier in the application"
+          },
+          "identifier": {
+            "type": "string",
+            "description": "The user's identifier"
+          },
+          "identifier_type": {
+            "type": "string",
+            "description": "The user's identifier type"
+          },
+          "claims": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The user's requested claims"
+          },
+          "exp": {
+            "type": "integer",
+            "description": "The remaining lifetime of the access token in seconds"
+          },
+          "client_id": {
+            "type": "string",
+            "description": "The client ID"
+          },
+          "active": {
+            "type": "boolean",
+            "description": "Whether the token is active"
+          }
+        },
+        "required": [
+          "active",
+          "client_id",
+          "exp",
+          "iat",
+          "identifier",
+          "identifier_type",
+          "iss",
+          "sub"
+        ]
+      },
+      "WellKnownConfiguration": {
+        "type": "object",
+        "properties": {
+          "issuer": {
+            "type": "string"
+          },
+          "authorization_endpoint": {
+            "type": "string"
+          },
+          "token_endpoint": {
+            "type": "string"
+          },
+          "userinfo_endpoint": {
+            "type": "string"
+          },
+          "jwks_uri": {
+            "type": "string"
+          },
+          "response_types_supported": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "grant_types_supported": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "subject_types_supported": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "id_token_signing_alg_values_supported": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "token_endpoint_auth_signing_alg_values_supported": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "scopes_supported": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "token_endpoint_auth_methods_supported": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "claims_supported": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "claims_parameter_supported": {
+            "type": "boolean"
+          },
+          "service_documentation": {
+            "type": "string"
+          },
+          "op_policy_uri": {
+            "type": "string"
+          },
+          "op_tos_uri": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "authorization_endpoint",
+          "claims_parameter_supported",
+          "claims_supported",
+          "grant_types_supported",
+          "id_token_signing_alg_values_supported",
+          "issuer",
+          "jwks_uri",
+          "op_policy_uri",
+          "op_tos_uri",
+          "response_types_supported",
+          "scopes_supported",
+          "service_documentation",
+          "subject_types_supported",
+          "token_endpoint",
+          "token_endpoint_auth_methods_supported",
+          "token_endpoint_auth_signing_alg_values_supported",
+          "userinfo_endpoint"
+        ]
+      }
+    },
+    "securitySchemes": {
+      "DiditAuthentication": {
+        "type": "http",
+        "scheme": "bearer",
+        "in": "header",
+        "name": "Authorization",
+        "description": "Token-based authentication with required prefix \"Bearer\""
+      },
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Tenant API key"
+      }
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8011",
+      "description": "Local dev"
+    },
+    {
+      "url": "https://credentials.didit.me",
+      "description": "Production (placeholder)"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Credentials"
+    },
+    {
+      "name": "OpenID4VP Verification"
+    },
+    {
+      "name": "Status Lists"
+    },
+    {
+      "name": "Trust Registry"
+    },
+    {
+      "name": "Issuer Keys"
+    },
+    {
+      "name": "OpenID4VCI Protocol"
+    }
+  ]
+}

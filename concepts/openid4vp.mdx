@@ -1,0 +1,227 @@
+---
+title: "OpenID4VP"
+description: "Verify wallet presentations with OpenID4VP 1.0, DCQL, holder key binding, and trust checks."
+---
+
+OpenID4VP lets you ask a wallet for only the claims you need, then verify the returned `vp_token` before you trust the disclosed data. Didit ID implements OpenID4VP 1.0 with DCQL, SD-JWT VC presentations, holder key binding, Token Status List revocation checks, and trusted-issuer validation.
+
+Use OpenID4VP when your application acts as the verifier or relying party. For issuance, see [OpenID4VCI](/concepts/openid4vci). For the credential format, see [SD-JWT VC](/concepts/sd-jwt-vc).
+
+## Flow overview
+
+<Steps>
+  <Step title="Create a presentation request">
+    Call [Create an OpenID4VP presentation request](/api-reference/verification/presentations-request-post) with the credential type, claim names, audience, and optional trusted issuer.
+
+    Didit ID creates a presentation request with a DCQL query and a fresh `nonce`.
+  </Step>
+  <Step title="Deliver the request to a wallet">
+    Send the request to the holder's wallet with the W3C Digital Credentials API using the `openid4vp-v1-signed` protocol.
+
+    The wallet evaluates the DCQL query, asks the holder to consent, and prepares a presentation that discloses only the requested claims.
+  </Step>
+  <Step title="Submit the vp_token">
+    The wallet returns a `vp_token`. Submit it to [Submit a vp_token for verification](/api-reference/verification/presentations-uuid-response-post).
+
+    Didit ID verifies the presentation and returns a `verdict`, `disclosed_claims`, and a `checks` object.
+  </Step>
+  <Step title="Poll or read the verification log">
+    Poll [the presentation request](/api-reference/verification/presentations-uuid-get) while the holder flow is pending.
+
+    After verification, retrieve audit history from [List verifications](/api-reference/verification/verifications-get) or [Get a verification result](/api-reference/verification/verifications-uuid-get).
+  </Step>
+</Steps>
+
+## Create the DCQL request
+
+Your verifier creates a request with `POST /v1/presentations/request`.
+
+<CodeGroup>
+```bash cURL
+curl -X POST "http://localhost:8011/v1/presentations/request" \
+  -H "Authorization: Bearer $DIDIT_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "requested_vct": "AirlineLoyalty",
+    "requested_claims": ["tier"],
+    "aud": "checkin-rp",
+    "trusted_iss": "https://issuer.example"
+  }'
+```
+
+```js JavaScript
+const response = await fetch("http://localhost:8011/v1/presentations/request", {
+  method: "POST",
+  headers: {
+    Authorization: `Bearer ${process.env.DIDIT_API_KEY}`,
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    requested_vct: "AirlineLoyalty",
+    requested_claims: ["tier"],
+    aud: "checkin-rp",
+    trusted_iss: "https://issuer.example",
+  }),
+});
+
+const presentationRequest = await response.json();
+```
+</CodeGroup>
+
+<ParamField path="requested_vct" type="string" required>
+  The SD-JWT VC type that the wallet must present. This maps to the credential `vct`, such as `AirlineLoyalty`.
+</ParamField>
+
+<ParamField path="requested_claims" type="string[]" required>
+  The claim names you want the holder to disclose. Didit ID places these claim requirements into the DCQL query.
+</ParamField>
+
+<ParamField path="aud" type="string" required>
+  The verifier audience. The holder's key-bound proof must bind the presentation to this value.
+</ParamField>
+
+<ParamField path="trusted_iss" type="string">
+  The issuer you expect to trust for this request. When present, Didit ID uses the trust registry during verification.
+</ParamField>
+
+The response includes a presentation `uuid`, `transaction_id`, generated `dcql`, requested claims, `aud`, `nonce`, and request `status`.
+
+```json Response
+{
+  "uuid": "<uuid>",
+  "transaction_id": "<uuid>",
+  "dcql": {
+    "credentials": []
+  },
+  "requested_claims": ["tier"],
+  "aud": "checkin-rp",
+  "nonce": "NKQRYX...",
+  "status": "pending"
+}
+```
+
+<Note>
+  The `nonce` is part of replay protection. The wallet must include it in the key-bound presentation proof, and Didit ID checks it when you submit the `vp_token`.
+</Note>
+
+## Deliver with the Digital Credentials API
+
+Use the W3C Digital Credentials API to deliver the OpenID4VP request to a compatible wallet. Didit ID uses the `openid4vp-v1-signed` protocol for signed OpenID4VP requests.
+
+```js
+const credential = await navigator.credentials.get({
+  digital: {
+    requests: [
+      {
+        protocol: "openid4vp-v1-signed",
+        data: presentationRequest,
+      },
+    ],
+  },
+});
+
+const vpToken = credential.data.vp_token;
+```
+
+The wallet uses the DCQL query to select a matching credential. For SD-JWT VC, it returns a selective-disclosure presentation with the requested disclosures and a KB-JWT that proves holder control of the bound key.
+
+<Tip>
+  In a production app, pass the presentation request through your holder handoff channel, then submit the wallet's `vp_token` to Didit ID. Use [Demo present](/api-reference/verification/presentations-uuid-demo-present-post) only for server-side test flows.
+</Tip>
+
+## Submit the vp_token
+
+Submit the wallet response to `POST /v1/presentations/{uuid}/response`.
+
+<CodeGroup>
+```bash cURL
+curl -X POST "http://localhost:8011/v1/presentations/$PRESENTATION_ID/response" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "vp_token": "<sd-jwt-vc presentation with KB-JWT>"
+  }'
+```
+
+```js JavaScript
+const response = await fetch(
+  `http://localhost:8011/v1/presentations/${presentationRequest.uuid}/response`,
+  {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      vp_token: vpToken,
+    }),
+  },
+);
+
+const verification = await response.json();
+```
+</CodeGroup>
+
+<ParamField path="vp_token" type="string" required>
+  The SD-JWT VC presentation returned by the wallet, including the holder's KB-JWT.
+</ParamField>
+
+Didit ID returns the verification decision, disclosed claims, and check results.
+
+```json Response
+{
+  "uuid": "<uuid>",
+  "verdict": "verified",
+  "disclosed_claims": {
+    "tier": "gold"
+  },
+  "checks": {
+    "signature": true,
+    "key_binding": true,
+    "aud": true,
+    "nonce": true,
+    "alg_allowlist": true,
+    "not_expired": true,
+    "not_revoked": true
+  },
+  "error": ""
+}
+```
+
+<ResponseField name="verdict" type="string">
+  The final verification result. A successful presentation returns `verified`.
+</ResponseField>
+
+<ResponseField name="disclosed_claims" type="object">
+  The claims the holder disclosed from the credential. Didit ID returns only claims requested by the DCQL query and present in the verified presentation.
+</ResponseField>
+
+<ResponseField name="checks" type="object">
+  A structured set of boolean checks for cryptographic validity, holder binding, request binding, expiry, and revocation. Didit ID also applies trusted-issuer policy when configured.
+</ResponseField>
+
+## Verifier checks
+
+Didit ID verifies the `vp_token` before it returns disclosed claims. Treat the claims as trusted only when the `verdict` and relevant checks match your policy.
+
+| Check | What Didit ID verifies |
+| --- | --- |
+| `signature` | The signed SD-JWT VC presentation verifies with the expected cryptographic material, including issuer keys and the holder-signed KB-JWT. Issuer JWKS is available from [SD-JWT VC issuer JWKS](/api-reference/openid4vci/issuers-slug-jwt-vc-issuer-get). |
+| `key_binding` | The holder proves possession of the key bound into the credential by signing the presentation KB-JWT. |
+| `aud` | The KB-JWT audience matches the `aud` value from the presentation request. |
+| `nonce` | The KB-JWT contains the request `nonce`, which prevents replay across presentation requests. |
+| `alg_allowlist` | The credential and presentation use an allowed signing algorithm. |
+| `not_expired` | The credential is still within its validity period. |
+| `not_revoked` | The credential is not marked revoked or suspended in its [Token Status List](/concepts/status-list). |
+
+The first five checks, `signature`, `key_binding`, `aud`, `nonce`, and `alg_allowlist`, form the KB-JWT verification set. Didit ID then applies credential expiry, Token Status List revocation, and trusted-issuer policy.
+
+## Trusted issuers
+
+Use the trust registry when you need to restrict which issuers can satisfy a request. Add issuers with [Add a trusted issuer](/api-reference/trust/trusted-issuers-post), validate them with [Validate a trusted issuer](/api-reference/trust/trusted-issuers-uuid-validate-post), and request a specific issuer through `trusted_iss`.
+
+Didit ID can evaluate trusted issuers under configured frameworks such as eIDAS 2.0, ISO mDL, Swiss e-ID, and US mDL. See [Trust frameworks](/concepts/trust-frameworks) for the model.
+
+The API response mirrors the documented `checks` fields. Trusted-issuer policy affects the verification outcome, but it is not returned as a separate `trusted_issuer` boolean.
+
+<Warning>
+  Do not use disclosed claims until verification succeeds. A wallet can send a malformed, expired, replayed, or untrusted presentation; the `checks` object tells you which requirement failed.
+</Warning>

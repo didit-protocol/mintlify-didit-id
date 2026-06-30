@@ -1,0 +1,246 @@
+---
+title: "Trust registry"
+description: "Manage trusted issuers, relying parties, and trust frameworks for OpenID4VP verification."
+---
+
+Use the trust registry to decide which issuers and relying parties your tenant accepts. Add trusted issuers before you verify wallet presentations, validate those registry entries, and remove entries that should no longer be trusted.
+
+Trust decisions apply during [OpenID4VP verification](/guides/verification). Didit ID also returns cryptographic and lifecycle checks such as `signature`, `key_binding`, `aud`, `nonce`, `alg_allowlist`, `not_expired`, and `not_revoked`.
+
+<Note>
+  Trust registry endpoints are management endpoints. Send `Authorization: Bearer $DIDIT_API_KEY` with each request.
+</Note>
+
+## Choose a trust framework
+
+A trust framework is the policy context for a trusted issuer. Didit ID includes frameworks such as eIDAS 2.0, ISO mDL, Swiss e-ID, and US mDL. Use the framework identifier returned by [`GET /trust-frameworks`](/api-reference/trust/trust-frameworks-get). The examples below use `eidas2`.
+
+<Steps>
+  <Step title="List available frameworks">
+    Fetch the frameworks configured for your tenant.
+
+    <CodeGroup>
+      ```bash cURL
+      curl http://localhost:8011/v1/trust-frameworks \
+        -H "Authorization: Bearer $DIDIT_API_KEY"
+      ```
+
+      ```js JavaScript
+      const response = await fetch("http://localhost:8011/v1/trust-frameworks", {
+        headers: {
+          Authorization: `Bearer ${process.env.DIDIT_API_KEY}`,
+        },
+      });
+
+      const frameworks = await response.json();
+      ```
+    </CodeGroup>
+  </Step>
+
+  <Step title="Pick the framework identifier">
+    Store the framework identifier you want to use when you create trusted issuer entries. Do not hardcode display names such as `eIDAS 2.0`; send the identifier expected by the API.
+  </Step>
+</Steps>
+
+## Add a trusted issuer
+
+Create a trusted issuer entry with [`POST /trusted-issuers`](/api-reference/trust/trusted-issuers-post). The API example uses an issuer URL, a trust anchor, and a framework identifier.
+
+<ParamField body="name" type="string">
+  Human-readable issuer name, such as `Gov PID`.
+</ParamField>
+
+<ParamField body="iss" type="string">
+  Issuer identifier that appears in credentials and verification policy, such as `https://pid.gov.example`.
+</ParamField>
+
+<ParamField body="trust_anchor" type="string">
+  Trust anchor for the issuer entry. The OpenAPI example uses `did-web`.
+</ParamField>
+
+<ParamField body="framework" type="string">
+  Trust framework identifier. Use a value returned by `GET /trust-frameworks`, such as `eidas2`.
+</ParamField>
+
+<CodeGroup>
+  ```bash cURL
+  curl -X POST http://localhost:8011/v1/trusted-issuers \
+    -H "Authorization: Bearer $DIDIT_API_KEY" \
+    -H "Content-Type: application/json" \
+    -d '{
+      "name": "Gov PID",
+      "iss": "https://pid.gov.example",
+      "trust_anchor": "did-web",
+      "framework": "eidas2"
+    }'
+  ```
+
+  ```js JavaScript
+  const response = await fetch("http://localhost:8011/v1/trusted-issuers", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${process.env.DIDIT_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      name: "Gov PID",
+      iss: "https://pid.gov.example",
+      trust_anchor: "did-web",
+      framework: "eidas2",
+    }),
+  });
+
+  const trustedIssuer = await response.json();
+  ```
+</CodeGroup>
+
+The create response includes the registry entry that you use for validation and removal.
+
+<ResponseField name="id" type="string">
+  Trusted issuer UUID.
+</ResponseField>
+
+<ResponseField name="name" type="string">
+  Trusted issuer display name.
+</ResponseField>
+
+<ResponseField name="iss" type="string">
+  Issuer identifier stored in the trust registry.
+</ResponseField>
+
+<ResponseField name="trust_anchor" type="string">
+  Trust anchor stored for the issuer.
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  Registry status for the issuer entry, such as `active`.
+</ResponseField>
+
+## Validate a trusted issuer
+
+Use [`POST /trusted-issuers/{uuid}/validate`](/api-reference/trust/trusted-issuers-uuid-validate-post) before relying on a new or changed entry. Validation is scoped to the trusted issuer UUID.
+
+<CodeGroup>
+  ```bash cURL
+  curl -X POST http://localhost:8011/v1/trusted-issuers/$TRUSTED_ISSUER_ID/validate \
+    -H "Authorization: Bearer $DIDIT_API_KEY"
+  ```
+
+  ```js JavaScript
+  const trustedIssuerId = process.env.TRUSTED_ISSUER_ID;
+
+  await fetch(`http://localhost:8011/v1/trusted-issuers/${trustedIssuerId}/validate`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${process.env.DIDIT_API_KEY}`,
+    },
+  });
+  ```
+</CodeGroup>
+
+<Tip>
+  Validate a trusted issuer after you add it and after any out-of-band trust anchor change.
+</Tip>
+
+## Use trust during verification
+
+When you create a presentation request, pass `trusted_iss` to constrain the OpenID4VP request to a trusted issuer. Didit ID builds the DCQL request and verifies the returned `vp_token`.
+
+<CodeGroup>
+  ```bash cURL
+  curl -X POST http://localhost:8011/v1/presentations/request \
+    -H "Authorization: Bearer $DIDIT_API_KEY" \
+    -H "Content-Type: application/json" \
+    -d '{
+      "requested_vct": "AirlineLoyalty",
+      "requested_claims": ["tier"],
+      "aud": "checkin-rp",
+      "trusted_iss": "https://pid.gov.example"
+    }'
+  ```
+
+  ```js JavaScript
+  const response = await fetch("http://localhost:8011/v1/presentations/request", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${process.env.DIDIT_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      requested_vct: "AirlineLoyalty",
+      requested_claims: ["tier"],
+      aud: "checkin-rp",
+      trusted_iss: "https://pid.gov.example",
+    }),
+  });
+
+  const presentationRequest = await response.json();
+  ```
+</CodeGroup>
+
+See [Verify presentations](/guides/verification) and [`POST /presentations/request`](/api-reference/verification/presentations-request-post) for the full OpenID4VP flow.
+
+## Register a relying party
+
+Register relying parties with [`POST /relying-parties`](/api-reference/trust/relying-parties-post), then list them with [`GET /relying-parties`](/api-reference/trust/relying-parties-get). The current OpenAPI spec defines the registration endpoint without a JSON request body.
+
+<CodeGroup>
+  ```bash cURL
+  curl -X POST http://localhost:8011/v1/relying-parties \
+    -H "Authorization: Bearer $DIDIT_API_KEY"
+
+  curl http://localhost:8011/v1/relying-parties \
+    -H "Authorization: Bearer $DIDIT_API_KEY"
+  ```
+
+  ```js JavaScript
+  await fetch("http://localhost:8011/v1/relying-parties", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${process.env.DIDIT_API_KEY}`,
+    },
+  });
+
+  const response = await fetch("http://localhost:8011/v1/relying-parties", {
+    headers: {
+      Authorization: `Bearer ${process.env.DIDIT_API_KEY}`,
+    },
+  });
+
+  const relyingParties = await response.json();
+  ```
+</CodeGroup>
+
+## Remove trust registry entries
+
+Remove trusted issuers and relying parties by UUID. Removal deletes the registry entry from your tenant.
+
+<CodeGroup>
+  ```bash cURL
+  curl -X DELETE http://localhost:8011/v1/trusted-issuers/$TRUSTED_ISSUER_ID \
+    -H "Authorization: Bearer $DIDIT_API_KEY"
+
+  curl -X DELETE http://localhost:8011/v1/relying-parties/$RELYING_PARTY_ID \
+    -H "Authorization: Bearer $DIDIT_API_KEY"
+  ```
+
+  ```js JavaScript
+  await fetch(`http://localhost:8011/v1/trusted-issuers/${process.env.TRUSTED_ISSUER_ID}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${process.env.DIDIT_API_KEY}`,
+    },
+  });
+
+  await fetch(`http://localhost:8011/v1/relying-parties/${process.env.RELYING_PARTY_ID}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${process.env.DIDIT_API_KEY}`,
+    },
+  });
+  ```
+</CodeGroup>
+
+<Warning>
+  Removing a trusted issuer changes future trust decisions for that tenant. Review active verification flows before you delete registry entries.
+</Warning>

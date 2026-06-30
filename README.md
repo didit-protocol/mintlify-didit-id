@@ -1,55 +1,28 @@
-# Mintlify Starter Kit
+# mintlify-didit-id
 
-Use the starter kit to get your docs deployed and ready to customize.
+Documentation for **Didit ID** — the verifiable-credentials API (OpenID4VCI / OpenID4VP, SD-JWT VC).
 
-Click the green **Use this template** button at the top of this repo to copy the Mintlify starter kit. The starter kit contains examples with
+Built with [Mintlify](https://mintlify.com). The API reference is generated from
+[`openapi.json`](./openapi.json) (the `service-didit-id-v0` `/v1/` surface, 32 paths / 36 operations).
 
-- Guide pages
-- Navigation
-- Customizations
-- API reference pages
-- Use of popular components
+## Structure
+- `docs.json` — site config + navigation (Documentation tab + API Reference tab).
+- `index.mdx`, `quickstart.mdx` — landing + 5-minute quickstart.
+- `concepts/` — verifiable credentials, SD-JWT VC, OpenID4VCI, OpenID4VP, Token Status List, trust frameworks.
+- `guides/` — issuance, verification, holder wallet, trust registry, key rotation, multi-tenancy.
+- `reference/` — authentication, errors, SDKs.
+- `api-reference/` — one page per operation (grouped by spec tag), driven by `openapi.json` frontmatter.
 
-**[Follow the full quickstart guide](https://starter.mintlify.com/quickstart)**
-
-## AI-assisted writing
-
-Set up your AI coding tool to work with Mintlify:
-
+## Regenerate the API reference + nav
 ```bash
-npx skills add https://mintlify.com/docs
+# after updating openapi.json from the backend:
+cp ../didit-credentials-service/openapi-credentials.json openapi.json
+python3 scripts/build_docs.py        # regenerates api-reference/*.mdx + docs.json
 ```
 
-This command installs Mintlify's documentation skill for your configured AI tools like Claude Code, Cursor, Windsurf, and others. The skill includes component reference, writing standards, and workflow guidance.
-
-See the [AI tools guides](/ai-tools) for tool-specific setup.
-
-## Development
-
-Install the [Mintlify CLI](https://www.npmjs.com/package/mint) to preview your documentation changes locally. To install, use the following command:
-
+## Preview
+```bash
+npm i -g mint        # or: npx mint dev
+mint dev             # http://localhost:3000
+mint broken-links    # link check
 ```
-npm i -g mint
-```
-
-Run the following command at the root of your documentation, where your `docs.json` is located:
-
-```
-mint dev
-```
-
-View your local preview at `http://localhost:3000`.
-
-## Publishing changes
-
-Install our GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app) to propagate changes from your repo to your deployment. Changes are deployed to production automatically after pushing to the default branch.
-
-## Need help?
-
-### Troubleshooting
-
-- If your dev environment isn't running: Run `mint update` to ensure you have the most recent version of the CLI.
-- If a page loads as a 404: Make sure you are running in a folder with a valid `docs.json`.
-
-### Resources
-- [Mintlify documentation](https://mintlify.com/docs)

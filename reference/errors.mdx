@@ -1,0 +1,109 @@
+---
+title: "Errors"
+description: "Understand Didit ID error responses, status codes, and verification failure checks."
+---
+
+Didit ID returns JSON errors with a stable machine-readable `error` code. Use the HTTP status to choose the retry or remediation path, and use `error` for application branching.
+
+Protocol endpoints use OpenID and OAuth error codes where the standards define them. Verification failures include the failed check so you can explain why the presentation was rejected.
+
+## Error shape
+
+```json
+{
+  "error": "verification_failed",
+  "message": "Presentation verification failed.",
+  "check": "nonce",
+  "details": {
+    "checks": {
+      "signature": true,
+      "key_binding": true,
+      "aud": true,
+      "nonce": false,
+      "alg_allowlist": true,
+      "not_expired": true,
+      "not_revoked": true
+    }
+  }
+}
+```
+
+<ResponseField name="error" type="string">
+  Stable machine-readable code. Examples include `invalid_key`, `invalid_grant`, `invalid_proof`, `not_found`, and `verification_failed`.
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Human-readable summary for logs and support messages. Do not branch on this value.
+</ResponseField>
+
+<ResponseField name="check" type="string | null">
+  Failing verification check when `error` is `verification_failed`. Valid checks are `signature`, `key_binding`, `aud`, `nonce`, `alg_allowlist`, `not_expired`, and `not_revoked`.
+</ResponseField>
+
+<ResponseField name="details" type="object">
+  Optional context such as field-level validation errors or the full verification `checks` object.
+</ResponseField>
+
+## Common statuses
+
+| Status | `error` | Common source | Meaning | What to do |
+| --- | --- | --- | --- | --- |
+| `400` | `invalid_grant` | [`POST /oauth/token`](/api-reference/openid4vci/oauth-token-post) | The `pre-authorized_code` or `tx_code` is missing, expired, invalid, already used, or not valid for the offer. | Start a new credential offer or ask the holder to retry with the current `tx_code`. |
+| `400` | `invalid_proof` | [`POST /credential`](/api-reference/openid4vci/credential-post) | The OpenID4VCI proof JWT is missing, malformed, signed by the wrong holder key, bound to the wrong nonce, or not acceptable for the credential request. | Request a fresh `c_nonce` from [`POST /nonce`](/api-reference/openid4vci/nonce-post), rebuild the proof JWT, and retry. |
+| `401` | `invalid_key` | Management endpoints with `bearerAuth` | The `Authorization` header is missing, malformed, revoked, or not a tenant API key. | Send `Authorization: Bearer $DIDIT_API_KEY` from your backend. Rotate the key in the Console if needed. |
+| `404` | `not_found` | Tenant-scoped resources such as credentials, presentations, trusted issuers, relying parties, and keys | The resource does not exist for the authenticated tenant. Cross-tenant lookups return the same response to preserve tenant isolation. | Check the UUID and tenant. Do not treat `404` as proof that a resource exists elsewhere. |
+| `422` | `verification_failed` | [`POST /presentations/{uuid}/response`](/api-reference/verification/presentations-uuid-response-post) | The `vp_token` was received, but one or more verification checks failed. | Inspect `check` and `details.checks`. Reject the presentation or ask the holder to present a credential that satisfies the request. |
+
+<Note>
+  A failed verification is not an authentication failure. `401` means the management API key is invalid. `422 verification_failed` means the submitted presentation did not satisfy the OpenID4VP, SD-JWT VC, key-binding, expiry, revocation, audience, nonce, or algorithm checks.
+</Note>
+
+## Verification checks
+
+The verification response returns the same check names used in failure details.
+
+| Check | What Didit ID validates |
+| --- | --- |
+| `signature` | The SD-JWT VC signature verifies against the issuer key. |
+| `key_binding` | The presentation includes a valid holder key-binding JWT. |
+| `aud` | The presentation is bound to the requested audience. |
+| `nonce` | The presentation is bound to the nonce from the presentation request. |
+| `alg_allowlist` | The credential and proof algorithms are allowed by policy. |
+| `not_expired` | The credential is still within its validity window. |
+| `not_revoked` | The credential status is valid in the IETF Token Status List. |
+
+Successful verification returns `verdict`, `disclosed_claims`, and `checks` from [`POST /presentations/{uuid}/response`](/api-reference/verification/presentations-uuid-response-post). A typical verified response looks like this:
+
+```json
+{
+  "uuid": "<uuid>",
+  "verdict": "verified",
+  "disclosed_claims": {
+    "tier": "gold"
+  },
+  "checks": {
+    "signature": true,
+    "key_binding": true,
+    "aud": true,
+    "nonce": true,
+    "alg_allowlist": true,
+    "not_expired": true,
+    "not_revoked": true
+  },
+  "error": ""
+}
+```
+
+## Retry guidance
+
+<Accordion title="Should I retry `invalid_grant`?">
+  Retry only after creating a new offer or collecting the current `tx_code`. Pre-authorized codes are short-lived and should not be replayed after use.
+</Accordion>
+
+<Accordion title="Should I retry `invalid_proof`?">
+  Retry after requesting a fresh `c_nonce` and rebuilding the holder proof JWT. Reusing an old nonce can fail nonce validation.
+</Accordion>
+
+<Accordion title="Why does a cross-tenant resource return `404`?">
+  Didit ID uses `404` for cross-tenant isolation. The response does not reveal whether the UUID exists in another tenant.
+</Accordion>

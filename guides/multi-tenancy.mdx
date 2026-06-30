@@ -1,0 +1,214 @@
+---
+title: "Multi-tenancy"
+description: "Design tenant-scoped issuance, verification, API keys, and white-label configuration."
+---
+
+Didit ID is multi-tenant. Each tenant has its own management boundary for credential configuration, issuer keys, trust registry entries, relying parties, issued credentials, verification logs, and status lists.
+
+Management endpoints authenticate with a tenant API key. OpenID4VCI, OpenID4VP, holder, verifier, metadata, and status-list endpoints are public where the protocol requires public access.
+
+<Warning>
+  Do not expose tenant API keys in browser code, wallet code, mobile apps, QR payloads, or credential offers. Use them only from your backend or trusted operator tooling.
+</Warning>
+
+## Operator to tenant model
+
+An operator can manage one or more tenants. A tenant is the isolated Didit ID configuration that issues credentials, verifies presentations, and owns management resources.
+
+Use separate tenants when you need separate operational control, separate issuer identity, separate trust policy, or separate branding. Use separate API keys per tenant and environment.
+
+<ParamField header="Authorization" type="string">
+  Tenant API key for management endpoints. Send it as `Authorization: Bearer $DIDIT_API_KEY`.
+</ParamField>
+
+<ParamField path="slug" type="string">
+  Tenant or issuer slug used by public issuer metadata and status-list endpoints, such as `/issuers/{slug}/.well-known/openid-credential-issuer`.
+</ParamField>
+
+## What is isolated by tenant
+
+Tenant API keys scope management calls to one tenant. Treat resources created with a tenant key as tenant-local.
+
+- Credential schemas and templates: [`/credential-schemas`](/api-reference/credentials/credential-schemas-get), [`/credential-templates`](/api-reference/credentials/credential-templates-get)
+- Issued credentials and lifecycle actions: [`/credentials`](/api-reference/credentials/credentials-get), [`/credentials/{uuid}/revoke`](/api-reference/credentials/credentials-uuid-revoke-post), [`/credentials/{uuid}/suspend`](/api-reference/credentials/credentials-uuid-suspend-post), [`/credentials/{uuid}/reactivate`](/api-reference/credentials/credentials-uuid-reactivate-post)
+- Presentation requests and verification logs: [`/presentations/request`](/api-reference/verification/presentations-request-post), [`/verifications`](/api-reference/verification/verifications-get)
+- Trust registry entries: [`/trust-frameworks`](/api-reference/trust/trust-frameworks-get), [`/trusted-issuers`](/api-reference/trust/trusted-issuers-get), [`/relying-parties`](/api-reference/trust/relying-parties-get)
+- Issuer signing keys: [`/keys`](/api-reference/keys/keys-get), [`/keys/rotate`](/api-reference/keys/keys-rotate-post)
+- Public status lists: [`/status-lists/{slug}/{uuid}`](/api-reference/status/status-lists-slug-uuid-get)
+
+<Note>
+  The public OpenAPI spec in this repo does not expose tenant provisioning, API-key creation, or white-label settings endpoints. It documents how tenant-scoped keys are used once a tenant exists.
+</Note>
+
+## Use the correct tenant API key
+
+For every management request, choose the API key for the tenant that should own the resource. The same request body sent with two different tenant keys creates resources in two different tenant boundaries.
+
+<Steps>
+  <Step title="Load the tenant key on the server">
+    Keep tenant keys in server-side secret storage. Use different variables for each tenant and environment.
+  </Step>
+
+  <Step title="Create tenant-local resources">
+    Create schemas, templates, credentials, trust entries, and presentation requests with the tenant API key that should own them.
+
+    <CodeGroup>
+      ```bash cURL
+      export DIDIT_API_KEY=$TENANT_A_DIDIT_API_KEY
+
+      curl -X POST http://localhost:8011/v1/credential-schemas \
+        -H "Authorization: Bearer $DIDIT_API_KEY" \
+        -H "Content-Type: application/json" \
+        -d '{
+          "name": "Loyalty",
+          "vct": "AirlineLoyalty",
+          "attributes": [
+            {
+              "name": "given_name",
+              "type": "string",
+              "sd": true
+            },
+            {
+              "name": "tier",
+              "type": "string",
+              "sd": true
+            }
+          ]
+        }'
+      ```
+
+      ```js JavaScript
+      async function createLoyaltySchema(apiKey) {
+        const response = await fetch("http://localhost:8011/v1/credential-schemas", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${apiKey}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name: "Loyalty",
+            vct: "AirlineLoyalty",
+            attributes: [
+              {
+                name: "given_name",
+                type: "string",
+                sd: true,
+              },
+              {
+                name: "tier",
+                type: "string",
+                sd: true,
+              },
+            ],
+          }),
+        });
+
+        return response.json();
+      }
+
+      const tenantASchema = await createLoyaltySchema(process.env.TENANT_A_DIDIT_API_KEY);
+      ```
+    </CodeGroup>
+  </Step>
+
+  <Step title="List resources with the same key">
+    Use the same tenant key when you list or operate on tenant-local resources.
+
+    <CodeGroup>
+      ```bash cURL
+      curl http://localhost:8011/v1/credential-schemas \
+        -H "Authorization: Bearer $DIDIT_API_KEY"
+      ```
+
+      ```js JavaScript
+      const response = await fetch("http://localhost:8011/v1/credential-schemas", {
+        headers: {
+          Authorization: `Bearer ${process.env.TENANT_A_DIDIT_API_KEY}`,
+        },
+      });
+
+      const schemas = await response.json();
+      ```
+    </CodeGroup>
+  </Step>
+</Steps>
+
+The schema create response includes the tenant-local schema identifier and credential type.
+
+<ResponseField name="uuid" type="string">
+  Credential schema UUID for the tenant that created it.
+</ResponseField>
+
+<ResponseField name="vct" type="string">
+  SD-JWT VC credential type, such as `AirlineLoyalty`.
+</ResponseField>
+
+<ResponseField name="format" type="string">
+  Credential format. The OpenAPI example returns `sd_jwt_vc`.
+</ResponseField>
+
+## Keep protocol endpoints public
+
+Wallets and verifiers need public protocol endpoints. Do not require a tenant API key on holder or verifier calls that are public in the OpenAPI spec.
+
+<CodeGroup>
+  ```bash cURL
+  curl http://localhost:8011/v1/issuers/$ISSUER_SLUG/.well-known/openid-credential-issuer
+
+  curl http://localhost:8011/v1/issuers/$ISSUER_SLUG/.well-known/jwt-vc-issuer
+
+  curl http://localhost:8011/v1/status-lists/$ISSUER_SLUG/$STATUS_LIST_ID
+  ```
+
+  ```js JavaScript
+  const issuerSlug = process.env.ISSUER_SLUG;
+  const statusListId = process.env.STATUS_LIST_ID;
+
+  const issuerMetadata = await fetch(
+    `http://localhost:8011/v1/issuers/${issuerSlug}/.well-known/openid-credential-issuer`
+  ).then((response) => response.json());
+
+  const issuerJwks = await fetch(
+    `http://localhost:8011/v1/issuers/${issuerSlug}/.well-known/jwt-vc-issuer`
+  ).then((response) => response.json());
+
+  const statusList = await fetch(
+    `http://localhost:8011/v1/status-lists/${issuerSlug}/${statusListId}`
+  ).then((response) => response.json());
+  ```
+</CodeGroup>
+
+Public endpoints include OpenID4VCI token, nonce, and credential exchange endpoints, OpenID4VP presentation response endpoints, issuer metadata, issuer JWKS, and Token Status List fetches.
+
+## Configure trust and keys per tenant
+
+Set trust and signing policy independently for each tenant.
+
+<Steps>
+  <Step title="Create trust registry entries">
+    Add trusted issuers and relying parties with the tenant key. See [Trust registry](/guides/trust-registry).
+  </Step>
+
+  <Step title="Rotate issuer keys per tenant">
+    Preview impact with `GET /keys/impact`, then rotate with `POST /keys/rotate`. See [Key rotation](/guides/key-rotation).
+  </Step>
+
+  <Step title="Issue and verify within the tenant boundary">
+    Use tenant-local templates for [issuance](/guides/issuance), then create presentation requests with the same tenant policy for [verification](/guides/verification).
+  </Step>
+</Steps>
+
+## White-label behavior
+
+White-label configuration is tenant-level product configuration. Use it to present the correct issuer or verifier identity to holders and relying parties.
+
+Because the OpenAPI spec in this repo does not expose white-label configuration endpoints, keep API docs and implementation boundaries clear:
+
+- Configure tenant branding outside the documented `/v1` API surface.
+- Use the tenant issuer slug consistently in issuer metadata URLs.
+- Keep wallet-facing offer and presentation experiences aligned with the tenant that owns the credential or verification request.
+- Keep tenant API keys out of public branded pages and client-side code.
+
+<Tip>
+  When you test a white-label tenant, verify both sides: create a tenant-scoped management resource with the tenant API key, then fetch the public issuer metadata for the tenant slug without authentication.
+</Tip>

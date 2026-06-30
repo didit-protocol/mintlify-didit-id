@@ -1,0 +1,136 @@
+---
+title: "Authentication"
+description: "Authenticate tenant management requests and keep public OpenID4VCI and OpenID4VP exchanges public."
+---
+
+Didit ID uses tenant API keys for management actions. Wallet and verifier protocol exchanges stay public so holders can complete OpenID4VCI and OpenID4VP flows without receiving your tenant secret.
+
+The development base URL is `http://localhost:8011/v1`. Send the API key in the `Authorization` header when an endpoint requires tenant authentication.
+
+<ParamField header="Authorization" type="string" required>
+  Use `Bearer <tenant API key>` for management endpoints.
+</ParamField>
+
+## Get an API key
+
+Create a tenant API key in the Didit Console and store it as a server-side secret.
+
+<Steps>
+  <Step title="Open the Console">
+    Go to [Didit Console](https://business.didit.me) and select the tenant or application that owns your Didit ID configuration.
+  </Step>
+  <Step title="Create a tenant API key">
+    Open the API key or developer settings for the tenant, then create a key for your backend service.
+  </Step>
+  <Step title="Store it server-side">
+    Save the key in your secret manager or local environment as `DIDIT_API_KEY`.
+
+    ```bash
+    export DIDIT_API_KEY="didit_tenant_key"
+    ```
+  </Step>
+</Steps>
+
+<Warning>
+  Never ship a tenant API key in a wallet, browser bundle, mobile app, QR payload, or credential offer. Use it only from a backend you control.
+</Warning>
+
+## Authenticated endpoints
+
+Management endpoints create and administer tenant-owned resources. These endpoints require `Authorization: Bearer $DIDIT_API_KEY`.
+
+| Area | Endpoints |
+| --- | --- |
+| Credential configuration | `GET /credential-schemas`, `POST /credential-schemas`, `GET /credential-templates`, `POST /credential-templates` |
+| Issuance management | `POST /credential-offers`, `POST /credentials/issue`, `GET /credentials`, `GET /credentials/{uuid}` |
+| Credential lifecycle | `POST /credentials/{uuid}/revoke`, `POST /credentials/{uuid}/suspend`, `POST /credentials/{uuid}/reactivate` |
+| Verification management | `POST /presentations/request`, `GET /verifications`, `GET /verifications/{uuid}` |
+| Trust registry | `GET /trust-frameworks`, `GET /trusted-issuers`, `POST /trusted-issuers`, `DELETE /trusted-issuers/{uuid}`, `POST /trusted-issuers/{uuid}/validate`, `GET /relying-parties`, `POST /relying-parties`, `DELETE /relying-parties/{uuid}` |
+| Issuer keys | `GET /keys`, `POST /keys/rotate`, `GET /keys/impact` |
+
+The management endpoint creates the transaction. The public protocol endpoints complete the wallet or verifier exchange.
+
+<CodeGroup>
+```bash cURL
+curl -X POST "http://localhost:8011/v1/credential-offers" \
+  -H "Authorization: Bearer $DIDIT_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "template_id": "<uuid>",
+    "claims": {
+      "given_name": "Ada",
+      "tier": "gold"
+    }
+  }'
+```
+
+```js JavaScript
+const response = await fetch("http://localhost:8011/v1/credential-offers", {
+  method: "POST",
+  headers: {
+    Authorization: `Bearer ${process.env.DIDIT_API_KEY}`,
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    template_id: "<uuid>",
+    claims: {
+      given_name: "Ada",
+      tier: "gold",
+    },
+  }),
+});
+
+const offer = await response.json();
+```
+</CodeGroup>
+
+Successful credential-offer creation returns an `offer_id`, a `credential_offer_uri`, a `credential_issuer`, a `pre_authorized_code`, and a `tx_code`. See the generated [`POST /credential-offers`](/api-reference/openid4vci/credential-offers-post) reference.
+
+## Public endpoints
+
+Public endpoints are designed for holder wallets, verifier callbacks, metadata discovery, and privacy-preserving status-list fetches. Do not send a tenant API key to these endpoints.
+
+| Flow | Public endpoints |
+| --- | --- |
+| OpenID4VCI holder exchange | `GET /credential-offers/{uuid}`, `POST /credential-offers/{uuid}/accept`, `POST /oauth/token`, `POST /nonce`, `POST /credential` |
+| Issuer metadata | `GET /issuers/{slug}/.well-known/openid-credential-issuer`, `GET /issuers/{slug}/.well-known/jwt-vc-issuer` |
+| OpenID4VP presentation exchange | `GET /presentations/{uuid}`, `POST /presentations/{uuid}/response`, `POST /presentations/{uuid}/demo-present` |
+| Token status lists | `GET /status-lists/{slug}/{uuid}` |
+
+For example, the OpenID4VCI token endpoint is public because the holder exchanges a `pre-authorized_code` and `tx_code` issued for a specific offer.
+
+<CodeGroup>
+```bash cURL
+curl -X POST "http://localhost:8011/v1/oauth/token" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "grant_type": "urn:ietf:params:oauth:grant-type:pre-authorized_code",
+    "pre-authorized_code": "s8Ilre...",
+    "tx_code": "517082"
+  }'
+```
+
+```js JavaScript
+const response = await fetch("http://localhost:8011/v1/oauth/token", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    grant_type: "urn:ietf:params:oauth:grant-type:pre-authorized_code",
+    "pre-authorized_code": "s8Ilre...",
+    tx_code: "517082",
+  }),
+});
+
+const token = await response.json();
+```
+</CodeGroup>
+
+The token response includes `access_token`, `token_type`, and `expires_in`. Continue with [`POST /nonce`](/api-reference/openid4vci/nonce-post) and [`POST /credential`](/api-reference/openid4vci/credential-post).
+
+## Tenant isolation
+
+API keys are scoped to one tenant. A key can only create, list, rotate, revoke, suspend, reactivate, or validate resources that belong to that tenant.
+
+If a valid key requests a resource from another tenant, Didit ID returns `404` instead of exposing whether the resource exists. See [errors](/reference/errors) for the common response patterns.
