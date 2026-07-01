@@ -1,27 +1,37 @@
 ---
 title: "Issuer, holder, verifier"
-description: "Learn the three roles through a simple airline boarding pass story."
+description: "Learn the three roles through three everyday stories: an employee badge, an age check, and an airline boarding pass."
 ---
 
 Most situations have three roles: issuer, holder, and verifier. These names sound formal, but the roles are familiar. One party gives proof, one party carries it, and one party checks it.
 
-## The airline story
+## Three stories, one pattern
 
-An airline gives a passenger a digital boarding pass credential. The airline is the issuer because it creates and signs the boarding pass. The passenger is the holder because they keep it in their wallet.
+The same pattern shows up everywhere once you look for it. Here are three everyday versions of it.
 
-At the gate, the gate system checks the boarding pass before letting the passenger board. The gate system is the verifier because it checks the proof and decides whether to accept it.
+**The employee badge.** Acme Corp's HR team gives a new employee a digital badge credential. HR is the issuer because it creates and signs the badge. The employee is the holder because they keep it in their wallet. At the office door, the access system checks the badge and the employee's role before unlocking. The door system is the verifier because it checks the proof and decides whether to accept it.
+
+**The age check.** A verified identity provider gives a person a credential that says they are over 18. The provider is the issuer, and the person is the holder. When an age-gated website asks for proof, the person shares only the over-18 fact — the site verifies it without ever seeing a birth year.
+
+**The boarding pass.** An airline gives a passenger a digital boarding pass credential after check-in. The airline is the issuer, and the passenger is the holder. At the gate, the gate system verifies the boarding pass before letting the passenger board.
 
 <Steps>
-  <Step title="The airline issues">
-    The airline writes the flight, seat, boarding group, and passenger facts into a credential. It signs the credential so others can check that the airline created it.
+  <Step title="The issuer creates and signs">
+    The issuer writes the facts into a credential — HR writes the employee ID, role, and department; the identity provider writes the over-18 fact; the airline writes the flight, seat, and boarding group. It signs the credential so others can check who created it.
   </Step>
-  <Step title="The passenger holds">
-    The passenger keeps the credential in a wallet app. The wallet is like Apple Wallet, but for signed proofs that can be checked by other systems.
+  <Step title="The holder carries it">
+    The holder keeps the credential in a wallet app. The wallet is like Apple Wallet, but for signed proofs that can be checked by other systems — and the holder chooses when and what to share.
   </Step>
-  <Step title="The gate verifies">
-    The gate asks for the boarding pass credential. It checks the airline signature, the flight details, and whether the credential is still valid.
+  <Step title="The verifier checks it">
+    The verifier asks for the credential — the office door asks for the role, the age-gated site asks for the over-18 fact, the gate asks for the boarding pass. It checks the issuer's signature, the facts it needs, and whether the credential is still valid.
   </Step>
 </Steps>
+
+| Story | Issuer | Holder | Verifier |
+| --- | --- | --- | --- |
+| Employee badge | Acme Corp HR | The employee | The office door system |
+| Age check | A verified identity provider | The person | The age-gated website |
+| Boarding pass | The airline | The passenger | The gate system |
 
 <Note>
   The issuer and verifier can be different organizations. A university can issue a diploma credential, and an employer can verify it later.
@@ -31,13 +41,13 @@ At the gate, the gate system checks the boarding pass before letting the passeng
 
 <CardGroup cols={3}>
   <Card title="Issuer" icon="signature" href="/guides/issuance">
-    Creates credentials and signs them, like the airline creating a boarding pass.
+    Creates credentials and signs them, like Acme Corp HR creating an employee badge.
   </Card>
   <Card title="Holder" icon="wallet" href="/guides/holder-wallet">
     Receives credentials and chooses when to share them, like the passenger carrying the boarding pass.
   </Card>
   <Card title="Verifier" icon="shield-check" href="/guides/verification">
-    Requests and checks credentials, like the gate checking the boarding pass.
+    Requests and checks credentials, like the age-gated site checking the over-18 fact.
   </Card>
 </CardGroup>
 

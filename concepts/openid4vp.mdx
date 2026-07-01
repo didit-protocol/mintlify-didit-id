@@ -7,6 +7,8 @@ OpenID4VP lets you ask a wallet for only the claims you need, then verify the re
 
 Use OpenID4VP when your application acts as the verifier or relying party. For issuance, see [OpenID4VCI](/concepts/openid4vci). For the credential format, see [SD-JWT VC](/concepts/sd-jwt-vc).
 
+The examples on this page follow an age-gated site verifying an `AgeOver18` credential: the verifier asks only for the boolean `over_18` claim, and the holder's birth year stays hidden.
+
 ## Flow overview
 
 <Steps>
@@ -42,9 +44,9 @@ curl -X POST "http://localhost:8011/v1/presentations/request" \
   -H "Authorization: Bearer $DIDIT_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
-    "requested_vct": "AirlineLoyalty",
-    "requested_claims": ["tier"],
-    "aud": "checkin-rp",
+    "requested_vct": "AgeOver18",
+    "requested_claims": ["over_18"],
+    "aud": "age-gate-rp",
     "trusted_iss": "https://issuer.example"
   }'
 ```
@@ -57,9 +59,9 @@ const response = await fetch("http://localhost:8011/v1/presentations/request", {
     "Content-Type": "application/json",
   },
   body: JSON.stringify({
-    requested_vct: "AirlineLoyalty",
-    requested_claims: ["tier"],
-    aud: "checkin-rp",
+    requested_vct: "AgeOver18",
+    requested_claims: ["over_18"],
+    aud: "age-gate-rp",
     trusted_iss: "https://issuer.example",
   }),
 });
@@ -69,7 +71,7 @@ const presentationRequest = await response.json();
 </CodeGroup>
 
 <ParamField path="requested_vct" type="string" required>
-  The SD-JWT VC type that the wallet must present. This maps to the credential `vct`, such as `AirlineLoyalty`.
+  The SD-JWT VC type that the wallet must present. This maps to the credential `vct`, such as `AgeOver18`.
 </ParamField>
 
 <ParamField path="requested_claims" type="string[]" required>
@@ -93,8 +95,8 @@ The response includes a presentation `uuid`, `transaction_id`, generated `dcql`,
   "dcql": {
     "credentials": []
   },
-  "requested_claims": ["tier"],
-  "aud": "checkin-rp",
+  "requested_claims": ["over_18"],
+  "aud": "age-gate-rp",
   "nonce": "NKQRYX...",
   "status": "pending"
 }
@@ -171,7 +173,7 @@ Didit ID returns the verification decision, disclosed claims, and check results.
   "uuid": "<uuid>",
   "verdict": "verified",
   "disclosed_claims": {
-    "tier": "gold"
+    "over_18": true
   },
   "checks": {
     "signature": true,

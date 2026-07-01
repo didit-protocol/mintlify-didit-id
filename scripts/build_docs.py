@@ -75,19 +75,29 @@ def main() -> None:
             "primary": {"type": "button", "label": "Console", "href": "https://business.didit.me"},
         },
         "openapi": ["openapi.json"],
+        "contextual": {"options": ["copy", "view", "chatgpt", "claude", "perplexity", "mcp", "cursor", "vscode"]},
         "navigation": {
             "tabs": [
                 {
                     "tab": "Documentation",
                     "groups": [
-                        {"group": "Get Started", "pages": ["index", "quickstart"]},
+                        {"group": "Learn the basics", "pages": [
+                            "learn/index", "learn/what-is-a-verifiable-credential",
+                            "learn/issuer-holder-verifier", "learn/wallets-and-presenting",
+                            "learn/trust-and-trusted-issuers", "learn/what-didit-id-does",
+                            "learn/what-you-can-build", "learn/glossary"]},
+                        {"group": "Get Started", "pages": ["index", "quickstart", "demo", "integration-prompt"]},
                         {"group": "Concepts", "pages": [
                             "concepts/verifiable-credentials", "concepts/sd-jwt-vc",
                             "concepts/openid4vci", "concepts/openid4vp", "concepts/status-list",
                             "concepts/trust-frameworks"]},
                         {"group": "Guides", "pages": [
-                            "guides/issuance", "guides/verification", "guides/holder-wallet",
+                            "guides/programmatic-access", "guides/integrate",
+                            "guides/issuance", "guides/issue-via-email",
+                            "guides/verification", "guides/relying-party", "guides/holder-wallet",
                             "guides/trust-registry", "guides/key-rotation", "guides/multi-tenancy"]},
+                        {"group": "Wallet", "pages": [
+                            "wallet/index", "wallet/quickstart", "wallet/architecture", "wallet/security"]},
                         {"group": "Reference", "pages": ["reference/authentication", "reference/errors", "reference/sdks"]},
                     ],
                 },
@@ -101,7 +111,7 @@ def main() -> None:
         "footer": {"socials": {"x": "https://x.com/getdidit", "github": "https://github.com/didit-protocol",
                                "linkedin": "https://linkedin.com/company/91001155"}},
     }
-    (ROOT / "docs.json").write_text(json.dumps(docs, indent=2))
+    (ROOT / "docs.json").write_text(json.dumps(docs, indent=2) + "\n")
     n = sum(len(v) for v in groups.values())
     print(f"WROTE docs.json + {n} API-reference MDX across {len([g for g in api_groups])} groups")
     for t in TAG_ORDER:

@@ -3,7 +3,7 @@ title: "Verify presentations"
 description: "Request wallet presentations and verify disclosed SD-JWT VC claims with OpenID4VP."
 ---
 
-Verify a credential by creating a presentation request, sending it to a holder wallet, and submitting the returned `vp_token` to Didit ID. The response gives you a final `verdict`, the disclosed claims, and the checks that determined the result.
+Verify a credential by creating a presentation request, sending it to a holder wallet, and submitting the returned `vp_token` to Didit ID. The response gives you a final `verdict`, the disclosed claims, and the checks that determined the result. The examples below run an age gate: the verifier confirms a user is over 18 from an `AgeOver18` credential without ever learning their birth year.
 
 Didit ID uses OpenID4VP 1.0 with DCQL for presentation requests. Submitted presentations are SD-JWT VC presentations with holder key binding through a KB-JWT.
 
@@ -65,11 +65,11 @@ Wallet-facing protocol endpoints are public and do not use the tenant API key:
 Call `POST /presentations/request` from your backend. Didit ID creates a presentation record, generates a nonce, and builds the DCQL query for the wallet.
 
 <ParamField path="requested_vct" type="string" required>
-  The credential type to request. The example API uses `AirlineLoyalty`.
+  The credential type to request. The example API uses `AgeOver18`.
 </ParamField>
 
 <ParamField path="requested_claims" type="string[]" required>
-  The claim names the wallet may disclose, such as `tier`.
+  The claim names the wallet may disclose, such as `over_18`.
 </ParamField>
 
 <ParamField path="aud" type="string" required>
@@ -87,9 +87,9 @@ curl -X POST "http://localhost:8011/v1/presentations/request" \
   -H "Authorization: Bearer $DIDIT_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
-    "requested_vct": "AirlineLoyalty",
-    "requested_claims": ["tier"],
-    "aud": "checkin-rp",
+    "requested_vct": "AgeOver18",
+    "requested_claims": ["over_18"],
+    "aud": "age-gate-rp",
     "trusted_iss": ""
   }'
 ```
@@ -102,9 +102,9 @@ const response = await fetch("http://localhost:8011/v1/presentations/request", {
     "Content-Type": "application/json",
   },
   body: JSON.stringify({
-    requested_vct: "AirlineLoyalty",
-    requested_claims: ["tier"],
-    aud: "checkin-rp",
+    requested_vct: "AgeOver18",
+    requested_claims: ["over_18"],
+    aud: "age-gate-rp",
     trusted_iss: "",
   }),
 });
@@ -123,8 +123,8 @@ The response contains the presentation identifier, transaction identifier, DCQL 
   "dcql": {
     "credentials": []
   },
-  "requested_claims": ["tier"],
-  "aud": "checkin-rp",
+  "requested_claims": ["over_18"],
+  "aud": "age-gate-rp",
   "nonce": "NKQRYX...",
   "status": "pending"
 }
@@ -201,7 +201,7 @@ The response returns the final decision and the claims the holder disclosed.
   "uuid": "<uuid>",
   "verdict": "verified",
   "disclosed_claims": {
-    "tier": "gold"
+    "over_18": true
   },
   "checks": {
     "signature": true,
@@ -294,10 +294,10 @@ const result = await response.json();
 ```json
 {
   "verdict": "verified",
-  "vct": "AirlineLoyalty",
-  "verifier": "checkin-rp",
+  "vct": "AgeOver18",
+  "verifier": "age-gate-rp",
   "disclosed_claims": {
-    "tier": "demo-tier"
+    "over_18": "demo-value"
   },
   "checks": {
     "signature": true,

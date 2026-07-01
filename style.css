@@ -1,0 +1,227 @@
+/* =========================================================
+   Agent Prompt Card — terminal-style, always-visible
+   Inspired by fe-didit-website-v4 / CopyIntegrationPrompt
+   ========================================================= */
+
+.didit-agent-card {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  margin: 12px 0 20px;
+  border-radius: 12px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  overflow: hidden;
+  box-sizing: border-box;
+  background: #0D0D0D;
+  box-shadow: 0 8px 24px -12px rgba(15, 23, 42, 0.18);
+}
+
+/* Title bar — macOS-style chrome */
+.didit-agent-titlebar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.didit-agent-dots {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.didit-agent-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  display: inline-block;
+}
+
+.didit-agent-dot-red    { background: #FF5F57; }
+.didit-agent-dot-yellow { background: #FEBC2E; }
+.didit-agent-dot-green  { background: #28C840; }
+
+.didit-agent-filename {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.65);
+  letter-spacing: 0.01em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.didit-agent-copy {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  padding: 5px 11px;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.10);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.didit-agent-copy:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.didit-agent-copy-copied {
+  color: #064e3b !important;
+  background: #d1fae5 !important;
+}
+
+.didit-agent-copy-copied:hover {
+  background: #a7f3d0 !important;
+}
+
+/* Body — visible prompt, scrollable */
+.didit-agent-body {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  max-height: 320px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  box-sizing: border-box;
+  margin: 0 !important;
+  padding: 16px 18px !important;
+  background: #0D0D0D !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace !important;
+  font-size: 12.5px !important;
+  line-height: 1.65 !important;
+  color: #D4D4D8 !important;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
+}
+
+.didit-agent-body::-webkit-scrollbar {
+  width: 8px;
+}
+
+.didit-agent-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.didit-agent-body::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+}
+
+.didit-agent-body::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.28);
+}
+
+.didit-agent-body code {
+  display: block;
+  max-width: 100%;
+  background: transparent !important;
+  padding: 0 !important;
+  font-family: inherit !important;
+  font-size: inherit !important;
+  color: inherit !important;
+  white-space: inherit;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+/* Footer — paste-into chips */
+.didit-agent-footer {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 8px;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.03);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.didit-agent-footer-label {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  font-size: 10.5px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.55);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.didit-agent-chips {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.didit-agent-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 9px;
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  letter-spacing: -0.005em;
+  line-height: 1.5;
+  white-space: nowrap;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.didit-agent-chip:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+/* ─── Agent Prompt Responsive ─── */
+@media (max-width: 640px) {
+  .didit-agent-titlebar {
+    gap: 8px;
+    padding: 9px 12px;
+  }
+
+  .didit-agent-filename {
+    font-size: 11px;
+  }
+
+  .didit-agent-copy span {
+    display: none;
+  }
+
+  .didit-agent-copy {
+    padding: 5px 8px;
+  }
+
+  .didit-agent-body {
+    font-size: 12px !important;
+    padding: 14px 14px !important;
+    max-height: 260px;
+  }
+
+  .didit-agent-footer {
+    padding: 9px 12px;
+  }
+}

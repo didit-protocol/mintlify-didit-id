@@ -15,7 +15,7 @@ Management endpoints authenticate with a tenant API key. OpenID4VCI, OpenID4VP, 
 
 An operator can manage one or more tenants. A tenant is the isolated Didit ID configuration that issues credentials, verifies presentations, and owns management resources.
 
-Use separate tenants when you need separate operational control, separate issuer identity, separate trust policy, or separate branding. Use separate API keys per tenant and environment.
+Use separate tenants when you need separate operational control, separate issuer identity, separate trust policy, or separate branding. Use separate API keys per tenant and environment. For example, `acme-corp` issues `EmployeeBadge` credentials while `state-university` issues `StudentID` credentials from its own isolated configuration.
 
 <ParamField header="Authorization" type="string">
   Tenant API key for management endpoints. Send it as `Authorization: Bearer $DIDIT_API_KEY`.
@@ -54,22 +54,27 @@ For every management request, choose the API key for the tenant that should own 
 
     <CodeGroup>
       ```bash cURL
-      export DIDIT_API_KEY=$TENANT_A_DIDIT_API_KEY
+      export DIDIT_API_KEY=$ACME_CORP_DIDIT_API_KEY
 
       curl -X POST http://localhost:8011/v1/credential-schemas \
         -H "Authorization: Bearer $DIDIT_API_KEY" \
         -H "Content-Type: application/json" \
         -d '{
-          "name": "Loyalty",
-          "vct": "AirlineLoyalty",
+          "name": "Employee Badge",
+          "vct": "EmployeeBadge",
           "attributes": [
             {
-              "name": "given_name",
+              "name": "employee_id",
               "type": "string",
               "sd": true
             },
             {
-              "name": "tier",
+              "name": "role",
+              "type": "string",
+              "sd": true
+            },
+            {
+              "name": "department",
               "type": "string",
               "sd": true
             }
@@ -78,7 +83,7 @@ For every management request, choose the API key for the tenant that should own 
       ```
 
       ```js JavaScript
-      async function createLoyaltySchema(apiKey) {
+      async function createEmployeeBadgeSchema(apiKey) {
         const response = await fetch("http://localhost:8011/v1/credential-schemas", {
           method: "POST",
           headers: {
@@ -86,16 +91,21 @@ For every management request, choose the API key for the tenant that should own 
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            name: "Loyalty",
-            vct: "AirlineLoyalty",
+            name: "Employee Badge",
+            vct: "EmployeeBadge",
             attributes: [
               {
-                name: "given_name",
+                name: "employee_id",
                 type: "string",
                 sd: true,
               },
               {
-                name: "tier",
+                name: "role",
+                type: "string",
+                sd: true,
+              },
+              {
+                name: "department",
                 type: "string",
                 sd: true,
               },
@@ -106,7 +116,7 @@ For every management request, choose the API key for the tenant that should own 
         return response.json();
       }
 
-      const tenantASchema = await createLoyaltySchema(process.env.TENANT_A_DIDIT_API_KEY);
+      const acmeCorpSchema = await createEmployeeBadgeSchema(process.env.ACME_CORP_DIDIT_API_KEY);
       ```
     </CodeGroup>
   </Step>
@@ -123,7 +133,7 @@ For every management request, choose the API key for the tenant that should own 
       ```js JavaScript
       const response = await fetch("http://localhost:8011/v1/credential-schemas", {
         headers: {
-          Authorization: `Bearer ${process.env.TENANT_A_DIDIT_API_KEY}`,
+          Authorization: `Bearer ${process.env.ACME_CORP_DIDIT_API_KEY}`,
         },
       });
 
@@ -140,7 +150,7 @@ The schema create response includes the tenant-local schema identifier and crede
 </ResponseField>
 
 <ResponseField name="vct" type="string">
-  SD-JWT VC credential type, such as `AirlineLoyalty`.
+  SD-JWT VC credential type, such as `EmployeeBadge`.
 </ResponseField>
 
 <ResponseField name="format" type="string">

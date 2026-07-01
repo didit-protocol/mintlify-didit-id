@@ -3,7 +3,7 @@ title: "Quickstart"
 description: "Issue and verify your first Didit ID credential in five minutes."
 ---
 
-Issue a demo `AirlineLoyalty` SD-JWT VC, accept it with the demo holder endpoint, and verify a selective-disclosure presentation with Didit ID.
+Issue a demo `EmployeeBadge` SD-JWT VC, accept it with the demo holder endpoint, and verify a selective-disclosure presentation with Didit ID.
 
 This quickstart uses the local API at `http://localhost:8011/v1`. Management endpoints use `Authorization: Bearer $DIDIT_API_KEY`. Holder and verifier protocol endpoints are public.
 
@@ -27,7 +27,7 @@ curl -sS "$DIDIT_API_BASE/credential-schemas" \
   </Step>
 
   <Step title="Create a credential schema and template">
-    Create a schema for an `AirlineLoyalty` credential. Then create a template that uses that schema and sets a one-hour credential lifetime.
+    Create a schema for an `EmployeeBadge` credential. Then create a template that uses that schema and sets a one-hour credential lifetime.
 
 <CodeGroup>
 ```bash cURL
@@ -36,16 +36,21 @@ SCHEMA_ID="$(
     -H "Authorization: Bearer $DIDIT_API_KEY" \
     -H "Content-Type: application/json" \
     --data '{
-      "name": "Loyalty",
-      "vct": "AirlineLoyalty",
+      "name": "Employee Badge",
+      "vct": "EmployeeBadge",
       "attributes": [
         {
-          "name": "given_name",
+          "name": "employee_id",
           "type": "string",
           "sd": true
         },
         {
-          "name": "tier",
+          "name": "role",
+          "type": "string",
+          "sd": true
+        },
+        {
+          "name": "department",
           "type": "string",
           "sd": true
         }
@@ -82,8 +87,9 @@ OFFER="$(
   jq -n --arg template_id "$TEMPLATE_ID" '{
     template_id: $template_id,
     claims: {
-      given_name: "Ada",
-      tier: "gold"
+      employee_id: "E-1042",
+      role: "Engineer",
+      department: "Platform"
     }
   }' |
   curl -sS -X POST "$DIDIT_API_BASE/credential-offers" \
@@ -132,7 +138,7 @@ curl -sS -X POST "$DIDIT_API_BASE/credential-offers/$OFFER_ID/accept" \
   </Step>
 
   <Step title="Request and verify a presentation">
-    Create an OpenID4VP presentation request for the `tier` claim. Then use `POST /presentations/{id}/demo-present` to run a real server-side issue, present, and verify flow for that request.
+    Create an OpenID4VP presentation request for the `role` claim. Then use `POST /presentations/{id}/demo-present` to run a real server-side issue, present, and verify flow for that request.
 
 <CodeGroup>
 ```bash cURL
@@ -141,9 +147,9 @@ PRESENTATION="$(
     -H "Authorization: Bearer $DIDIT_API_KEY" \
     -H "Content-Type: application/json" \
     --data '{
-      "requested_vct": "AirlineLoyalty",
-      "requested_claims": ["tier"],
-      "aud": "checkin-rp",
+      "requested_vct": "EmployeeBadge",
+      "requested_claims": ["role"],
+      "aud": "office-access-rp",
       "trusted_iss": ""
     }'
 )"
@@ -180,7 +186,7 @@ curl -sS -X POST "$DIDIT_API_BASE/presentations/$PRESENTATION_ID/demo-present" \
 </ResponseField>
 
 <ResponseField name="disclosed_claims" type="object">
-  The claims the holder disclosed. In this quickstart, the verifier requests only `tier`, so `given_name` stays undisclosed.
+  The claims the holder disclosed. In this quickstart, the verifier requests only `role`, so `employee_id` and `department` stay undisclosed.
 </ResponseField>
 
 <ResponseField name="checks" type="object">

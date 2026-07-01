@@ -109,7 +109,7 @@
               "added_by": {
                 "type": "string",
                 "description": "Identifier of the API user / tenant principal that registered this trusted issuer. Empty string for seeded self-trust rows.",
-                "example": "tenant:airline-acme"
+                "example": "tenant:state-university"
               },
               "framework": {
                 "type": "string",
@@ -212,7 +212,7 @@
           "added_by": {
             "type": "string",
             "description": "Identifier of the API principal that registered this trusted issuer.",
-            "example": "tenant:airline-acme"
+            "example": "tenant:state-university"
           },
           "framework": {
             "type": "string",
@@ -309,7 +309,7 @@
           "added_by": {
             "type": "string",
             "description": "Identifier of the API principal that registered this trusted issuer.",
-            "example": "tenant:airline-acme"
+            "example": "tenant:state-university"
           },
           "framework": {
             "type": "string",
@@ -369,17 +369,17 @@
               "name": {
                 "type": "string",
                 "description": "Display name of the relying party / verifier.",
-                "example": "Airline Check-in"
+                "example": "Campus Door"
               },
               "origin": {
                 "type": "string",
                 "description": "The registered web origin of the relying party, checked on presentation requests.",
-                "example": "https://checkin.airline.com"
+                "example": "https://door.state-university.example"
               },
               "client_id": {
                 "type": "string",
                 "description": "OAuth/OpenID4VP client identifier for the relying party. Empty string when not set.",
-                "example": "airline-checkin"
+                "example": "campus-door"
               },
               "status": {
                 "type": "string",
@@ -408,17 +408,17 @@
         "name": {
           "type": "string",
           "description": "Display name for the relying party / verifier.",
-          "example": "Airline Check-in"
+          "example": "Campus Door"
         },
         "origin": {
           "type": "string",
           "description": "Web origin of the relying party; this is the value checked on DC-API presentation requests.",
-          "example": "https://checkin.airline.com"
+          "example": "https://door.state-university.example"
         },
         "client_id": {
           "type": "string",
           "description": "OAuth/OpenID4VP client identifier for the relying party.",
-          "example": "airline-checkin"
+          "example": "campus-door"
         }
       }
     },
@@ -435,17 +435,17 @@
           "name": {
             "type": "string",
             "description": "Display name of the relying party / verifier.",
-            "example": "Airline Check-in"
+            "example": "Campus Door"
           },
           "origin": {
             "type": "string",
             "description": "The registered web origin of the relying party.",
-            "example": "https://checkin.airline.com"
+            "example": "https://door.state-university.example"
           },
           "client_id": {
             "type": "string",
             "description": "OAuth/OpenID4VP client identifier for the relying party; empty string when not set.",
-            "example": "airline-checkin"
+            "example": "campus-door"
           },
           "status": {
             "type": "string",

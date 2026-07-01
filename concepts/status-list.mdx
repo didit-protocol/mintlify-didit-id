@@ -7,6 +7,8 @@ Token Status List lets verifiers check credential lifecycle state without callin
 
 Use status lists to make revocation privacy-preserving at verification time. The verifier fetches a list, checks the credential's indexed entry, and does not tell the issuer which holder or credential it is checking.
 
+The examples on this page follow a university (tenant slug `state-university`) managing the lifecycle of `StudentID` credentials — suspending a student ID during a leave of absence, reactivating it on return, and revoking it after graduation or withdrawal.
+
 ## How it works
 
 <Steps>
@@ -37,7 +39,7 @@ The credential carries the information a verifier needs to locate the status ent
   "status": {
     "status_list": {
       "idx": 0,
-      "uri": "http://localhost:8011/v1/status-lists/airline-demo/<uuid>"
+      "uri": "http://localhost:8011/v1/status-lists/state-university/<uuid>"
     }
   }
 }

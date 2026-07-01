@@ -42,8 +42,9 @@ Use the issuance client to create an OpenID4VCI credential offer or to issue dir
 const offer = await didit.issuance.createOffer({
   templateId: "<uuid>",
   claims: {
-    given_name: "Ada",
-    tier: "gold",
+    employee_id: "E-1042",
+    role: "Engineer",
+    department: "Platform",
   },
 });
 
@@ -59,8 +60,9 @@ curl -X POST "http://localhost:8011/v1/credential-offers" \
   -d '{
     "template_id": "<uuid>",
     "claims": {
-      "given_name": "Ada",
-      "tier": "gold"
+      "employee_id": "E-1042",
+      "role": "Engineer",
+      "department": "Platform"
     }
   }'
 ```
@@ -81,8 +83,9 @@ const credential = await didit.credentials.issue({
     y: "...",
   },
   claims: {
-    given_name: "Ada",
-    tier: "gold",
+    employee_id: "E-1042",
+    role: "Engineer",
+    department: "Platform",
   },
 });
 
@@ -104,8 +107,9 @@ curl -X POST "http://localhost:8011/v1/credentials/issue" \
       "y": "..."
     },
     "claims": {
-      "given_name": "Ada",
-      "tier": "gold"
+      "employee_id": "E-1042",
+      "role": "Engineer",
+      "department": "Platform"
     }
   }'
 ```
@@ -127,9 +131,9 @@ Use the verification client to create a DCQL-backed OpenID4VP presentation reque
 <CodeGroup>
 ```js JavaScript SDK
 const request = await didit.verification.createRequest({
-  requestedVct: "AirlineLoyalty",
-  requestedClaims: ["tier"],
-  aud: "checkin-rp",
+  requestedVct: "EmployeeBadge",
+  requestedClaims: ["role"],
+  aud: "office-access-rp",
   trustedIss: "",
 });
 
@@ -146,9 +150,9 @@ curl -X POST "http://localhost:8011/v1/presentations/request" \
   -H "Authorization: Bearer $DIDIT_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
-    "requested_vct": "AirlineLoyalty",
-    "requested_claims": ["tier"],
-    "aud": "checkin-rp",
+    "requested_vct": "EmployeeBadge",
+    "requested_claims": ["role"],
+    "aud": "office-access-rp",
     "trusted_iss": ""
   }'
 ```

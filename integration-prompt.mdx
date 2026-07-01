@@ -1,0 +1,62 @@
+---
+title: "Integration Prompt"
+sidebarTitle: "Integration Prompt"
+description: "One copy-paste prompt that integrates Didit ID end-to-end — programmatic access, tenant bootstrap, schema creation, email-delivered issuance, the OpenID4VCI claim flow, and OpenID4VP verification."
+seo:
+  title: "Integration Prompt — Verifiable Credentials Setup for AI Agents | Didit ID"
+  description: "Paste this prompt into Claude Code, Codex, Cursor, Copilot, or Devin and the agent integrates Didit ID end-to-end. Programmatic registration, tenant bootstrap, credential schemas, email claim links, OpenID4VCI, OpenID4VP with DCQL. Verified against the canonical docs."
+  keywords: "Didit ID integration prompt, AI agent verifiable credentials prompt, Claude Code Didit ID, Codex Didit ID, Cursor verifiable credentials prompt, OpenID4VCI integration, OpenID4VP integration, SD-JWT VC prompt, one-prompt credential issuance, AI coding agent prompt"
+---
+
+import { AgentPromptAccordion } from "/snippets/agent-prompt-accordion.jsx";
+import { DIDIT_ID_INTEGRATION_PROMPT } from "/snippets/didit-id-integration-prompt.jsx";
+
+## One prompt. End-to-end Didit ID integration.
+
+The fastest way to integrate Didit ID into any application is to hand this prompt to an AI coding agent. It walks the agent through programmatic account creation, the tenant bootstrap bridge, credential schema and template setup, email-delivered credential offers with transaction-code guidance, the full OpenID4VCI claim exchange, and OpenID4VP verification with DCQL — every endpoint, header, body key, and response field has been cross-checked against `openapi.json` and the guides on this site.
+
+**How to use:**
+
+1. Open **Claude Code**, **Codex**, **Cursor**, **GitHub Copilot**, **Devin**, or any AI coding agent that can run shell commands.
+2. Click **Copy Prompt** below.
+3. Paste into your agent's chat.
+4. Fill in the `<my_stack>` block with your framework / credential type / claims.
+5. Hit enter.
+
+The agent registers your account, bootstraps the credentials tenant, defines your credential schema, ships the issue-by-email route, wires the verifier flow with result polling, and includes a runnable local demo that works without a wallet — usually in one session.
+
+<AgentPromptAccordion
+  title="Didit ID Integration Prompt (copy and paste)"
+  prompt={DIDIT_ID_INTEGRATION_PROMPT}
+/>
+
+## What the prompt covers
+
+| Step | What the agent does |
+|------|---------------------|
+| 1. Get access | Register + verify-email at `/auth/v2/programmatic/*`, then `POST /v1/tenant/bootstrap` with the user `access_token` — returns the tenant `api_key` used as `Bearer` for every `/v1` management call |
+| 2. Define the credential | `POST /v1/credential-schemas` with `vct` + attributes (`sd: true` for selective disclosure), then `POST /v1/credential-templates` for a reusable `template_id` |
+| 3. Issue via email | `POST /v1/credential-offers` with `recipient_email` + `send_email: true` — Didit ID emails a claim link that opens the holder wallet; the 6-digit `tx_code` (PIN) is shared out-of-band by the issuer |
+| 4. Holder claim | The OpenID4VCI exchange the wallet runs: `POST /v1/oauth/token` (pre-authorized_code grant + `tx_code`) → `POST /v1/nonce` → `POST /v1/credential` with an `openid4vci-proof+jwt` ES256 proof (holder JWK in the header, `aud` = `credential_issuer` from the issuer's `.well-known/openid-credential-issuer`) → the SD-JWT VC |
+| 5. Verify | `POST /v1/presentations/request` (DCQL) → wallet submits its `vp_token` to the public `POST /v1/presentations/{uuid}/response` → backend polls `GET /v1/presentations/{uuid}` for `result` with `verdict`, `disclosed_claims`, and the `checks` map |
+
+The prompt also bundles the **lifecycle endpoints** (revoke / suspend / reactivate, Token Status Lists), the **trust registry and relying-party registration** calls, **issuer key rotation**, and the **demo endpoints** (`/accept`, `/demo-present`) so the integration runs locally without a wallet.
+
+## Why this works as a one-prompt integration
+
+- **Self-sufficient.** Every step has a runnable cURL snippet — the agent never has to leave the prompt to look up a body shape, header, or endpoint.
+- **Canonical.** Each endpoint, body key, and response field is verified against [`openapi.json`](/api-reference/openid4vci/credential-offers-post) and the guide pages on this site (linked below).
+- **Two-secret contract.** The prompt names the boundary explicitly — the user `access_token` is only for `POST /v1/tenant/bootstrap`; the tenant `api_key` is for every other management call and never reaches a wallet, browser, or email.
+- **Protocol-exact.** It calls out the traps: the `pre-authorized_code` body key has a hyphen, tokens and nonces are single-use with 300 s / 60 s TTLs, offers expire in 10 minutes, and five wrong `tx_code` attempts lock the offer.
+- **Verdict-driven.** The agent's decision logic reads `result.verdict` as authoritative and uses the seven-boolean `checks` map (`signature`, `key_binding`, `aud`, `nonce`, `alg_allowlist`, `not_expired`, `not_revoked`) to explain failures.
+- **Demo-runnable.** The deliverable includes an end-to-end local run built on `/accept` and `/demo-present`, so the integration proves itself before a real wallet is in the loop.
+
+## See also
+
+- [Programmatic access](/guides/programmatic-access) — the register / verify-email / login / bootstrap flow used at the top of the prompt
+- [Integrate Didit ID (AI agent setup prompt)](/guides/integrate) — the shorter setup prompt plus the manual steps behind it
+- [Issue credentials](/guides/issuance) — the complete OpenID4VCI and direct issuance paths
+- [Issue via email](/guides/issue-via-email) — email claim links and transaction-code delivery
+- [Verify presentations](/guides/verification) — the complete OpenID4VP verification flow with DCQL and verdicts
+- [Holder wallet](/wallet/index) — where the claim link opens and the presentation is approved
+- [Authentication](/reference/authentication) — which endpoints need the tenant API key and which stay public

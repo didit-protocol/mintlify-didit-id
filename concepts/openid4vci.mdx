@@ -3,7 +3,7 @@ title: "OpenID4VCI issuance"
 description: "Understand how Didit ID implements OpenID4VCI 1.0 credential issuance."
 ---
 
-OpenID4VCI is the wallet-facing protocol that lets you issue verifiable credentials to a holder. Didit ID implements OpenID4VCI 1.0 with the pre-authorized code grant, transaction codes, holder proof-of-possession, and SD-JWT VC credentials.
+OpenID4VCI is the wallet-facing protocol that lets you issue verifiable credentials to a holder. Didit ID implements OpenID4VCI 1.0 with the pre-authorized code grant, transaction codes, holder proof-of-possession, and SD-JWT VC credentials. The examples on this page follow a club (tenant slug `summit-club`) issuing a `MembershipCard` credential to a new member.
 
 Use this page to understand the protocol shape. Use the [issuance guide](/guides/issuance) when you are ready to build the full flow.
 
@@ -77,7 +77,7 @@ Use this page to understand the protocol shape. Use the [issuance guide](/guides
 </ResponseField>
 
 <ResponseField name="credential_issuer" type="string">
-  The issuer URL for this offer, such as `https://.../v1/issuers/airline-demo`.
+  The issuer URL for this offer, such as `https://.../v1/issuers/summit-club`.
 </ResponseField>
 
 <ResponseField name="pre_authorized_code" type="string">
@@ -97,8 +97,8 @@ curl -s -X POST http://localhost:8011/v1/credential-offers \
   -d '{
     "template_id": "<uuid>",
     "claims": {
-      "given_name": "Ada",
-      "tier": "gold"
+      "member_id": "M-9042",
+      "level": "premium"
     }
   }'
 ```
@@ -113,8 +113,8 @@ const offerResponse = await fetch("http://localhost:8011/v1/credential-offers", 
   body: JSON.stringify({
     template_id: "<uuid>",
     claims: {
-      given_name: "Ada",
-      tier: "gold",
+      member_id: "M-9042",
+      level: "premium",
     },
   }),
 });
@@ -247,7 +247,7 @@ Proof payload:
 
 ```json
 {
-  "aud": "https://.../v1/issuers/airline-demo",
+  "aud": "https://.../v1/issuers/summit-club",
   "iat": 1710000000,
   "nonce": "NKQRYX..."
 }
@@ -266,7 +266,7 @@ Proof payload:
 </ResponseField>
 
 <ResponseField name="vct" type="string">
-  The Verifiable Credential Type for the issued credential, such as `AirlineLoyalty`.
+  The Verifiable Credential Type for the issued credential, such as `MembershipCard`.
 </ResponseField>
 
 <CodeGroup>

@@ -82,9 +82,9 @@ TWO SECRETS — DO NOT CONFUSE:
 
 STEP 3 — DEFINE THE CREDENTIAL
 POST /v1/credential-schemas
-  body: { "name": "Loyalty", "vct": "AirlineLoyalty",
-          "attributes": [ { "name": "given_name", "type": "string", "sd": true },
-                          { "name": "tier",       "type": "string", "sd": true } ] }
+  body: { "name": "Employee Badge", "vct": "EmployeeBadge",
+          "attributes": [ { "name": "employee_id", "type": "string", "sd": true },
+                          { "name": "role",        "type": "string", "sd": true } ] }
   -> { uuid, vct, format }   (sd: true = selectively disclosable)
 POST /v1/credential-templates
   body: { "schema": "<schema uuid>", "name": "std", "validity_seconds": 3600 }
@@ -93,7 +93,7 @@ POST /v1/credential-templates
 STEP 4 — ISSUE A CREDENTIAL (pick one path)
 Path A, wallet (OpenID4VCI):
   POST /v1/credential-offers
-    body: { "template_id": "<TEMPLATE_ID>", "claims": { "given_name": "Ada", "tier": "gold" } }
+    body: { "template_id": "<TEMPLATE_ID>", "claims": { "employee_id": "E-1042", "role": "Engineer" } }
     -> { offer_id, credential_offer_uri, credential_issuer, pre_authorized_code, tx_code }
   Deliver credential_offer_uri to the wallet as a deep link / QR.
   (Local demo only: POST /v1/credential-offers/{offer_id}/accept  body {} runs
@@ -102,13 +102,13 @@ Path B, backend direct issuance:
   POST /v1/credentials/issue
     body: { "template_id": "<TEMPLATE_ID>",
             "holder_jwk": { "kty": "EC", "crv": "P-256", "x": "...", "y": "..." },
-            "claims": { "given_name": "Ada", "tier": "gold" } }
+            "claims": { "employee_id": "E-1042", "role": "Engineer" } }
     -> { credential_id, vct, sd_jwt, status_idx }
 
 STEP 5 — REQUEST A PRESENTATION (OpenID4VP)
 POST /v1/presentations/request
-  body: { "requested_vct": "AirlineLoyalty", "requested_claims": ["tier"],
-          "aud": "checkin-rp", "trusted_iss": "" }
+  body: { "requested_vct": "EmployeeBadge", "requested_claims": ["role"],
+          "aud": "office-access-rp", "trusted_iss": "" }
   -> { uuid, dcql, requested_claims, aud, nonce, status }
 Deliver the request to a wallet (W3C Digital Credentials API, openid4vp-v1-signed);
 the wallet submits its vp_token to POST /v1/presentations/{uuid}/response.

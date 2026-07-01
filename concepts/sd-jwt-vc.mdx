@@ -55,8 +55,8 @@ This simplified payload shows the claims that matter for Didit ID integrations:
 
 ```json
 {
-  "iss": "http://localhost:8011/v1/issuers/airline-demo",
-  "vct": "AirlineLoyalty",
+  "iss": "http://localhost:8011/v1/issuers/acme-demo",
+  "vct": "AgeOver18",
   "_sd_alg": "sha-256",
   "_sd": ["rR8z3...", "4nN7x..."],
   "cnf": {
@@ -70,7 +70,7 @@ This simplified payload shows the claims that matter for Didit ID integrations:
   "status": {
     "status_list": {
       "idx": 0,
-      "uri": "http://localhost:8011/v1/status-lists/airline-demo/<uuid>"
+      "uri": "http://localhost:8011/v1/status-lists/acme-demo/<uuid>"
     }
   }
 }
@@ -109,10 +109,10 @@ Selective disclosure is built from two pieces:
 
 When the holder presents a credential, the wallet includes only the disclosures required by the verifier. Didit ID hashes each provided disclosure, checks that the digest appears in `_sd`, and returns the revealed values in `disclosed_claims`.
 
-For example, if a verifier requests only `tier`, the wallet can include the `tier` disclosure and omit `given_name`. The signature still covers the original digest commitments, so the verifier can trust the revealed `tier` value without learning the omitted claim.
+For example, an `AgeOver18` credential can carry two selectively disclosable claims: the boolean `over_18` and the holder's `birth_year`. If a verifier requests only `over_18`, the wallet includes the `over_18` disclosure and omits `birth_year`. The signature still covers the original digest commitments, so the verifier can trust the revealed `over_18: true` value without ever learning the birth year.
 
 <Tip>
-  Model fields as selectively disclosable when a verifier may need them independently. A field such as `tier` can be disclosed without revealing `given_name` or other profile attributes.
+  Model fields as selectively disclosable when a verifier may need them independently. A field such as `over_18` can be disclosed without revealing `birth_year` or other profile attributes.
 </Tip>
 
 ## Holder key binding with `cnf`
@@ -135,7 +135,7 @@ The verifier creates a request with [`POST /presentations/request`](/api-referen
 ```json
 {
   "nonce": "NKQRYX...",
-  "aud": "checkin-rp",
+  "aud": "age-gate-rp",
   "iat": 1777056848,
   "sd_hash": "hwQH4n..."
 }
@@ -173,7 +173,7 @@ Didit ID returns `checks.not_revoked` during presentation verification. Credenti
 
 The `vct` claim identifies the credential type. Didit ID uses it across the full lifecycle:
 
-- Schemas define `vct`, such as `AirlineLoyalty`.
+- Schemas define `vct`, such as `AgeOver18`.
 - Issuance responses return `vct` with the credential.
 - Presentation requests use `requested_vct` to ask for the credential type.
 - Verification results include the disclosed claims that matched the requested type.

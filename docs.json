@@ -41,6 +41,18 @@
   "openapi": [
     "openapi.json"
   ],
+  "contextual": {
+    "options": [
+      "copy",
+      "view",
+      "chatgpt",
+      "claude",
+      "perplexity",
+      "mcp",
+      "cursor",
+      "vscode"
+    ]
+  },
   "navigation": {
     "tabs": [
       {
@@ -63,7 +75,9 @@
             "group": "Get Started",
             "pages": [
               "index",
-              "quickstart"
+              "quickstart",
+              "demo",
+              "integration-prompt"
             ]
           },
           {
@@ -83,11 +97,22 @@
               "guides/programmatic-access",
               "guides/integrate",
               "guides/issuance",
+              "guides/issue-via-email",
               "guides/verification",
+              "guides/relying-party",
               "guides/holder-wallet",
               "guides/trust-registry",
               "guides/key-rotation",
               "guides/multi-tenancy"
+            ]
+          },
+          {
+            "group": "Wallet",
+            "pages": [
+              "wallet/index",
+              "wallet/quickstart",
+              "wallet/architecture",
+              "wallet/security"
             ]
           },
           {

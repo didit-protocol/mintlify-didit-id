@@ -3,7 +3,7 @@ title: "Holder wallet"
 description: "Build the holder-side flow for accepting offers, approving disclosures, and presenting credentials."
 ---
 
-Build a holder wallet that accepts OpenID4VCI credential offers, shows a consent and selective-disclosure screen, and presents SD-JWT VC credentials through OpenID4VP. The wallet never needs the tenant API key. It uses public holder and verifier protocol endpoints.
+Build a holder wallet that accepts OpenID4VCI credential offers, shows a consent and selective-disclosure screen, and presents SD-JWT VC credentials through OpenID4VP. The wallet never needs the tenant API key. It uses public holder and verifier protocol endpoints. The examples below follow a member claiming a `MembershipCard` credential from the `summit-club` issuer and later presenting their membership `level`.
 
 <CardGroup cols={2}>
   <Card title="Verify presentations" icon="shield-check" href="/guides/verification">
@@ -51,7 +51,7 @@ Credential offers are created by issuers with [`POST /credential-offers`](/api-r
 {
   "offer_id": "<uuid>",
   "credential_offer_uri": "openid-credential-offer://...",
-  "credential_issuer": "https://.../v1/issuers/airline-demo",
+  "credential_issuer": "https://.../v1/issuers/summit-club",
   "pre_authorized_code": "s8Ilre...",
   "tx_code": "517082"
 }
@@ -199,7 +199,7 @@ The credential response includes the compact SD-JWT VC string and its credential
 ```json
 {
   "credential": "<jws>~<disclosure>~",
-  "vct": "AirlineLoyalty"
+  "vct": "MembershipCard"
 }
 ```
 
@@ -214,7 +214,7 @@ Before presenting a credential, show the holder exactly what the verifier asks f
 </ParamField>
 
 <ParamField path="credential_type" type="string">
-  Show the requested `vct`, such as `AirlineLoyalty`.
+  Show the requested `vct`, such as `MembershipCard`.
 </ParamField>
 
 <ParamField path="issuer" type="string">

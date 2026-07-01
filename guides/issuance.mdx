@@ -47,16 +47,21 @@ curl -X POST "http://localhost:8011/v1/credential-schemas" \
   -H "Authorization: Bearer $DIDIT_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
-    "name": "Loyalty",
-    "vct": "AirlineLoyalty",
+    "name": "Employee Badge",
+    "vct": "EmployeeBadge",
     "attributes": [
       {
-        "name": "given_name",
+        "name": "employee_id",
         "type": "string",
         "sd": true
       },
       {
-        "name": "tier",
+        "name": "role",
+        "type": "string",
+        "sd": true
+      },
+      {
+        "name": "department",
         "type": "string",
         "sd": true
       }
@@ -72,11 +77,12 @@ const response = await fetch("http://localhost:8011/v1/credential-schemas", {
     "Content-Type": "application/json",
   },
   body: JSON.stringify({
-    name: "Loyalty",
-    vct: "AirlineLoyalty",
+    name: "Employee Badge",
+    vct: "EmployeeBadge",
     attributes: [
-      { name: "given_name", type: "string", sd: true },
-      { name: "tier", type: "string", sd: true },
+      { name: "employee_id", type: "string", sd: true },
+      { name: "role", type: "string", sd: true },
+      { name: "department", type: "string", sd: true },
     ],
   }),
 });
@@ -156,8 +162,9 @@ Use this path when a wallet receives the credential. Your backend creates an off
       -d '{
         "template_id": "'"$TEMPLATE_ID"'",
         "claims": {
-          "given_name": "Ada",
-          "tier": "gold"
+          "employee_id": "E-1042",
+          "role": "Engineer",
+          "department": "Platform"
         }
       }'
     ```
@@ -172,8 +179,9 @@ Use this path when a wallet receives the credential. Your backend creates an off
       body: JSON.stringify({
         template_id: process.env.TEMPLATE_ID,
         claims: {
-          given_name: "Ada",
-          tier: "gold",
+          employee_id: "E-1042",
+          role: "Engineer",
+          department: "Platform",
         },
       }),
     });
@@ -310,7 +318,7 @@ Use this path when a wallet receives the credential. Your backend creates an off
     </ResponseField>
 
     <ResponseField name="vct" type="string">
-      The credential type, such as `AirlineLoyalty`.
+      The credential type, such as `EmployeeBadge`.
     </ResponseField>
 
     See [credential endpoint](/api-reference/openid4vci/credential-post).
@@ -323,18 +331,18 @@ Wallets can discover issuer capabilities and signing keys through the public iss
 
 <CodeGroup>
 ```bash cURL
-curl "http://localhost:8011/v1/issuers/airline-demo/.well-known/openid-credential-issuer"
+curl "http://localhost:8011/v1/issuers/acme-corp/.well-known/openid-credential-issuer"
 
-curl "http://localhost:8011/v1/issuers/airline-demo/.well-known/jwt-vc-issuer"
+curl "http://localhost:8011/v1/issuers/acme-corp/.well-known/jwt-vc-issuer"
 ```
 
 ```js JavaScript
 const issuerMetadata = await fetch(
-  "http://localhost:8011/v1/issuers/airline-demo/.well-known/openid-credential-issuer"
+  "http://localhost:8011/v1/issuers/acme-corp/.well-known/openid-credential-issuer"
 ).then((response) => response.json());
 
 const issuerJwks = await fetch(
-  "http://localhost:8011/v1/issuers/airline-demo/.well-known/jwt-vc-issuer"
+  "http://localhost:8011/v1/issuers/acme-corp/.well-known/jwt-vc-issuer"
 ).then((response) => response.json());
 ```
 </CodeGroup>
@@ -421,8 +429,9 @@ Use direct issuance when your backend already has the holder public key and you 
           "y": "<base64url-y-coordinate>"
         },
         "claims": {
-          "given_name": "Ada",
-          "tier": "gold"
+          "employee_id": "E-1042",
+          "role": "Engineer",
+          "department": "Platform"
         }
       }'
     ```
@@ -443,8 +452,9 @@ Use direct issuance when your backend already has the holder public key and you 
           y: "<base64url-y-coordinate>",
         },
         claims: {
-          given_name: "Ada",
-          tier: "gold",
+          employee_id: "E-1042",
+          role: "Engineer",
+          department: "Platform",
         },
       }),
     });
@@ -481,7 +491,7 @@ Selective disclosure starts in the schema and is exercised during verification.
 - A verifier requests a subset with `requested_claims`.
 - The holder presents only the requested disclosures.
 
-For example, a credential can include `given_name` and `tier`, while a verifier later asks only for `tier`. The verification response returns `disclosed_claims` and a `checks` object. See [verify presentations](/guides/verification) and [SD-JWT VC](/concepts/sd-jwt-vc).
+For example, a credential can include `employee_id`, `role`, and `department`, while a verifier later asks only for `role`. The verification response returns `disclosed_claims` and a `checks` object. See [verify presentations](/guides/verification) and [SD-JWT VC](/concepts/sd-jwt-vc).
 
 ## Validity and issuer keys
 

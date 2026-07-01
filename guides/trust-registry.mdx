@@ -47,11 +47,11 @@ A trust framework is the policy context for a trusted issuer. Didit ID includes 
 Create a trusted issuer entry with [`POST /trusted-issuers`](/api-reference/trust/trusted-issuers-post). The API example uses an issuer URL, a trust anchor, and a framework identifier.
 
 <ParamField body="name" type="string">
-  Human-readable issuer name, such as `Gov PID`.
+  Human-readable issuer name, such as `State University Registrar`.
 </ParamField>
 
 <ParamField body="iss" type="string">
-  Issuer identifier that appears in credentials and verification policy, such as `https://pid.gov.example`.
+  Issuer identifier that appears in credentials and verification policy, such as `https://id.state-university.example`.
 </ParamField>
 
 <ParamField body="trust_anchor" type="string">
@@ -68,8 +68,8 @@ Create a trusted issuer entry with [`POST /trusted-issuers`](/api-reference/trus
     -H "Authorization: Bearer $DIDIT_API_KEY" \
     -H "Content-Type: application/json" \
     -d '{
-      "name": "Gov PID",
-      "iss": "https://pid.gov.example",
+      "name": "State University Registrar",
+      "iss": "https://id.state-university.example",
       "trust_anchor": "did-web",
       "framework": "eidas2"
     }'
@@ -83,8 +83,8 @@ Create a trusted issuer entry with [`POST /trusted-issuers`](/api-reference/trus
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      name: "Gov PID",
-      iss: "https://pid.gov.example",
+      name: "State University Registrar",
+      iss: "https://id.state-university.example",
       trust_anchor: "did-web",
       framework: "eidas2",
     }),
@@ -152,10 +152,10 @@ When you create a presentation request, pass `trusted_iss` to constrain the Open
     -H "Authorization: Bearer $DIDIT_API_KEY" \
     -H "Content-Type: application/json" \
     -d '{
-      "requested_vct": "AirlineLoyalty",
-      "requested_claims": ["tier"],
-      "aud": "checkin-rp",
-      "trusted_iss": "https://pid.gov.example"
+      "requested_vct": "StudentID",
+      "requested_claims": ["program"],
+      "aud": "campus-door",
+      "trusted_iss": "https://id.state-university.example"
     }'
   ```
 
@@ -167,10 +167,10 @@ When you create a presentation request, pass `trusted_iss` to constrain the Open
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      requested_vct: "AirlineLoyalty",
-      requested_claims: ["tier"],
-      aud: "checkin-rp",
-      trusted_iss: "https://pid.gov.example",
+      requested_vct: "StudentID",
+      requested_claims: ["program"],
+      aud: "campus-door",
+      trusted_iss: "https://id.state-university.example",
     }),
   });
 

@@ -6,7 +6,7 @@
         "slug": {
           "type": "string",
           "description": "The tenant's issuer slug. Resolves to a non-deleted Tenant; an unknown or soft-deleted slug returns 404.",
-          "example": "airline-demo"
+          "example": "summit-club"
         }
       },
       "query": {}
@@ -23,7 +23,7 @@
             "type": "string",
             "format": "uri",
             "description": "The issuer's stable credential-issuer identifier — `{base}/v1/issuers/{slug}`. Used as the proof JWT `aud` (audience) and as the trust anchor for this issuer.",
-            "example": "https://id.didit.me/v1/issuers/airline-demo"
+            "example": "https://id.didit.me/v1/issuers/summit-club"
           },
           "credential_endpoint": {
             "type": "string",
@@ -47,15 +47,15 @@
             "type": "string",
             "format": "uri",
             "description": "Absolute URL of the SD-JWT VC issuer metadata / JWKS document (GET /v1/issuers/{slug}/.well-known/jwt-vc-issuer) holding the public keys used to verify issued credentials.",
-            "example": "https://id.didit.me/v1/issuers/airline-demo/.well-known/jwt-vc-issuer"
+            "example": "https://id.didit.me/v1/issuers/summit-club/.well-known/jwt-vc-issuer"
           },
           "credential_configurations_supported": {
             "type": "object",
             "description": "Map of supported credential configurations, keyed by the credential's `vct` (Verifiable Credential Type). One entry per non-deleted schema owned by the tenant. The key equals the value of the nested `vct` field. An empty object means the tenant has no schemas yet.",
             "example": {
-              "AirlineLoyalty": {
+              "MembershipCard": {
                 "format": "dc+sd-jwt",
-                "vct": "AirlineLoyalty",
+                "vct": "MembershipCard",
                 "cryptographic_binding_methods_supported": ["jwk"],
                 "credential_signing_alg_values_supported": ["ES256"],
                 "proof_types_supported": {
@@ -74,7 +74,7 @@
               "vct": {
                 "type": "string",
                 "description": "Verifiable Credential Type — the schema's `vct`. Matches the map key.",
-                "example": "AirlineLoyalty"
+                "example": "MembershipCard"
               },
               "cryptographic_binding_methods_supported": {
                 "type": "array",
@@ -118,7 +118,7 @@
         "slug": {
           "type": "string",
           "description": "The tenant's issuer slug. Resolves to a non-deleted Tenant; an unknown or soft-deleted slug returns 404.",
-          "example": "airline-demo"
+          "example": "summit-club"
         }
       },
       "query": {}
@@ -135,7 +135,7 @@
             "type": "string",
             "format": "uri",
             "description": "The issuer's credential-issuer identifier — `{base}/v1/issuers/{slug}`. Matches `credential_issuer` in the issuer metadata document.",
-            "example": "https://id.didit.me/v1/issuers/airline-demo"
+            "example": "https://id.didit.me/v1/issuers/summit-club"
           },
           "jwks": {
             "type": "object",
@@ -296,7 +296,7 @@
             "jwt": {
               "type": "string",
               "description": "The proof JWT (header typ `openid4vci-proof+jwt`, signed with ES256 or EdDSA). Its payload must contain `nonce` = the `c_nonce` from POST /v1/nonce, `aud` = the issuer's `credential_issuer` identifier, and `iat`; its header carries the holder public `jwk`. Required — a missing or empty `proof.jwt` returns 400 `invalid_proof`.",
-              "example": "eyJ0eXAiOiJvcGVuaWQ0dmNpLXByb29mK2p3dCIsImFsZyI6IkVTMjU2IiwiandrIjp7Li4ufX0.eyJub25jZSI6Ik5LUVJZWC4uLiIsImF1ZCI6Imh0dHBzOi8vaWQuZGlkaXQubWUvdjEvaXNzdWVycy9haXJsaW5lLWRlbW8iLCJpYXQiOjE3MTk3NjUwMDB9.<signature>"
+              "example": "eyJ0eXAiOiJvcGVuaWQ0dmNpLXByb29mK2p3dCIsImFsZyI6IkVTMjU2IiwiandrIjp7Li4ufX0.eyJub25jZSI6Ik5LUVJZWC4uLiIsImF1ZCI6Imh0dHBzOi8vaWQuZGlkaXQubWUvdjEvaXNzdWVycy9zdW1taXQtY2x1YiIsImlhdCI6MTcxOTc2NTAwMH0.<signature>"
             }
           }
         }
@@ -309,12 +309,12 @@
           "credential": {
             "type": "string",
             "description": "The issued credential as a `dc+sd-jwt` (SD-JWT VC) string: the issuer-signed JWS followed by tilde-separated selective-disclosure segments, ending in a trailing tilde — `<jws>~<disclosure>~<disclosure>~`. The holder stores this and presents it (optionally with a key-binding JWT) to verifiers.",
-            "example": "eyJhbGciOiJFUzI1NiIsInR5cCI6ImRjK3NkLWp3dCJ9.eyJ2Y3QiOiJBaXJsaW5lTG95YWx0eSIsImlzcyI6Imh0dHBzOi8vaWQuZGlkaXQubWUvdjEvaXNzdWVycy9haXJsaW5lLWRlbW8iLC4uLn0.<signature>~WyJzYWx0IiwgImdpdmVuX25hbWUiLCAiQWRhIl0~WyJzYWx0IiwgInRpZXIiLCAiZ29sZCJd~"
+            "example": "eyJhbGciOiJFUzI1NiIsInR5cCI6ImRjK3NkLWp3dCJ9.eyJ2Y3QiOiJNZW1iZXJzaGlwQ2FyZCIsImlzcyI6Imh0dHBzOi8vaWQuZGlkaXQubWUvdjEvaXNzdWVycy9zdW1taXQtY2x1YiIsLi4ufQ.<signature>~WyJzYWx0IiwgIm1lbWJlcl9pZCIsICJNLTkwNDIiXQ~WyJzYWx0IiwgImxldmVsIiwgInByZW1pdW0iXQ~"
           },
           "vct": {
             "type": "string",
             "description": "Verifiable Credential Type of the issued credential (the schema's `vct`).",
-            "example": "AirlineLoyalty"
+            "example": "MembershipCard"
           }
         }
       },
@@ -366,8 +366,8 @@
           "required": false,
           "description": "Claim name/value map to embed in the credential, keyed by the schema's attribute names. Defaults to `{}` if omitted. Values are stored on the offer and bound into the SD-JWT VC at issuance.",
           "example": {
-            "given_name": "Ada",
-            "tier": "gold"
+            "member_id": "M-9042",
+            "level": "premium"
           }
         },
         "tx_code": {
@@ -392,13 +392,13 @@
             "type": "string",
             "format": "uri",
             "description": "The OpenID4VCI credential-offer deep link for the holder wallet — `openid-credential-offer://?tenant={slug}&code={pre_authorized_code}`. Typically rendered as a QR code.",
-            "example": "openid-credential-offer://?tenant=airline-demo&code=s8Ilre7v2K9pQx1bN4mZ"
+            "example": "openid-credential-offer://?tenant=summit-club&code=s8Ilre7v2K9pQx1bN4mZ"
           },
           "credential_issuer": {
             "type": "string",
             "format": "uri",
             "description": "The issuer's credential-issuer identifier — `{base}/v1/issuers/{slug}`.",
-            "example": "https://id.didit.me/v1/issuers/airline-demo"
+            "example": "https://id.didit.me/v1/issuers/summit-club"
           },
           "pre_authorized_code": {
             "type": "string",
@@ -464,7 +464,7 @@
             "type": "string",
             "format": "uri",
             "description": "The OpenID4VCI credential-offer deep link — `openid-credential-offer://?tenant={slug}&code={pre_authorized_code}`.",
-            "example": "openid-credential-offer://?tenant=airline-demo&code=s8Ilre7v2K9pQx1bN4mZ"
+            "example": "openid-credential-offer://?tenant=summit-club&code=s8Ilre7v2K9pQx1bN4mZ"
           },
           "issuer": {
             "type": "object",
@@ -473,29 +473,29 @@
               "name": {
                 "type": "string",
                 "description": "Human-readable tenant/issuer name.",
-                "example": "Airline Demo"
+                "example": "Summit Club"
               },
               "did": {
                 "type": "string",
                 "description": "Decentralized identifier of the issuer — `did:web:{slug}.didit.test`.",
-                "example": "did:web:airline-demo.didit.test"
+                "example": "did:web:summit-club.didit.test"
               },
               "domain": {
                 "type": "string",
                 "description": "The issuer's `iss` value (issuer domain/identifier configured on the tenant).",
-                "example": "https://id.didit.me/v1/issuers/airline-demo"
+                "example": "https://id.didit.me/v1/issuers/summit-club"
               },
               "id": {
                 "type": "string",
                 "description": "The tenant slug.",
-                "example": "airline-demo"
+                "example": "summit-club"
               }
             }
           },
           "vct": {
             "type": "string",
             "description": "Verifiable Credential Type that would be issued (the schema's `vct`).",
-            "example": "AirlineLoyalty"
+            "example": "MembershipCard"
           },
           "format": {
             "type": "string",
@@ -525,17 +525,17 @@
               "name": {
                 "type": "string",
                 "description": "Machine name of the claim (schema attribute name).",
-                "example": "given_name"
+                "example": "member_id"
               },
               "label": {
                 "type": "string",
                 "description": "Human-readable label, derived from the claim name (underscores to spaces, title-cased).",
-                "example": "Given Name"
+                "example": "Member Id"
               },
               "value": {
                 "type": "string",
                 "description": "The claim value to be issued, stringified. Empty string if not provided in the offer's claims.",
-                "example": "Ada"
+                "example": "M-9042"
               },
               "selective_disclosure": {
                 "type": "boolean",
@@ -593,21 +593,21 @@
                 "type": "object",
                 "description": "Issuer identity block — `name`, `did` (`did:web:{slug}.didit.test`), `domain` (the tenant `iss`), `id` (slug).",
                 "example": {
-                  "name": "Airline Demo",
-                  "did": "did:web:airline-demo.didit.test",
-                  "domain": "https://id.didit.me/v1/issuers/airline-demo",
-                  "id": "airline-demo"
+                  "name": "Summit Club",
+                  "did": "did:web:summit-club.didit.test",
+                  "domain": "https://id.didit.me/v1/issuers/summit-club",
+                  "id": "summit-club"
                 }
               },
               "vct": {
                 "type": "string",
                 "description": "Verifiable Credential Type of the issued credential.",
-                "example": "AirlineLoyalty"
+                "example": "MembershipCard"
               },
               "credential_name": {
                 "type": "string",
                 "description": "Human-readable name of the credential (the schema name).",
-                "example": "Airline Loyalty Card"
+                "example": "Membership Card"
               },
               "format": {
                 "type": "string",
@@ -634,22 +634,22 @@
               "subject": {
                 "type": "string",
                 "description": "Convenience subject label — the offer's `given_name` claim value (empty if absent).",
-                "example": "Ada"
+                "example": ""
               },
               "claims": {
                 "type": "array",
                 "description": "Per-claim breakdown (same shape as the holder preview): `name`, `label`, `value`, `selective_disclosure`, one entry per schema attribute.",
                 "example": [
                   {
-                    "name": "given_name",
-                    "label": "Given Name",
-                    "value": "Ada",
+                    "name": "member_id",
+                    "label": "Member Id",
+                    "value": "M-9042",
                     "selective_disclosure": true
                   },
                   {
-                    "name": "tier",
-                    "label": "Tier",
-                    "value": "gold",
+                    "name": "level",
+                    "label": "Level",
+                    "value": "premium",
                     "selective_disclosure": true
                   }
                 ]
@@ -657,14 +657,14 @@
               "sd_jwt": {
                 "type": "string",
                 "description": "The full SD-JWT VC string — `<jws>~<disclosure>~...~` — issued and bound to the generated holder key.",
-                "example": "eyJhbGciOiJFUzI1NiIsInR5cCI6ImRjK3NkLWp3dCJ9.<payload>.<signature>~WyJzYWx0IiwgImdpdmVuX25hbWUiLCAiQWRhIl0~"
+                "example": "eyJhbGciOiJFUzI1NiIsInR5cCI6ImRjK3NkLWp3dCJ9.<payload>.<signature>~WyJzYWx0IiwgIm1lbWJlcl9pZCIsICJNLTkwNDIiXQ~"
               }
             }
           },
           "vct": {
             "type": "string",
             "description": "Verifiable Credential Type of the issued credential (top-level convenience copy of `credential.vct`).",
-            "example": "AirlineLoyalty"
+            "example": "MembershipCard"
           },
           "holder_jwk": {
             "type": "object",
