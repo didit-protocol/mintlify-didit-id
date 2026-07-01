@@ -1,0 +1,310 @@
+---
+title: "Programmatic access (for scripts & AI agents)"
+description: "Register, verify, and log in programmatically, then bootstrap a credentials tenant to obtain the tenant API key for the /v1 management API."
+---
+
+Programmatic access lets a script or an AI agent onboard to Didit ID end to end without opening the Console. You register with an email and password, confirm the email with a one-time code, and receive tokens. You then call the tenant bridge once to provision a credentials tenant and get the tenant API key used by every `/v1` management endpoint.
+
+Use this flow when a backend service, a CI job, or a coding agent needs to obtain its own Didit ID credentials and start issuing and verifying without a human clicking through the Console.
+
+The development base server is `http://localhost:8011`. In production, use your deployed host in place of `http://localhost:8011`. Programmatic auth endpoints live under `/auth/v2/programmatic/`, the tenant bridge lives at `/v1/tenant/bootstrap`, and the management API lives under `/v1`.
+
+<Note>
+  `POST /auth/v2/programmatic/verify-email/` is the one-time bootstrap for a new account. It returns your `access_token` and `refresh_token`, and it also provisions and returns your `organization` and `application`. Later, use `POST /auth/v2/programmatic/login/` whenever you need fresh tokens.
+</Note>
+
+## Endpoints at a glance
+
+| Step | Endpoint | Auth | Purpose |
+| --- | --- | --- | --- |
+| Register | `POST /auth/v2/programmatic/register/` | None | Create an account and email a 6-character OTP |
+| Resend OTP | `POST /auth/v2/programmatic/resend-otp/` | None | Re-send the email OTP |
+| Verify email | `POST /auth/v2/programmatic/verify-email/` | None | Confirm the OTP, get tokens + organization + application |
+| Log in | `POST /auth/v2/programmatic/login/` | None | Get fresh tokens for an existing account |
+| Bootstrap tenant | `POST /v1/tenant/bootstrap` | `Bearer <access_token>` | Provision the credentials tenant and return the tenant API key |
+| Management API | `/v1/*` | `Bearer <api_key>` | Issue, verify, and manage credentials |
+
+The programmatic auth endpoints are public and CORS-open. They take no `Authorization` header. The tenant bridge takes your user `access_token`. Everything under `/v1` after bootstrap takes the tenant API key.
+
+## Walkthrough
+
+<Steps>
+  <Step title="Register an account">
+    Send an email and a password of at least 8 characters. Didit ID creates the account and emails a 6-character uppercase OTP.
+
+    <ParamField body="email" type="string" required>
+      The account email. The OTP is sent here.
+    </ParamField>
+
+    <ParamField body="password" type="string" required>
+      The account password. Minimum 8 characters.
+    </ParamField>
+
+    <CodeGroup>
+    ```bash cURL
+    curl -X POST "http://localhost:8011/auth/v2/programmatic/register/" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "email": "agent@example.com",
+        "password": "a-strong-password"
+      }'
+    ```
+
+    ```js JavaScript
+    const response = await fetch(
+      "http://localhost:8011/auth/v2/programmatic/register/",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: "agent@example.com",
+          password: "a-strong-password",
+        }),
+      }
+    );
+
+    const registration = await response.json();
+    ```
+    </CodeGroup>
+
+    A `201` response returns `message` and `email`. Check the inbox for the 6-character code.
+  </Step>
+
+  <Step title="Resend the OTP if needed">
+    If the code did not arrive or expired, request a new one with the same email and password.
+
+    <CodeGroup>
+    ```bash cURL
+    curl -X POST "http://localhost:8011/auth/v2/programmatic/resend-otp/" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "email": "agent@example.com",
+        "password": "a-strong-password"
+      }'
+    ```
+
+    ```js JavaScript
+    const response = await fetch(
+      "http://localhost:8011/auth/v2/programmatic/resend-otp/",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: "agent@example.com",
+          password: "a-strong-password",
+        }),
+      }
+    );
+
+    const resend = await response.json();
+    ```
+    </CodeGroup>
+
+    A `200` response returns `message`. A fresh OTP is emailed.
+  </Step>
+
+  <Step title="Verify the email and receive tokens">
+    Confirm the account with the email and the 6-character code. This one-time bootstrap returns your tokens and also provisions your organization and first application.
+
+    <ParamField body="email" type="string" required>
+      The account email.
+    </ParamField>
+
+    <ParamField body="code" type="string" required>
+      The 6-character OTP from the email.
+    </ParamField>
+
+    <CodeGroup>
+    ```bash cURL
+    curl -X POST "http://localhost:8011/auth/v2/programmatic/verify-email/" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "email": "agent@example.com",
+        "code": "AB12CD"
+      }'
+    ```
+
+    ```js JavaScript
+    const response = await fetch(
+      "http://localhost:8011/auth/v2/programmatic/verify-email/",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: "agent@example.com",
+          code: "AB12CD",
+        }),
+      }
+    );
+
+    const session = await response.json();
+    const accessToken = session.access_token;
+    ```
+    </CodeGroup>
+
+    A `200` response returns the token pair, the token metadata, and your newly provisioned account context.
+
+    <ResponseField name="access_token" type="string">
+      The user access token. Use it as `Bearer <access_token>` to call the tenant bridge.
+    </ResponseField>
+
+    <ResponseField name="refresh_token" type="string">
+      The refresh token for renewing the session.
+    </ResponseField>
+
+    <ResponseField name="token_type" type="string">
+      Always `Bearer`.
+    </ResponseField>
+
+    <ResponseField name="expires_in" type="number">
+      The access token lifetime in seconds.
+    </ResponseField>
+
+    <ResponseField name="organization" type="object">
+      Your organization, with `uuid` and `name`.
+    </ResponseField>
+
+    <ResponseField name="application" type="object">
+      Your first application, with `uuid`, `name`, `client_id`, and `api_key`.
+    </ResponseField>
+  </Step>
+
+  <Step title="Log in for fresh tokens later">
+    Once the account exists, use login to get new tokens without repeating verification. Register and verify are a one-time bootstrap; login is the everyday path.
+
+    <ParamField body="email" type="string" required>
+      The account email.
+    </ParamField>
+
+    <ParamField body="password" type="string" required>
+      The account password.
+    </ParamField>
+
+    <CodeGroup>
+    ```bash cURL
+    curl -X POST "http://localhost:8011/auth/v2/programmatic/login/" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "email": "agent@example.com",
+        "password": "a-strong-password"
+      }'
+    ```
+
+    ```js JavaScript
+    const response = await fetch(
+      "http://localhost:8011/auth/v2/programmatic/login/",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: "agent@example.com",
+          password: "a-strong-password",
+        }),
+      }
+    );
+
+    const session = await response.json();
+    const accessToken = session.access_token;
+    ```
+    </CodeGroup>
+
+    A `200` response returns `access_token`, `refresh_token`, `token_type`, and `expires_in`.
+  </Step>
+
+  <Step title="Bootstrap the credentials tenant">
+    Call the tenant bridge with your user `access_token`. The first call provisions and seeds a credentials tenant, then returns the tenant API key used by every `/v1` management endpoint. The call is idempotent, so repeating it returns the same tenant and key.
+
+    <ParamField header="Authorization" type="string" required>
+      Use `Bearer <access_token>` with the user access token from verify-email or login.
+    </ParamField>
+
+    <CodeGroup>
+    ```bash cURL
+    curl -X POST "http://localhost:8011/v1/tenant/bootstrap" \
+      -H "Authorization: Bearer $DIDIT_ACCESS_TOKEN"
+    ```
+
+    ```js JavaScript
+    const response = await fetch("http://localhost:8011/v1/tenant/bootstrap", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${process.env.DIDIT_ACCESS_TOKEN}`,
+      },
+    });
+
+    const bootstrap = await response.json();
+    const apiKey = bootstrap.api_key;
+    ```
+    </CodeGroup>
+
+    A `200` response returns the tenant, the tenant API key, the environment, and whether seeding ran.
+
+    <ResponseField name="tenant" type="object">
+      The provisioned tenant, with `slug` and `name`.
+    </ResponseField>
+
+    <ResponseField name="api_key" type="string">
+      The tenant API key. Use it as `Bearer <api_key>` for all `/v1` management calls.
+    </ResponseField>
+
+    <ResponseField name="environment" type="string">
+      The tenant environment. Bootstrap returns `sandbox`.
+    </ResponseField>
+
+    <ResponseField name="seeded" type="boolean">
+      `true` when the bridge seeded starter resources on this call.
+    </ResponseField>
+  </Step>
+
+  <Step title="Call the management API with the tenant API key">
+    Use the tenant `api_key` as `Bearer <api_key>` against `/v1`. For example, list your credential schemas to confirm the key works.
+
+    <CodeGroup>
+    ```bash cURL
+    curl "http://localhost:8011/v1/credential-schemas" \
+      -H "Authorization: Bearer $DIDIT_API_KEY"
+    ```
+
+    ```js JavaScript
+    const response = await fetch("http://localhost:8011/v1/credential-schemas", {
+      headers: {
+        Authorization: `Bearer ${process.env.DIDIT_API_KEY}`,
+      },
+    });
+
+    const schemas = await response.json();
+    ```
+    </CodeGroup>
+
+    From here, follow [issue credentials](/guides/issuance) and [verify presentations](/guides/verification). Both guides use `Authorization: Bearer $DIDIT_API_KEY` for management calls.
+  </Step>
+</Steps>
+
+## Which token goes where
+
+Programmatic access produces two distinct secrets. Keep them straight.
+
+| Secret | Comes from | Sent as | Used for |
+| --- | --- | --- | --- |
+| User `access_token` | `verify-email` or `login` | `Bearer <access_token>` | Calling `POST /v1/tenant/bootstrap` |
+| Tenant `api_key` | `POST /v1/tenant/bootstrap` | `Bearer <api_key>` | Every other `/v1` management endpoint |
+
+The `application.api_key` returned by verify-email identifies your application. The tenant `api_key` returned by bootstrap is the credentials tenant key you use for Didit ID issuance and verification.
+
+<Warning>
+  The tenant API key is a server-side secret. Never ship it in a wallet, browser bundle, mobile app, QR payload, or credential offer, and never commit it to source control. Store it in your secret manager or environment as `DIDIT_API_KEY` and use it only from a backend you control.
+</Warning>
+
+## What you can do next
+
+- Issue an SD-JWT VC with [issue credentials](/guides/issuance).
+- Verify a wallet presentation with [verify presentations](/guides/verification).
+- Review the full auth model, including public protocol endpoints, in [authentication](/reference/authentication).

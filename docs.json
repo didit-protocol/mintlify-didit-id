@@ -80,6 +80,8 @@
           {
             "group": "Guides",
             "pages": [
+              "guides/programmatic-access",
+              "guides/integrate",
               "guides/issuance",
               "guides/verification",
               "guides/holder-wallet",

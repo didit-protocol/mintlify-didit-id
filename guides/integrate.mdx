@@ -1,0 +1,161 @@
+---
+title: "Integrate Didit ID (AI agent setup prompt)"
+description: "A copy-paste setup prompt for an AI coding agent to wire Didit ID into your app, plus the manual integration steps behind it."
+---
+
+This page gives you a ready-to-run setup prompt. Paste it into a coding agent such as Cursor or Claude Code and let the agent wire Didit ID into your backend. The prompt walks the agent through programmatic auth, the tenant bootstrap bridge, and a minimal issue, present, and verify integration against the `/v1` management API.
+
+The development base server is `http://localhost:8011`. In production, replace it with your deployed host. Programmatic auth lives under `/auth/v2/programmatic/`, the tenant bridge is `POST /v1/tenant/bootstrap`, and management endpoints live under `/v1`.
+
+## How to integrate and run
+
+<Steps>
+  <Step title="Get access">
+    Register with `POST /auth/v2/programmatic/register/`, confirm the email OTP with `POST /auth/v2/programmatic/verify-email/`, and keep the returned `access_token`. Use `POST /auth/v2/programmatic/login/` later for fresh tokens. See [programmatic access](/guides/programmatic-access).
+  </Step>
+  <Step title="Bootstrap the tenant">
+    Call `POST /v1/tenant/bootstrap` with `Authorization: Bearer <access_token>`. Store the returned tenant `api_key` as a server-side secret. Use it as `Bearer <api_key>` for every `/v1` call.
+  </Step>
+  <Step title="Create a schema">
+    Call `POST /v1/credential-schemas` to define the credential type (`vct`) and its attributes. Mark selectively disclosable attributes with `sd: true`. Then create a `POST /v1/credential-templates` to get a reusable `template_id`.
+  </Step>
+  <Step title="Issue a credential">
+    For a wallet flow, create an offer with `POST /v1/credential-offers` and deliver `credential_offer_uri`. For a backend flow, issue directly with `POST /v1/credentials/issue` using the holder public JWK. For local demos, `POST /v1/credential-offers/{uuid}/accept` runs issuance server-side.
+  </Step>
+  <Step title="Request a presentation">
+    Call `POST /v1/presentations/request` with `requested_vct`, `requested_claims`, and `aud`. Deliver the request to a wallet, or use `POST /v1/presentations/{uuid}/demo-present` locally.
+  </Step>
+  <Step title="Verify">
+    Read the `verdict`, `disclosed_claims`, and `checks` from the presentation response, and audit results with `GET /v1/verifications`. Manage issuer signing keys with `GET /v1/keys` and `POST /v1/keys/rotate`.
+  </Step>
+</Steps>
+
+## Copy this setup prompt
+
+Paste the block below into your AI coding agent. It is self-contained and describes the exact endpoints, auth flow, and the minimal integration to build.
+
+<Note>
+  This prompt is a starting point. Adjust the base URL, the credential type, and the requested claims to fit your product, and move all secrets into your own environment or secret manager.
+</Note>
+
+````text
+You are integrating Didit ID (a verifiable-credentials platform: OpenID4VCI issuance,
+OpenID4VP verification, SD-JWT VC) into this codebase. Build a minimal, working
+issue -> present -> verify integration on the backend. Follow this spec exactly.
+
+BASE SERVER
+- Dev:  http://localhost:8011
+- Prod: replace http://localhost:8011 with the deployed host.
+- Programmatic auth: {BASE}/auth/v2/programmatic/*  (public, no auth header, CORS-open)
+- Tenant bridge:     {BASE}/v1/tenant/bootstrap      (Bearer <access_token>)
+- Management API:    {BASE}/v1/*                      (Bearer <tenant api_key>)
+
+STEP 1 — GET ACCESS (programmatic auth)
+Send JSON bodies with Content-Type: application/json. No Authorization header on these.
+1. POST /auth/v2/programmatic/register/
+   body: { "email": "<email>", "password": "<min 8 chars>" }
+   -> 201 { message, email }. A 6-character UPPERCASE OTP is emailed.
+2. (optional) POST /auth/v2/programmatic/resend-otp/
+   body: { "email", "password" } -> 200 { message }  (re-sends the OTP)
+3. POST /auth/v2/programmatic/verify-email/
+   body: { "email", "code": "<6-char OTP>" }
+   -> 200 { access_token, refresh_token, token_type: "Bearer", expires_in,
+            organization: { uuid, name },
+            application:  { uuid, name, client_id, api_key } }
+   This is a ONE-TIME bootstrap: it also provisions the organization + application.
+4. For fresh tokens later: POST /auth/v2/programmatic/login/
+   body: { "email", "password" }
+   -> 200 { access_token, refresh_token, token_type, expires_in }
+Keep the user access_token.
+
+STEP 2 — BOOTSTRAP THE CREDENTIALS TENANT
+POST /v1/tenant/bootstrap
+  header: Authorization: Bearer <access_token>   (the USER access_token)
+  -> 200 { tenant: { slug, name }, api_key, environment: "sandbox", seeded: bool }
+Idempotent: the first call provisions + seeds a credentials tenant; later calls
+return the same tenant and key. Store `api_key` as a SERVER-SIDE secret
+(e.g. DIDIT_API_KEY). Every /v1 call below uses: Authorization: Bearer <api_key>.
+
+TWO SECRETS — DO NOT CONFUSE:
+- user access_token  -> only for POST /v1/tenant/bootstrap
+- tenant api_key     -> for every other /v1 management endpoint
+
+STEP 3 — DEFINE THE CREDENTIAL
+POST /v1/credential-schemas
+  body: { "name": "Loyalty", "vct": "AirlineLoyalty",
+          "attributes": [ { "name": "given_name", "type": "string", "sd": true },
+                          { "name": "tier",       "type": "string", "sd": true } ] }
+  -> { uuid, vct, format }   (sd: true = selectively disclosable)
+POST /v1/credential-templates
+  body: { "schema": "<schema uuid>", "name": "std", "validity_seconds": 3600 }
+  -> { uuid }   (this is TEMPLATE_ID)
+
+STEP 4 — ISSUE A CREDENTIAL (pick one path)
+Path A, wallet (OpenID4VCI):
+  POST /v1/credential-offers
+    body: { "template_id": "<TEMPLATE_ID>", "claims": { "given_name": "Ada", "tier": "gold" } }
+    -> { offer_id, credential_offer_uri, credential_issuer, pre_authorized_code, tx_code }
+  Deliver credential_offer_uri to the wallet as a deep link / QR.
+  (Local demo only: POST /v1/credential-offers/{offer_id}/accept  body {} runs
+   token+nonce+proof+credential server-side and returns the credential.)
+Path B, backend direct issuance:
+  POST /v1/credentials/issue
+    body: { "template_id": "<TEMPLATE_ID>",
+            "holder_jwk": { "kty": "EC", "crv": "P-256", "x": "...", "y": "..." },
+            "claims": { "given_name": "Ada", "tier": "gold" } }
+    -> { credential_id, vct, sd_jwt, status_idx }
+
+STEP 5 — REQUEST A PRESENTATION (OpenID4VP)
+POST /v1/presentations/request
+  body: { "requested_vct": "AirlineLoyalty", "requested_claims": ["tier"],
+          "aud": "checkin-rp", "trusted_iss": "" }
+  -> { uuid, dcql, requested_claims, aud, nonce, status }
+Deliver the request to a wallet (W3C Digital Credentials API, openid4vp-v1-signed);
+the wallet submits its vp_token to POST /v1/presentations/{uuid}/response.
+Local demo only: POST /v1/presentations/{uuid}/demo-present  body {}  runs a real
+server-side issue+present+verify for that request.
+
+STEP 6 — VERIFY
+The present/response call returns { verdict, disclosed_claims, checks }.
+- verdict "verified" = accepted.
+- checks include: signature, key_binding, aud, nonce, alg_allowlist, not_expired, not_revoked.
+Audit trail: GET /v1/verifications  and  GET /v1/verifications/{uuid}.
+
+KEY MANAGEMENT (issuer signing keys)
+GET  /v1/keys           list issuer signing keys
+GET  /v1/keys/impact    preview a rotation's impact
+POST /v1/keys/rotate    rotate the issuer signing key (old key kept during overlap)
+
+DELIVERABLE
+Write a small backend module that:
+1. reads DIDIT_ACCESS_TOKEN (from verify-email/login) and DIDIT_API_KEY (from bootstrap)
+   from the environment; if DIDIT_API_KEY is missing, call POST /v1/tenant/bootstrap and
+   persist the returned api_key.
+2. exposes functions: createSchemaAndTemplate(), issueCredential(claims),
+   requestPresentation(requestedClaims), and verify() that reads verdict + checks.
+3. never logs or hard-codes secrets; loads all keys/tokens from env; uses the
+   tenant api_key as Bearer for every /v1 call and the user access_token ONLY for
+   /v1/tenant/bootstrap.
+4. includes a runnable end-to-end demo using the /accept and /demo-present demo
+   endpoints so it works locally without a wallet, and prints the final verdict + checks.
+Use Content-Type: application/json on every request with a body.
+````
+
+## After the agent runs
+
+Verify the integration against the reference docs, then replace the demo endpoints with a real wallet flow before production.
+
+<CardGroup cols={2}>
+  <Card title="Programmatic access" icon="key-round" href="/guides/programmatic-access">
+    The full register, verify-email, login, and bootstrap flow with cURL and JavaScript.
+  </Card>
+  <Card title="Issue credentials" icon="send" href="/guides/issuance">
+    The complete OpenID4VCI and direct issuance paths.
+  </Card>
+  <Card title="Verify presentations" icon="shield-check" href="/guides/verification">
+    The complete OpenID4VP verification flow with DCQL and verdicts.
+  </Card>
+  <Card title="Authentication" icon="lock" href="/reference/authentication">
+    Which endpoints need the tenant API key and which stay public.
+  </Card>
+</CardGroup>
