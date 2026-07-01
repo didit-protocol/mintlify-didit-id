@@ -25,63 +25,6 @@
         ]
       }
     },
-    "/v1/dev/otp": {
-      "get": {
-        "operationId": "v1_dev_otp_retrieve",
-        "description": "Dev-only: read the most recent programmatic-registration OTP from the in-process cache.",
-        "tags": [
-          "Other"
-        ],
-        "responses": {
-          "200": {
-            "description": "No response body"
-          }
-        },
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ]
-      }
-    },
-    "/v1/dev/last-email": {
-      "get": {
-        "operationId": "v1_dev_last_email_retrieve",
-        "description": "Dev-only: the most recent claim email recorded for an address (see offer_email service).",
-        "tags": [
-          "Other"
-        ],
-        "responses": {
-          "200": {
-            "description": "No response body"
-          }
-        },
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ]
-      }
-    },
-    "/v1/dev/reset-token": {
-      "get": {
-        "operationId": "v1_dev_reset_token_retrieve",
-        "description": "Dev-only: the outstanding password-reset token for an email (see PasswordAuthProcessor).",
-        "tags": [
-          "Other"
-        ],
-        "responses": {
-          "200": {
-            "description": "No response body"
-          }
-        },
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ]
-      }
-    },
     "/v1/members": {
       "get": {
         "operationId": "v1_members_retrieve",
@@ -3641,7 +3584,7 @@
     "/v1/credential-offers/{uuid}/offer": {
       "get": {
         "operationId": "v1_credential_offers_offer_retrieve",
-        "description": "Public OpenID4VCI credential-offer JSON \u2014 the document `credential_offer_uri` points at.",
+        "description": "Public OpenID4VCI credential-offer JSON \u2014 the document `credential_offer_uri` points at.\n\nSEC-5: applies the same staleness 404 as OfferDetailView \u2014 an unknown, already-redeemed, or\nexpired offer is 404, so this document never hands out a pre-authorized_code for a dead offer.",
         "parameters": [
           {
             "name": "uuid",
