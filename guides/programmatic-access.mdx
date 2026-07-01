@@ -67,6 +67,19 @@ The programmatic auth endpoints are public and CORS-open. They take no `Authoriz
 
     const registration = await response.json();
     ```
+
+    ```python Python
+    import requests
+
+    base = "http://localhost:8011"
+
+    response = requests.post(
+        f"{base}/auth/v2/programmatic/register/",
+        json={"email": "agent@example.com", "password": "a-strong-password"},
+    )
+
+    registration = response.json()
+    ```
     </CodeGroup>
 
     A `201` response returns `message` and `email`. Check the inbox for the 6-character code.
@@ -101,6 +114,15 @@ The programmatic auth endpoints are public and CORS-open. They take no `Authoriz
     );
 
     const resend = await response.json();
+    ```
+
+    ```python Python
+    response = requests.post(
+        f"{base}/auth/v2/programmatic/resend-otp/",
+        json={"email": "agent@example.com", "password": "a-strong-password"},
+    )
+
+    resend = response.json()
     ```
     </CodeGroup>
 
@@ -145,6 +167,16 @@ The programmatic auth endpoints are public and CORS-open. They take no `Authoriz
 
     const session = await response.json();
     const accessToken = session.access_token;
+    ```
+
+    ```python Python
+    response = requests.post(
+        f"{base}/auth/v2/programmatic/verify-email/",
+        json={"email": "agent@example.com", "code": "AB12CD"},
+    )
+
+    session = response.json()
+    access_token = session["access_token"]
     ```
     </CodeGroup>
 
@@ -214,6 +246,16 @@ The programmatic auth endpoints are public and CORS-open. They take no `Authoriz
     const session = await response.json();
     const accessToken = session.access_token;
     ```
+
+    ```python Python
+    response = requests.post(
+        f"{base}/auth/v2/programmatic/login/",
+        json={"email": "agent@example.com", "password": "a-strong-password"},
+    )
+
+    session = response.json()
+    access_token = session["access_token"]
+    ```
     </CodeGroup>
 
     A `200` response returns `access_token`, `refresh_token`, `token_type`, and `expires_in`.
@@ -242,6 +284,16 @@ The programmatic auth endpoints are public and CORS-open. They take no `Authoriz
 
     const bootstrap = await response.json();
     const apiKey = bootstrap.api_key;
+    ```
+
+    ```python Python
+    response = requests.post(
+        f"{base}/v1/tenant/bootstrap",
+        headers={"Authorization": f"Bearer {access_token}"},
+    )
+
+    bootstrap = response.json()
+    api_key = bootstrap["api_key"]
     ```
     </CodeGroup>
 
@@ -281,6 +333,15 @@ The programmatic auth endpoints are public and CORS-open. They take no `Authoriz
     });
 
     const schemas = await response.json();
+    ```
+
+    ```python Python
+    response = requests.get(
+        f"{base}/v1/credential-schemas",
+        headers={"Authorization": f"Bearer {api_key}"},
+    )
+
+    schemas = response.json()
     ```
     </CodeGroup>
 

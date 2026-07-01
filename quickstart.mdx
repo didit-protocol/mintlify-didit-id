@@ -23,6 +23,18 @@ export DIDIT_API_KEY="<tenant-api-key>"
 curl -sS "$DIDIT_API_BASE/credential-schemas" \
   -H "Authorization: Bearer $DIDIT_API_KEY" | jq
 ```
+
+```python Python
+import os
+import requests
+
+api_base = os.environ.get("DIDIT_API_BASE", "http://localhost:8011/v1")
+api_key = os.environ["DIDIT_API_KEY"]
+auth = {"Authorization": f"Bearer {api_key}"}
+
+response = requests.get(f"{api_base}/credential-schemas", headers=auth)
+print(response.json())
+```
 </CodeGroup>
   </Step>
 
@@ -73,6 +85,33 @@ TEMPLATE_ID="$(
 echo "SCHEMA_ID=$SCHEMA_ID"
 echo "TEMPLATE_ID=$TEMPLATE_ID"
 ```
+
+```python Python
+schema = requests.post(
+    f"{api_base}/credential-schemas",
+    headers=auth,
+    json={
+        "name": "Employee Badge",
+        "vct": "EmployeeBadge",
+        "attributes": [
+            {"name": "employee_id", "type": "string", "sd": True},
+            {"name": "role", "type": "string", "sd": True},
+            {"name": "department", "type": "string", "sd": True},
+        ],
+    },
+).json()
+schema_id = schema["uuid"]
+
+template = requests.post(
+    f"{api_base}/credential-templates",
+    headers=auth,
+    json={"schema": schema_id, "name": "std", "validity_seconds": 3600},
+).json()
+template_id = template["uuid"]
+
+print("SCHEMA_ID", schema_id)
+print("TEMPLATE_ID", template_id)
+```
 </CodeGroup>
 
     `SCHEMA_ID` identifies the credential type and selectively disclosable claims. `TEMPLATE_ID` is the issuer-side configuration you use when you create an offer.
@@ -108,6 +147,27 @@ echo "$OFFER" | jq '{
   tx_code
 }'
 ```
+
+```python Python
+offer = requests.post(
+    f"{api_base}/credential-offers",
+    headers=auth,
+    json={
+        "template_id": template_id,
+        "claims": {
+            "employee_id": "E-1042",
+            "role": "Engineer",
+            "department": "Platform",
+        },
+    },
+).json()
+offer_id = offer["offer_id"]
+
+print({k: offer[k] for k in (
+    "offer_id", "credential_offer_uri", "credential_issuer",
+    "pre_authorized_code", "tx_code",
+)})
+```
 </CodeGroup>
 
     See the [credential offer API reference](/api-reference/openid4vci/credential-offers-post) for the full response shape.
@@ -131,6 +191,17 @@ curl -sS -X POST "$DIDIT_API_BASE/credential-offers/$OFFER_ID/accept" \
       claims
     }
   }'
+```
+
+```python Python
+# The demo accept endpoint is public — no Authorization header.
+accepted = requests.post(
+    f"{api_base}/credential-offers/{offer_id}/accept",
+    json={},
+).json()
+
+print(accepted["vct"])
+print(accepted["credential"])
 ```
 </CodeGroup>
 
@@ -172,6 +243,32 @@ curl -sS -X POST "$DIDIT_API_BASE/presentations/$PRESENTATION_ID/demo-present" \
     disclosed_claims,
     checks
   }'
+```
+
+```python Python
+presentation = requests.post(
+    f"{api_base}/presentations/request",
+    headers=auth,
+    json={
+        "requested_vct": "EmployeeBadge",
+        "requested_claims": ["role"],
+        "aud": "office-access-rp",
+        "trusted_iss": "",
+    },
+).json()
+presentation_id = presentation["uuid"]
+
+print({k: presentation.get(k) for k in (
+    "uuid", "dcql", "requested_claims", "aud", "nonce", "status",
+)})
+
+# demo-present is public — no Authorization header.
+result = requests.post(
+    f"{api_base}/presentations/{presentation_id}/demo-present",
+    json={},
+).json()
+
+print({k: result[k] for k in ("verdict", "disclosed_claims", "checks")})
 ```
 </CodeGroup>
 

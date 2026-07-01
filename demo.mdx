@@ -1,8 +1,111 @@
 ---
 title: "Run the full demo locally"
-description: "Spin up the Didit Credentials service, console, and holder wallet on your machine and walk an issue, claim, present, and verify loop end to end."
+description: "Spin up the Didit ID service, console, holder wallet, and relying-party demo on your machine and walk one credential from issue to verify in about 15 minutes."
 ---
 
-This page will walk you through running the complete Didit Credentials stack locally — the credentials service on `http://localhost:8011`, the console, and the holder wallet — then driving one credential through its full life: create a schema, issue an offer, claim it into the wallet, present it to a verifier, and read the verification result.
+This walkthrough runs the whole Didit ID stack on your machine — the credentials service, the console, the holder wallet, and the relying-party demo — and drives one credential through its full life: create a schema, issue it by email, claim it into a passkey-backed wallet, and verify it with selective disclosure. Budget about 15 minutes.
 
-<Note>Content lands with the wallet release.</Note>
+## Prerequisites
+
+- **Python 3.10+** with [`pipenv`](https://pipenv.pypa.io/) — for the credentials service.
+- **Node 18+** with [`pnpm`](https://pnpm.io/) — for the console, wallet, and relying-party demo.
+- **A passkey-capable browser** — Chrome, Safari, or Edge on a device with a platform authenticator (Touch ID, Windows Hello) or a security key.
+- **`git`** and **`make`**.
+
+<Note>
+  No Postmark token is required. Without one, the service logs the claim link and exposes it at `GET /v1/dev/last-email`, so the demo runs fully offline.
+</Note>
+
+## Ports
+
+The four apps run on fixed local ports.
+
+| App | Repo | URL |
+| --- | --- | --- |
+| Credentials service (Django) | [`didit-credentials-service`](https://github.com/didit-protocol/service-didit-id-v0) | `http://localhost:8011` |
+| Console (Next.js) | [`didit-credentials-console`](https://github.com/didit-protocol/fe-didit-id-v0) | `http://localhost:3011/console` |
+| Holder wallet (Next.js) | `didit-credentials-wallet` | `http://localhost:3012` |
+| Relying-party demo (Next.js) | `didit-credentials-rp-demo` | `http://localhost:3013` |
+
+The wallet reads `NEXT_PUBLIC_API_BASE=http://localhost:8011/v1` and `NEXT_PUBLIC_AUTH_BASE=http://localhost:8011`.
+
+## Walkthrough
+
+<Steps>
+  <Step title="Clone the four repos plus the orchestrator">
+    Clone all four apps and the `didit-credentials-e2e` orchestrator side by side in one parent directory. The orchestrator's `make dev-all` expects them as siblings.
+
+    ```bash
+    mkdir didit-id && cd didit-id
+    git clone https://github.com/didit-protocol/service-didit-id-v0.git didit-credentials-service
+    git clone https://github.com/didit-protocol/fe-didit-id-v0.git      didit-credentials-console
+    # wallet, rp-demo, and e2e are part of the same org
+    git clone <didit-credentials-wallet>
+    git clone <didit-credentials-rp-demo>
+    git clone <didit-credentials-e2e>
+    ```
+  </Step>
+
+  <Step title="Start everything with make dev-all">
+    From the `didit-credentials-e2e` directory, run `make dev-all`. It migrates the service database (SQLite, no external dependencies), then starts the service on `:8011` and the three frontends on `:3011`, `:3012`, and `:3013` in the foreground. `Ctrl-C` stops all four.
+
+    ```bash
+    cd didit-credentials-e2e
+    make install   # first run only — node deps + Playwright chromium
+    make dev-all
+    ```
+
+    The service runs with `DJANGO_SETTINGS_MODULE=core.settings.devserver`, which enables the `/v1/dev/*` helper endpoints and local ES256 token signing so no AWS KMS is needed. Wait for the `All services up` banner.
+  </Step>
+
+  <Step title="Sign up in the console">
+    Open `http://localhost:3011/console` and create an account. The console uses the programmatic auth flow under the hood — register, then confirm the emailed OTP. Without Postmark, read the code from `GET /v1/dev/otp?email=<your-email>`. On first sign-in, the console bootstraps your credentials tenant and its API key. See [programmatic access](/guides/programmatic-access) for the same flow via the API.
+  </Step>
+
+  <Step title="Create an EmployeeBadge schema">
+    In the console, create a credential schema with `vct` = `EmployeeBadge` and three selectively disclosable attributes: `employee_id`, `role`, and `department`. Then create a template from it. This is the equivalent of [`POST /v1/credential-schemas`](/api-reference/credentials/credential-schemas-post) followed by [`POST /v1/credential-templates`](/api-reference/credentials/credential-templates-post).
+  </Step>
+
+  <Step title="Issue the credential by email">
+    Create a credential offer for the badge with your own email as `recipient_email` and `send_email: true`. The console fills in the claim values (for example `employee_id: E-1042`, `role: Engineer`, `department: Platform`). See [issue via email](/guides/issue-via-email).
+  </Step>
+
+  <Step title="Grab the claim link">
+    Because Postmark is not configured, read the claim link from the dev inbox instead of your email:
+
+    ```bash
+    curl "http://localhost:8011/v1/dev/last-email?to=<your-email>" | jq -r '.claim_url'
+    ```
+
+    The link looks like `http://localhost:3012/claim?offer=<offer_id>`. Keep the transaction code the console showed you — you will enter it in the wallet.
+  </Step>
+
+  <Step title="Create a wallet account with a passkey">
+    Open `http://localhost:3012` and create an account. The wallet uses a passkey (WebAuthn) for account sign-in and generates a WebCrypto ES256 holder key per credential. Approve the passkey prompt in your browser.
+  </Step>
+
+  <Step title="Claim the credential">
+    Paste the claim link into the wallet (or open it directly). Review the offer, enter the transaction code, and claim. The wallet runs the [OpenID4VCI](/concepts/openid4vci) exchange — token, nonce, holder proof — and stores the SD-JWT VC bound to a fresh holder key. See the [wallet quickstart](/wallet/quickstart).
+  </Step>
+
+  <Step title="Verify with selective disclosure">
+    Open the relying-party demo at `http://localhost:3013`. It requests a presentation (for example, the badge `role`). Scan the QR with the wallet or use the same-device link, approve the disclosure of only the requested claim, and the demo polls for the verdict. The verifier learns `role` and nothing else. See [build a relying party](/guides/relying-party).
+  </Step>
+</Steps>
+
+## What you just proved
+
+- An issuer defined a credential type and issued it by email — no wallet pre-provisioning.
+- A holder claimed it into a browser wallet with a passkey account and per-credential holder keys.
+- A verifier confirmed one claim without the holder revealing the rest.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Wallet architecture" icon="sitemap" href="/wallet/architecture">
+    How the wallet stores keys and credentials and runs the claim and present pipelines.
+  </Card>
+  <Card title="Integration prompt" icon="robot" href="/integration-prompt">
+    Hand the whole integration to an AI coding agent in one paste.
+  </Card>
+</CardGroup>

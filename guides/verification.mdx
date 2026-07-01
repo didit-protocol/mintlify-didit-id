@@ -112,6 +112,27 @@ const response = await fetch("http://localhost:8011/v1/presentations/request", {
 const presentation = await response.json();
 ```
 
+```python Python
+import os
+import requests
+
+api_base = "http://localhost:8011/v1"
+auth = {"Authorization": f"Bearer {os.environ['DIDIT_API_KEY']}"}
+
+response = requests.post(
+    f"{api_base}/presentations/request",
+    headers=auth,
+    json={
+        "requested_vct": "AgeOver18",
+        "requested_claims": ["over_18"],
+        "aud": "age-gate-rp",
+        "trusted_iss": "",
+    },
+)
+
+presentation = response.json()
+```
+
 </CodeGroup>
 
 The response contains the presentation identifier, transaction identifier, DCQL query, requested claims, audience, nonce, and current status.
@@ -190,6 +211,16 @@ const response = await fetch(
 );
 
 const result = await response.json();
+```
+
+```python Python
+# The holder wallet calls this public endpoint with its vp_token.
+response = requests.post(
+    f"{api_base}/presentations/{presentation['uuid']}/response",
+    json={"vp_token": "<sd-jwt-vc presentation with KB-JWT>"},
+)
+
+result = response.json()
 ```
 
 </CodeGroup>
@@ -289,6 +320,16 @@ const response = await fetch(
 const result = await response.json();
 ```
 
+```python Python
+# demo-present is public — no Authorization header.
+response = requests.post(
+    f"{api_base}/presentations/{presentation['uuid']}/demo-present",
+    json={},
+)
+
+result = response.json()
+```
+
 </CodeGroup>
 
 ```json
@@ -335,6 +376,12 @@ const response = await fetch("http://localhost:8011/v1/verifications", {
 });
 
 const verifications = await response.json();
+```
+
+```python Python
+response = requests.get(f"{api_base}/verifications", headers=auth)
+
+verifications = response.json()
 ```
 
 </CodeGroup>

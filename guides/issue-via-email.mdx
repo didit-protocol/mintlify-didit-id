@@ -1,8 +1,271 @@
 ---
 title: "Issue via email"
-description: "Send a credential offer as an email claim link — the holder opens the link, enters the transaction code, and claims the credential into their wallet."
+description: "Send a credential offer as an email claim link — the holder opens the link in the wallet, enters the transaction code, and claims the credential."
 ---
 
-This guide will cover email-delivered issuance: creating a credential offer with `recipient_email` and `send_email: true` so Didit ID emails the holder a claim link, how the link opens the holder wallet, and how the transaction code (PIN) protects the exchange — including when to share it out-of-band and when to disable it.
+Email-delivered issuance turns a credential offer into a link you can send to a person. You create the offer with a `recipient_email` and `send_email: true`, Didit ID emails the holder a claim link, and the link opens the [holder wallet](/wallet/index) at `WALLET_BASE_URL/claim?offer=<offer_id>`. The holder reviews the offer, enters the transaction code (PIN), and claims the credential with the standard [OpenID4VCI](/concepts/openid4vci) exchange.
 
-<Note>Content lands with the wallet release.</Note>
+Use this path when you are onboarding real people — issuing an `EmployeeBadge` to a new hire, a `StudentID` to an enrolled student, a `MembershipCard` to a member — and you do not want to hand-deliver a QR code. The examples below issue an `EmployeeBadge` from the `acme-corp` issuer.
+
+<Note>
+  `POST /v1/credential-offers` is a management endpoint. It uses `Authorization: Bearer $DIDIT_API_KEY`. The claim link it emails is public — never send the tenant API key to the holder.
+</Note>
+
+## Before you start
+
+You need a schema and a template (see [issue credentials](/guides/issuance)), plus two environment values on the service:
+
+| Variable | Purpose |
+| --- | --- |
+| `WALLET_BASE_URL` | Base URL of the holder wallet. The claim link is `WALLET_BASE_URL/claim?offer=<offer_id>`. Defaults to `http://localhost:3012`. |
+| `DJANGO_EMAIL_HOST_PASSWORD` | The Postmark server token. When set, Didit ID sends the claim email through Postmark. |
+
+<Note>
+  **Local dev without Postmark.** If `DJANGO_EMAIL_HOST_PASSWORD` is empty, email delivery degrades gracefully: the service logs the claim URL and caches it, and `GET /v1/dev/last-email?to=<email>` returns the last claim link for that address. The response sets `email_sent: false` with `email_skipped_reason: "postmark_unset"`. The `/v1/dev/*` endpoints exist only in non-production environments.
+</Note>
+
+## Create an emailed offer
+
+Call `POST /v1/credential-offers` with the template, the claims for this holder, `recipient_email`, and `send_email: true`.
+
+<ParamField body="template_id" type="string" required>
+  The credential template UUID.
+</ParamField>
+
+<ParamField body="claims" type="object" required>
+  Claim values to issue into the credential.
+</ParamField>
+
+<ParamField body="recipient_email" type="string">
+  The holder's email address. Required when `send_email` is `true`.
+</ParamField>
+
+<ParamField body="send_email" type="boolean">
+  Set `true` to email the claim link. When `false` (the default), the offer is created but no email is sent — you deliver the `credential_offer_uri` yourself.
+</ParamField>
+
+<ParamField body="tx_code_delivery" type="string">
+  How the transaction code reaches the holder. One of `issuer` (default), `email`, or `none`. See [transaction-code delivery](#transaction-code-delivery).
+</ParamField>
+
+<CodeGroup>
+```bash cURL
+curl -X POST "http://localhost:8011/v1/credential-offers" \
+  -H "Authorization: Bearer $DIDIT_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "template_id": "'"$TEMPLATE_ID"'",
+    "claims": {
+      "employee_id": "E-1042",
+      "role": "Engineer",
+      "department": "Platform"
+    },
+    "recipient_email": "ada@acme-corp.example",
+    "send_email": true,
+    "tx_code_delivery": "issuer"
+  }'
+```
+
+```js JavaScript
+const response = await fetch("http://localhost:8011/v1/credential-offers", {
+  method: "POST",
+  headers: {
+    Authorization: `Bearer ${process.env.DIDIT_API_KEY}`,
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    template_id: process.env.TEMPLATE_ID,
+    claims: {
+      employee_id: "E-1042",
+      role: "Engineer",
+      department: "Platform",
+    },
+    recipient_email: "ada@acme-corp.example",
+    send_email: true,
+    tx_code_delivery: "issuer",
+  }),
+});
+
+const offer = await response.json();
+```
+
+```python Python
+import os
+import requests
+
+response = requests.post(
+    "http://localhost:8011/v1/credential-offers",
+    headers={"Authorization": f"Bearer {os.environ['DIDIT_API_KEY']}"},
+    json={
+        "template_id": os.environ["TEMPLATE_ID"],
+        "claims": {
+            "employee_id": "E-1042",
+            "role": "Engineer",
+            "department": "Platform",
+        },
+        "recipient_email": "ada@acme-corp.example",
+        "send_email": True,
+        "tx_code_delivery": "issuer",
+    },
+)
+
+offer = response.json()
+```
+</CodeGroup>
+
+A `201` response confirms the offer and reports whether the email went out.
+
+```json
+{
+  "offer_id": "0f3c8a12-...",
+  "credential_offer_uri": "openid-credential-offer://?credential_offer_uri=...",
+  "credential_issuer": "https://.../v1/issuers/acme-corp",
+  "pre_authorized_code": "s8Ilre...",
+  "tx_code": "517082",
+  "recipient_email": "ada@acme-corp.example",
+  "email_sent": true,
+  "claim_url": "http://localhost:3012/claim?offer=0f3c8a12-...",
+  "expires_at": "2026-07-08T12:00:00Z"
+}
+```
+
+<ResponseField name="offer_id" type="string">
+  The offer UUID. It is also the capability the wallet dereferences at `/claim?offer=<offer_id>`.
+</ResponseField>
+
+<ResponseField name="claim_url" type="string">
+  The wallet deep link the holder clicks. This is the same link Didit ID puts in the email.
+</ResponseField>
+
+<ResponseField name="email_sent" type="boolean">
+  `true` when Postmark accepted the email. `false` in local dev when Postmark is not configured — check `email_skipped_reason`.
+</ResponseField>
+
+<ResponseField name="tx_code" type="string">
+  The transaction code (PIN) that redeems the offer at the token endpoint. **Do not** put this value in the claim email — see below.
+</ResponseField>
+
+<Warning>
+  The claim email never contains the transaction code. Emailing the link and the PIN together would let a single intercepted message redeem the offer. Deliver the PIN on a separate channel.
+</Warning>
+
+## Transaction-code delivery
+
+The transaction code (`tx_code`) is a short PIN the holder enters at `POST /v1/oauth/token` to redeem the offer. `tx_code_delivery` controls how it reaches them:
+
+<CardGroup cols={3}>
+  <Card title="issuer (default)" icon="user-lock">
+    You share the PIN out-of-band — in person, over the phone, in a chat, or in your own onboarding UI. Best security: the claim link and the PIN never travel the same channel.
+  </Card>
+  <Card title="email" icon="envelope">
+    Didit ID sends the PIN in a **second, separate email** from the claim link. Convenient, but a compromised inbox holds both halves.
+  </Card>
+  <Card title="none" icon="ban">
+    No PIN. The offer UUID alone redeems the credential. Only use this for low-value credentials where the claim link is delivered on a trusted channel.
+  </Card>
+</CardGroup>
+
+<Note>
+  Even with `tx_code_delivery: "email"`, the PIN is sent as a distinct message — never inside the claim link email.
+</Note>
+
+## The holder experience
+
+<Steps>
+  <Step title="The holder receives the email">
+    The email contains the credential name, the issuer, and a single Claim button linking to `WALLET_BASE_URL/claim?offer=<offer_id>`.
+  </Step>
+  <Step title="The wallet opens the offer">
+    The claim link opens the holder wallet, which previews the offer with the public [`GET /v1/credential-offers/{uuid}`](/api-reference/openid4vci/credential-offers-uuid-get) endpoint. When a transaction code is required, the preview shows claim labels only — never the values — until the holder proves possession of the code.
+  </Step>
+  <Step title="The holder enters the transaction code">
+    The wallet redeems the `pre_authorized_code` and the `tx_code` at [`POST /v1/oauth/token`](/api-reference/openid4vci/oauth-token-post), then runs the nonce and proof steps.
+  </Step>
+  <Step title="The credential lands in the wallet">
+    The wallet stores the SD-JWT VC bound to a fresh holder key. The holder can now present it with selective disclosure.
+  </Step>
+</Steps>
+
+See the [wallet quickstart](/wallet/quickstart) for the holder side end to end, and [issue credentials](/guides/issuance) for the full OpenID4VCI exchange the wallet runs.
+
+## Read the claim link in local dev
+
+Without Postmark, use the dev inbox endpoint to grab the link the wallet would have received by email. This endpoint only exists in non-production environments.
+
+<CodeGroup>
+```bash cURL
+curl "http://localhost:8011/v1/dev/last-email?to=ada@acme-corp.example" | jq
+```
+
+```js JavaScript
+const response = await fetch(
+  "http://localhost:8011/v1/dev/last-email?to=ada@acme-corp.example"
+);
+
+const lastEmail = await response.json();
+const claimUrl = lastEmail.claim_url;
+```
+
+```python Python
+response = requests.get(
+    "http://localhost:8011/v1/dev/last-email",
+    params={"to": "ada@acme-corp.example"},
+)
+
+last_email = response.json()
+claim_url = last_email["claim_url"]
+```
+</CodeGroup>
+
+```json
+{
+  "to": "ada@acme-corp.example",
+  "subject": "Claim your Employee Badge credential",
+  "claim_url": "http://localhost:3012/claim?offer=0f3c8a12-..."
+}
+```
+
+## Resend a claim email
+
+If the holder loses the email or the offer's expiry window elapses, resend it with `POST /v1/credential-offers/{uuid}/resend-email`. This refreshes the expiry and re-sends the same claim link. Resending is capped (five sends per offer) and returns `409` once the offer is claimed.
+
+<CodeGroup>
+```bash cURL
+curl -X POST "http://localhost:8011/v1/credential-offers/$OFFER_ID/resend-email" \
+  -H "Authorization: Bearer $DIDIT_API_KEY"
+```
+
+```js JavaScript
+const response = await fetch(
+  `http://localhost:8011/v1/credential-offers/${offerId}/resend-email`,
+  {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${process.env.DIDIT_API_KEY}`,
+    },
+  }
+);
+
+const resend = await response.json();
+```
+
+```python Python
+response = requests.post(
+    f"http://localhost:8011/v1/credential-offers/{offer_id}/resend-email",
+    headers={"Authorization": f"Bearer {os.environ['DIDIT_API_KEY']}"},
+)
+
+resend = response.json()
+```
+</CodeGroup>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Wallet quickstart" icon="wallet" href="/wallet/quickstart">
+    Follow the holder from the claim link to a verified presentation.
+  </Card>
+  <Card title="Verify presentations" icon="shield-check" href="/guides/verification">
+    Build the verifier that checks the credential the holder just claimed.
+  </Card>
+</CardGroup>

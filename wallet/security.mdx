@@ -1,8 +1,82 @@
 ---
 title: "Wallet security"
-description: "The wallet's security model — holder key binding, single-use codes and nonces, transaction codes, and what the wallet never sees."
+description: "The holder wallet's security model — the two key domains (passkey account auth vs. WebCrypto holder binding), what data leaves the browser and when, selective disclosure, and the threat model."
 ---
 
-This page will cover the wallet's security guarantees: credentials bound to holder keys that never leave the device, single-use pre-authorized codes, access tokens, and nonces, brute-force-protected transaction codes, selective disclosure by default, and the boundary that keeps tenant API keys strictly server-side.
+The wallet's security rests on a clean separation between two key domains and a strict boundary around what ever leaves the browser. This page states the guarantees, then the threat model and its explicit non-goals.
 
-<Note>Content lands with the wallet release.</Note>
+## Two key domains
+
+The wallet uses two independent kinds of keys. Keeping them separate is deliberate.
+
+<CardGroup cols={2}>
+  <Card title="Passkey (WebAuthn) — account auth" icon="fingerprint">
+    A passkey authenticates the **account**. It answers "is this the person who owns this wallet account?" and gates sign-in. The passkey never signs a credential or a presentation.
+  </Card>
+  <Card title="WebCrypto ES256 — holder binding" icon="key">
+    A per-credential non-extractable ECDSA P-256 key proves **holder control** of a credential. It signs the OpenID4VCI proof at claim time and the KB-JWT at present time. It has nothing to do with account sign-in.
+  </Card>
+</CardGroup>
+
+**Why two domains.** Account authentication and credential holder-binding are different questions with different lifecycles and different trust anchors. A passkey lives with the platform authenticator and roams via the OS; a holder key is minted fresh per credential and is pinned into that credential's `cnf.jwk`. Conflating them would tie every credential's cryptographic binding to the account's sign-in method — so rotating or losing the passkey would strand the credentials, and the verifier's key-binding check would depend on the wallet's login provider. Separating them means the holder key proves possession of a specific credential regardless of how the account authenticates.
+
+## Non-extractable holder keys
+
+Holder keys are generated with `extractable: false`. The browser can sign with the private key, but no code — the wallet included — can read the key material out. The keys are stored as opaque `CryptoKey` objects in IndexedDB (structured-cloned, never serialized to raw bytes). The consequence: the private key never leaves the browser, and there is no code path that exports it.
+
+## What leaves the browser, and when
+
+The wallet is deliberately narrow about what it sends and to whom.
+
+| Data | Leaves the browser? | When |
+| --- | --- | --- |
+| Holder private key | **Never** | — |
+| Holder public JWK | Yes | In the OpenID4VCI proof-JWT header at claim time (and it is the credential's `cnf.jwk`). |
+| Passkey private key | **Never** | Stays with the platform authenticator; only WebAuthn assertions are sent. |
+| SD-JWT VC credential | Only the presented part | At present time, only the issuer JWS + the disclosures the holder approved + the KB-JWT. |
+| Undisclosed claim values | **Never** | Withheld disclosures are not sent — the verifier receives only approved ones. |
+| Account email | Yes | For passkey ceremonies and to derive the local vault scope. |
+| Tenant API key | **Never** | The wallet does not have one. It calls only public endpoints. |
+
+## Selective disclosure guarantee
+
+The consent screen is the disclosure control. Before any presentation, the wallet shows the verifier, the credential type, and exactly the claims the request asks for. The `vp_token` the wallet builds contains **only** the disclosures the holder approved plus the KB-JWT needed for holder key binding — never a claim the holder did not approve, and never a claim the verifier did not request. The KB-JWT's `sd_hash` commits to precisely the disclosures included, so the verifier can confirm the presented set was not tampered with after signing.
+
+## Single-use and replay protection
+
+- **Pre-authorized codes and transaction codes** are single-use; the offer locks after five wrong PIN attempts.
+- **`c_nonce`** is minted immediately before the proof is signed and is single-use.
+- **Presentation requests** are single-use. The wallet guards each submit so a request is never re-fired, and the service rejects a replayed presentation.
+- **KB-JWT binding** ties every presentation to the verifier's `aud` and `nonce`, so a captured `vp_token` cannot be replayed to a different verifier or a different request.
+
+## Threat model
+
+**What the wallet defends against:**
+
+- Theft of a holder private key — it is non-extractable and never leaves the browser.
+- Replay of a claim or a presentation — single-use codes, nonces, and requests, plus `aud`/`nonce` binding.
+- A verifier over-asking — the holder sees and approves the exact disclosure set.
+- An intercepted claim email — the transaction code travels on a separate channel, so one intercepted message cannot redeem an offer.
+- Cross-account leakage in a shared browser profile — every vault row is scoped by a per-account `vaultId`.
+- PII leakage from a stale offer link — a public offer preview that still requires a transaction code shows claim labels only, never values, until the code is proven.
+
+**Explicit non-goals (today):**
+
+- **Single-device.** The vault is local to one browser profile. There is no multi-device access to the same credentials.
+- **No cloud sync or backup.** Credentials and keys are not synced or backed up anywhere. Clearing the browser's IndexedDB, or losing the device, loses the credentials — they must be re-issued.
+- **No device attestation.** The wallet does not attest the device or the platform authenticator's hardware to the issuer or verifier.
+
+<Note>
+  **Status-list format.** The wallet currently reads revocation status as a raw bitstring served by `GET /v1/status-lists/{slug}/{uuid}`. A signed IETF Token Status List token (`application/statuslist+jwt`) is on the roadmap so the wallet can verify the status list's authenticity, not just read its bits.
+</Note>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Architecture" icon="sitemap" href="/wallet/architecture">
+    The key model, vault schema, and the claim and present pipelines in detail.
+  </Card>
+  <Card title="Authentication reference" icon="lock" href="/reference/authentication">
+    Which service endpoints are public and which need the tenant API key.
+  </Card>
+</CardGroup>

@@ -89,6 +89,30 @@ const response = await fetch("http://localhost:8011/v1/credential-schemas", {
 
 const schema = await response.json();
 ```
+
+```python Python
+import os
+import requests
+
+api_base = "http://localhost:8011/v1"
+auth = {"Authorization": f"Bearer {os.environ['DIDIT_API_KEY']}"}
+
+response = requests.post(
+    f"{api_base}/credential-schemas",
+    headers=auth,
+    json={
+        "name": "Employee Badge",
+        "vct": "EmployeeBadge",
+        "attributes": [
+            {"name": "employee_id", "type": "string", "sd": True},
+            {"name": "role", "type": "string", "sd": True},
+            {"name": "department", "type": "string", "sd": True},
+        ],
+    },
+)
+
+schema = response.json()
+```
 </CodeGroup>
 
 The response includes the schema `uuid`, `vct`, and `format`.
@@ -125,6 +149,12 @@ const response = await fetch("http://localhost:8011/v1/credential-templates", {
 });
 
 const templates = await response.json();
+```
+
+```python Python
+response = requests.get(f"{api_base}/credential-templates", headers=auth)
+
+templates = response.json()
 ```
 </CodeGroup>
 
@@ -188,6 +218,23 @@ Use this path when a wallet receives the credential. Your backend creates an off
 
     const offer = await response.json();
     ```
+
+    ```python Python
+    response = requests.post(
+        f"{api_base}/credential-offers",
+        headers=auth,
+        json={
+            "template_id": os.environ["TEMPLATE_ID"],
+            "claims": {
+                "employee_id": "E-1042",
+                "role": "Engineer",
+                "department": "Platform",
+            },
+        },
+    )
+
+    offer = response.json()
+    ```
     </CodeGroup>
 
     The response includes `offer_id`, `credential_offer_uri`, `credential_issuer`, `pre_authorized_code`, and `tx_code`.
@@ -229,6 +276,21 @@ Use this path when a wallet receives the credential. Your backend creates an off
 
     const token = await response.json();
     ```
+
+    ```python Python
+    # The wallet runs this. The token endpoint is public — no Authorization header.
+    response = requests.post(
+        f"{api_base}/oauth/token",
+        json={
+            "grant_type": "urn:ietf:params:oauth:grant-type:pre-authorized_code",
+            "pre-authorized_code": "s8Ilre...",
+            "tx_code": "517082",
+        },
+    )
+
+    token = response.json()
+    holder_access_token = token["access_token"]
+    ```
     </CodeGroup>
 
     The response includes `access_token`, `token_type`, and `expires_in`. The holder access token belongs to this OpenID4VCI issuance session. It is not your tenant API key. Set `HOLDER_ACCESS_TOKEN` to this `access_token` for the credential request.
@@ -256,6 +318,12 @@ Use this path when a wallet receives the credential. Your backend creates an off
     });
 
     const nonce = await response.json();
+    ```
+
+    ```python Python
+    response = requests.post(f"{api_base}/nonce", json={})
+
+    nonce = response.json()
     ```
     </CodeGroup>
 
@@ -309,6 +377,22 @@ Use this path when a wallet receives the credential. Your backend creates an off
 
     const issuedCredential = await response.json();
     ```
+
+    ```python Python
+    # The wallet signs the proof JWT with the holder private key.
+    response = requests.post(
+        f"{api_base}/credential",
+        headers={"Authorization": f"Bearer {holder_access_token}"},
+        json={
+            "proof": {
+                "proof_type": "jwt",
+                "jwt": "<openid4vci-proof+jwt>",
+            },
+        },
+    )
+
+    issued_credential = response.json()
+    ```
     </CodeGroup>
 
     The response includes the SD-JWT VC compact string and `vct`.
@@ -345,6 +429,16 @@ const issuerJwks = await fetch(
   "http://localhost:8011/v1/issuers/acme-corp/.well-known/jwt-vc-issuer"
 ).then((response) => response.json());
 ```
+
+```python Python
+issuer_metadata = requests.get(
+    f"{api_base}/issuers/acme-corp/.well-known/openid-credential-issuer"
+).json()
+
+issuer_jwks = requests.get(
+    f"{api_base}/issuers/acme-corp/.well-known/jwt-vc-issuer"
+).json()
+```
 </CodeGroup>
 
 See [issuer metadata](/api-reference/openid4vci/issuers-slug-openid-credential-issuer-get) and [issuer JWKS](/api-reference/openid4vci/issuers-slug-jwt-vc-issuer-get).
@@ -377,6 +471,16 @@ const response = await fetch(
 );
 
 const demoCredential = await response.json();
+```
+
+```python Python
+# The demo accept endpoint is public — no Authorization header.
+response = requests.post(
+    f"{api_base}/credential-offers/{os.environ['OFFER_ID']}/accept",
+    json={},
+)
+
+demo_credential = response.json()
 ```
 </CodeGroup>
 
@@ -460,6 +564,29 @@ Use direct issuance when your backend already has the holder public key and you 
     });
 
     const credential = await response.json();
+    ```
+
+    ```python Python
+    response = requests.post(
+        f"{api_base}/credentials/issue",
+        headers=auth,
+        json={
+            "template_id": os.environ["TEMPLATE_ID"],
+            "holder_jwk": {
+                "kty": "EC",
+                "crv": "P-256",
+                "x": "<base64url-x-coordinate>",
+                "y": "<base64url-y-coordinate>",
+            },
+            "claims": {
+                "employee_id": "E-1042",
+                "role": "Engineer",
+                "department": "Platform",
+            },
+        },
+    )
+
+    credential = response.json()
     ```
     </CodeGroup>
 
@@ -552,6 +679,20 @@ await fetch(`${apiBaseUrl}/credentials/${process.env.CREDENTIAL_ID}/revoke`, {
   method: "POST",
   headers,
 });
+```
+
+```python Python
+credential_id = os.environ["CREDENTIAL_ID"]
+
+credentials = requests.get(f"{api_base}/credentials", headers=auth).json()
+
+credential = requests.get(
+    f"{api_base}/credentials/{credential_id}", headers=auth
+).json()
+
+requests.post(f"{api_base}/credentials/{credential_id}/suspend", headers=auth)
+requests.post(f"{api_base}/credentials/{credential_id}/reactivate", headers=auth)
+requests.post(f"{api_base}/credentials/{credential_id}/revoke", headers=auth)
 ```
 </CodeGroup>
 

@@ -6,6 +6,174 @@
     "description": "OpenID4VCI 1.0 issuance + OpenID4VP 1.0 verification (SD-JWT VC, draft-16) with a multi-tenant management plane: credentials, presentations, verifications, a trust registry (frameworks, trusted issuers, relying parties), and issuer key rotation. Management endpoints authenticate with a tenant API key (`Authorization: Bearer <key>`); the OpenID4VCI/VP protocol + holder/verifier endpoints are public."
   },
   "paths": {
+    "/v1/tenant/bootstrap": {
+      "post": {
+        "operationId": "v1_tenant_bootstrap_create",
+        "description": "Exchange a programmatic user access token for the caller's credentials TenantApiKey.\n\nThe console signs a user in via `/auth/v2/programmatic/{login,verify-email}` (which return\na Didit user `access_token`), then calls this once to obtain the `/v1/` tenant API key that\nscopes all subsequent data calls. First call for an org provisions + seeds the tenant.",
+        "tags": [
+          "Other"
+        ],
+        "responses": {
+          "200": {
+            "description": "No response body"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/dev/otp": {
+      "get": {
+        "operationId": "v1_dev_otp_retrieve",
+        "description": "Dev-only: read the most recent programmatic-registration OTP from the in-process cache.",
+        "tags": [
+          "Other"
+        ],
+        "responses": {
+          "200": {
+            "description": "No response body"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/dev/last-email": {
+      "get": {
+        "operationId": "v1_dev_last_email_retrieve",
+        "description": "Dev-only: the most recent claim email recorded for an address (see offer_email service).",
+        "tags": [
+          "Other"
+        ],
+        "responses": {
+          "200": {
+            "description": "No response body"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/dev/reset-token": {
+      "get": {
+        "operationId": "v1_dev_reset_token_retrieve",
+        "description": "Dev-only: the outstanding password-reset token for an email (see PasswordAuthProcessor).",
+        "tags": [
+          "Other"
+        ],
+        "responses": {
+          "200": {
+            "description": "No response body"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/members": {
+      "get": {
+        "operationId": "v1_members_retrieve",
+        "description": "Team members of a tenant (one role-scoped key per member). Owner/Admin manage; everyone\ncan list. In production an invite emails the member; in the demo the seat is provisioned\ndirectly and the person inherits the role when they sign in.",
+        "tags": [
+          "Other"
+        ],
+        "responses": {
+          "200": {
+            "description": "No response body"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "v1_members_create",
+        "description": "Team members of a tenant (one role-scoped key per member). Owner/Admin manage; everyone\ncan list. In production an invite emails the member; in the demo the seat is provisioned\ndirectly and the person inherits the role when they sign in.",
+        "tags": [
+          "Other"
+        ],
+        "responses": {
+          "200": {
+            "description": "No response body"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/members/{email}": {
+      "patch": {
+        "operationId": "v1_members_partial_update",
+        "parameters": [
+          {
+            "name": "email",
+            "in": "path",
+            "required": true,
+            "description": "`email` path parameter.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "tags": [
+          "Other"
+        ],
+        "responses": {
+          "200": {
+            "description": "No response body"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "v1_members_destroy",
+        "parameters": [
+          {
+            "name": "email",
+            "in": "path",
+            "required": true,
+            "description": "`email` path parameter.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "tags": [
+          "Other"
+        ],
+        "responses": {
+          "204": {
+            "description": "No response body"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
     "/v1/credential-schemas": {
       "get": {
         "operationId": "v1_credential_schemas_retrieve",
@@ -1114,6 +1282,22 @@
       }
     },
     "/v1/presentations/request": {
+      "get": {
+        "operationId": "v1_presentations_request_retrieve",
+        "tags": [
+          "OpenID4VP Verification"
+        ],
+        "responses": {
+          "200": {
+            "description": "No response body"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
       "post": {
         "operationId": "v1_presentations_request_create",
         "tags": [
@@ -1277,6 +1461,40 @@
             }
           }
         }
+      }
+    },
+    "/v1/presentations/requests": {
+      "get": {
+        "operationId": "v1_presentations_requests_retrieve",
+        "tags": [
+          "OpenID4VP Verification"
+        ],
+        "responses": {
+          "200": {
+            "description": "No response body"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "v1_presentations_requests_create",
+        "tags": [
+          "OpenID4VP Verification"
+        ],
+        "responses": {
+          "200": {
+            "description": "No response body"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/v1/presentations/{uuid}": {
@@ -1536,9 +1754,40 @@
         "security": []
       }
     },
+    "/v1/presentations/{uuid}/request": {
+      "get": {
+        "operationId": "v1_presentations_request_retrieve_2",
+        "description": "Public OpenID4VP request parameters for the holder wallet (request uuid = capability).",
+        "parameters": [
+          {
+            "name": "uuid",
+            "in": "path",
+            "required": true,
+            "description": "`uuid` path parameter.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "tags": [
+          "OpenID4VP Verification"
+        ],
+        "responses": {
+          "200": {
+            "description": "No response body"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
     "/v1/presentations/{uuid}/response": {
       "post": {
         "operationId": "v1_presentations_response_create",
+        "description": "Submit a holder's presentation (the SD-JWT VC verifiable presentation, including the Key-Binding JWT) against a presentation request and verify it. The service consumes the request's single-use nonce, verifies the issuer signature (resolving the key by `kid`), the holder key binding, the `aud` and `nonce` bindings, the algorithm allow-list, expiry, and revocation via the Token Status List, then checks the credential's issuer against the tenant's trusted-issuer registry. A presentation request is single-use: a second response (replay) is rejected with 422. Authenticated with the tenant API key.",
         "parameters": [
           {
             "name": "uuid",
@@ -1689,7 +1938,6 @@
           }
         },
         "summary": "Submit a vp_token for verification",
-        "description": "Submit a holder's presentation (the SD-JWT VC verifiable presentation, including the Key-Binding JWT) against a presentation request and verify it. The service consumes the request's single-use nonce, verifies the issuer signature (resolving the key by `kid`), the holder key binding, the `aud` and `nonce` bindings, the algorithm allow-list, expiry, and revocation via the Token Status List, then checks the credential's issuer against the tenant's trusted-issuer registry. A presentation request is single-use: a second response (replay) is rejected with 422. Authenticated with the tenant API key.",
         "security": [],
         "requestBody": {
           "required": true,
@@ -2041,6 +2289,7 @@
     "/v1/verifications/{uuid}": {
       "get": {
         "operationId": "v1_verifications_retrieve_2",
+        "description": "Fetch a single verification result by id for the authenticated tenant. Returns the verification payload \u2014 verdict, requested and disclosed claims, the per-check booleans, and the verifier audience. Scoped to the tenant via the API key; a verification belonging to another tenant (or an unknown/soft-deleted id) returns 404. Authenticated with the tenant API key.",
         "parameters": [
           {
             "name": "uuid",
@@ -2176,7 +2425,6 @@
           }
         },
         "summary": "Get a verification result",
-        "description": "Fetch a single verification result by id for the authenticated tenant. Returns the verification payload \u2014 verdict, requested and disclosed claims, the per-check booleans, and the verifier audience. Scoped to the tenant via the API key; a verification belonging to another tenant (or an unknown/soft-deleted id) returns 404. Authenticated with the tenant API key.",
         "security": [
           {
             "bearerAuth": []
@@ -2276,6 +2524,22 @@
         },
         "summary": "List trust frameworks",
         "description": "List the global reference trust frameworks Didit ID recognizes (eIDAS 2.0 / EUDI, ISO/IEC 18013-5 mDL, Swiss e-ID, US mDL / AAMVA). These are read-only reference rows seeded on first access \u2014 they are not tenant-scoped \u2014 and are used to tag a trusted issuer with the framework it operates under. The response is a bare JSON array of framework objects ordered by name.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "v1_trust_frameworks_create",
+        "tags": [
+          "Trust Registry"
+        ],
+        "responses": {
+          "200": {
+            "description": "No response body"
+          }
+        },
         "security": [
           {
             "bearerAuth": []
@@ -3093,6 +3357,23 @@
       }
     },
     "/v1/credential-offers": {
+      "get": {
+        "operationId": "v1_credential_offers_retrieve",
+        "description": "Tenant-scoped offer list for the console (newest first, capped). NEVER exposes the\npre-authorized code or the transaction code \u2014 those are the offer's secrets.",
+        "tags": [
+          "OpenID4VCI Protocol"
+        ],
+        "responses": {
+          "200": {
+            "description": "No response body"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
       "post": {
         "operationId": "v1_credential_offers_create",
         "description": "Create an OpenID4VCI credential offer using the pre-authorized_code flow. Authenticated with the tenant API key (Bearer). The issuer picks a credential template (scoped to the caller's tenant), embeds the claim values, and \u2014 by default \u2014 generates a 6-digit transaction code (PIN). Returns the offer identifier, the wallet deep-link URI, the issuer identifier, the pre-authorized code, the tx_code (if any), and the `grants` object the wallet uses to drive the token exchange. The offer expires 10 minutes after creation and is single-use.",
@@ -3214,9 +3495,28 @@
         }
       }
     },
+    "/v1/credential-offers/resolve": {
+      "get": {
+        "operationId": "v1_credential_offers_resolve_retrieve",
+        "description": "Public resolve-by-code for the holder wallet: the (tenant, pre_auth_code) pair carried\nby a QR/deeplink is exchanged for the holder preview payload. 404 when unknown, already\nredeemed, or expired \u2014 indistinguishable on purpose.\n\nThe pre_auth_code is secrets.token_urlsafe(32) (high entropy) so guessing is impractical,\nbut a cheap per-IP throttle is layered on anyway (defense-in-depth against scanning).",
+        "tags": [
+          "OpenID4VCI Protocol"
+        ],
+        "responses": {
+          "200": {
+            "description": "No response body"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
     "/v1/credential-offers/{uuid}": {
       "get": {
-        "operationId": "v1_credential_offers_retrieve",
+        "operationId": "v1_credential_offers_retrieve_2",
         "description": "Holder-facing preview of a credential offer. Public and unauthenticated \u2014 the offer UUID is the capability. Returns a wallet-friendly summary of what would be issued: the issuer identity, the credential type and format, expiry, whether a transaction code is required, and the per-claim breakdown (label, value, selective-disclosure flag). Used to render a consent screen before the holder accepts the offer.",
         "parameters": [
           {
@@ -3336,6 +3636,36 @@
         },
         "summary": "Get a credential offer (holder preview)",
         "security": []
+      }
+    },
+    "/v1/credential-offers/{uuid}/offer": {
+      "get": {
+        "operationId": "v1_credential_offers_offer_retrieve",
+        "description": "Public OpenID4VCI credential-offer JSON \u2014 the document `credential_offer_uri` points at.",
+        "parameters": [
+          {
+            "name": "uuid",
+            "in": "path",
+            "required": true,
+            "description": "`uuid` path parameter.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "tags": [
+          "OpenID4VCI Protocol"
+        ],
+        "responses": {
+          "200": {
+            "description": "No response body"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/v1/credential-offers/{uuid}/accept": {
@@ -3519,6 +3849,36 @@
             }
           }
         }
+      }
+    },
+    "/v1/credential-offers/{uuid}/resend-email": {
+      "post": {
+        "operationId": "v1_credential_offers_resend_email_create",
+        "description": "Re-send the claim email for a pending offer (refreshes the expiry window).",
+        "parameters": [
+          {
+            "name": "uuid",
+            "in": "path",
+            "required": true,
+            "description": "`uuid` path parameter.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "tags": [
+          "OpenID4VCI Protocol"
+        ],
+        "responses": {
+          "200": {
+            "description": "No response body"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/v1/oauth/token": {
@@ -4023,6 +4383,9 @@
     }
   ],
   "tags": [
+    {
+      "name": "Other"
+    },
     {
       "name": "Credentials"
     },
