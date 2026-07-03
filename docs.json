@@ -150,6 +150,10 @@
             "pages": [
               "api-reference/credentials/credential-schemas-get",
               "api-reference/credentials/credential-schemas-post",
+              "api-reference/credentials/credential-schemas-uuid-get",
+              "api-reference/credentials/credential-schemas-uuid-patch",
+              "api-reference/credentials/credential-schemas-uuid-revoke-credentials-post",
+              "api-reference/credentials/credential-schemas-uuid-versions-post",
               "api-reference/credentials/credential-templates-get",
               "api-reference/credentials/credential-templates-post",
               "api-reference/credentials/credentials-get",
@@ -183,9 +187,13 @@
               "api-reference/trust/relying-parties-uuid-delete",
               "api-reference/trust/trust-frameworks-get",
               "api-reference/trust/trust-frameworks-post",
+              "api-reference/trust/trust-frameworks-slug-delete",
+              "api-reference/trust/trust-frameworks-slug-get",
+              "api-reference/trust/trust-frameworks-slug-patch",
               "api-reference/trust/trusted-issuers-get",
               "api-reference/trust/trusted-issuers-post",
               "api-reference/trust/trusted-issuers-uuid-delete",
+              "api-reference/trust/trusted-issuers-uuid-patch",
               "api-reference/trust/trusted-issuers-uuid-validate-post"
             ]
           },

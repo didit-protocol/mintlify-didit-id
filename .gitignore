@@ -1,0 +1,16 @@
+# Secrets — never commit real env to this PUBLIC docs repo (.env.example is safe)
+.env
+.env.local
+.env.*
+!.env.example
+
+# Mintlify + tooling
+.mintlify/
+node_modules/
+.DS_Store
+__pycache__/
+*.pyc
+
+# Local example-capture output may contain volatile data; keep redacted snapshots only
+scripts/*.tmp
+.logs-mint.txt

@@ -1,0 +1,3089 @@
+{
+  "DELETE /v1/members/{email}": {
+    "errors": [],
+    "responses": {
+      "204": {}
+    },
+    "source": "captured-live",
+    "summary": "Remove a team member (204)."
+  },
+  "DELETE /v1/relying-parties/{uuid}": {
+    "errors": [],
+    "responses": {
+      "204": {}
+    },
+    "source": "captured-live",
+    "summary": "Remove a relying party (soft delete, 204)."
+  },
+  "DELETE /v1/trust-frameworks/{slug}": {
+    "errors": [
+      {
+        "body": {
+          "detail": "'ISO/IEC 18013-5 mDL' is a governed framework managed by its governance authority \u2014 it cannot be edited or deleted. Create a custom framework instead."
+        },
+        "note": "deleting a governed framework",
+        "status": 403
+      }
+    ],
+    "responses": {
+      "204": {}
+    },
+    "source": "captured-live",
+    "summary": "Delete a custom framework (204; governed -> 403)."
+  },
+  "DELETE /v1/trusted-issuers/{uuid}": {
+    "errors": [],
+    "responses": {
+      "204": {}
+    },
+    "source": "captured-live",
+    "summary": "Remove a trusted issuer (soft delete, 204)."
+  },
+  "GET /v1/credential-offers": {
+    "errors": [],
+    "responses": {
+      "200": [
+        {
+          "claimed_at": null,
+          "claimed_by": "",
+          "created_at": "2026-07-02T23:51:57.514393+00:00",
+          "email_sent_at": null,
+          "expires_at": "2026-07-03T00:01:57.514340+00:00",
+          "offer_id": "6ba6f012-900b-4cfa-8c3b-50498c90c640",
+          "recipient_email": "holder@diditcapture.dev",
+          "schema_name": "Loyalty Membership",
+          "status": "pending",
+          "tx_code_required": true,
+          "vct": "AirlineLoyalty"
+        },
+        {
+          "claimed_at": null,
+          "claimed_by": "",
+          "created_at": "2026-07-02T23:51:57.511172+00:00",
+          "email_sent_at": null,
+          "expires_at": "2026-07-03T00:01:57.511106+00:00",
+          "offer_id": "e6233586-9a63-459a-b799-a0500f97d577",
+          "recipient_email": "",
+          "schema_name": "Loyalty Membership",
+          "status": "pending",
+          "tx_code_required": true,
+          "vct": "AirlineLoyalty"
+        }
+      ]
+    },
+    "source": "captured-live",
+    "summary": "List the tenant's credential offers."
+  },
+  "GET /v1/credential-offers/resolve": {
+    "errors": [],
+    "query": {
+      "code": "uyeIOEafpEl6YOWGgClhiGhvJejNWeeLtbomCZov9BA",
+      "tenant": "docs-capture-z2373a"
+    },
+    "responses": {
+      "200": {
+        "claims": [
+          {
+            "label": "Given Name",
+            "name": "given_name",
+            "selective_disclosure": true
+          },
+          {
+            "label": "Tier",
+            "name": "tier",
+            "selective_disclosure": true
+          }
+        ],
+        "expires_at": "2026-07-03T00:01:57.511106+00:00",
+        "format": "SD_JWT_VC",
+        "issuer": {
+          "did": "did:web:docs-capture-z2373a.didit.test",
+          "domain": "http://localhost:8011/v1/issuers/docs-capture-z2373a",
+          "id": "docs-capture-z2373a",
+          "name": "docs-capture-z2373a"
+        },
+        "offer_id": "e6233586-9a63-459a-b799-a0500f97d577",
+        "offer_uri": "openid-credential-offer://?credential_offer_uri=http%3A%2F%2Flocalhost%3A8011%2Fv1%2Fcredential-offers%2Fe6233586-9a63-459a-b799-a0500f97d577%2Foffer",
+        "tx_code_length": 6,
+        "tx_code_required": true,
+        "vct": "AirlineLoyalty"
+      }
+    },
+    "source": "captured-live",
+    "summary": "Resolve an offer by (tenant, pre-authorized code) for the wallet claim screen."
+  },
+  "GET /v1/credential-offers/{uuid}": {
+    "errors": [],
+    "responses": {
+      "200": {
+        "claims": [
+          {
+            "label": "Given Name",
+            "name": "given_name",
+            "selective_disclosure": true
+          },
+          {
+            "label": "Tier",
+            "name": "tier",
+            "selective_disclosure": true
+          }
+        ],
+        "expires_at": "2026-07-03T00:01:57.511106+00:00",
+        "format": "SD_JWT_VC",
+        "issuer": {
+          "did": "did:web:docs-capture-z2373a.didit.test",
+          "domain": "http://localhost:8011/v1/issuers/docs-capture-z2373a",
+          "id": "docs-capture-z2373a",
+          "name": "docs-capture-z2373a"
+        },
+        "offer_id": "e6233586-9a63-459a-b799-a0500f97d577",
+        "offer_uri": "openid-credential-offer://?credential_offer_uri=http%3A%2F%2Flocalhost%3A8011%2Fv1%2Fcredential-offers%2Fe6233586-9a63-459a-b799-a0500f97d577%2Foffer",
+        "tx_code_length": 6,
+        "tx_code_required": true,
+        "vct": "AirlineLoyalty"
+      }
+    },
+    "source": "captured-live",
+    "summary": "Public offer preview (labels only while a tx_code is required)."
+  },
+  "GET /v1/credential-offers/{uuid}/offer": {
+    "errors": [],
+    "responses": {
+      "200": {
+        "credential_configuration_ids": [
+          "AirlineLoyalty"
+        ],
+        "credential_issuer": "http://localhost:8011/v1/issuers/docs-capture-z2373a",
+        "grants": {
+          "urn:ietf:params:oauth:grant-type:pre-authorized_code": {
+            "pre-authorized_code": "<redacted>",
+            "tx_code": {
+              "description": "<redacted>",
+              "input_mode": "<redacted>",
+              "length": 6
+            }
+          }
+        }
+      }
+    },
+    "source": "captured-live",
+    "summary": "Standard OpenID4VCI credential-offer-by-reference document."
+  },
+  "GET /v1/credential-schemas": {
+    "errors": [],
+    "responses": {
+      "200": [
+        {
+          "attributes": [
+            {
+              "name": "given_name",
+              "sd": true
+            },
+            {
+              "name": "tier",
+              "sd": true
+            }
+          ],
+          "branding": {},
+          "created_at": "2026-07-02T23:51:57.328099Z",
+          "format": "sd_jwt_vc",
+          "name": "Loyalty Membership",
+          "revocable": true,
+          "status": "active",
+          "supersedes": null,
+          "uuid": "5e41f295-5b7b-456a-989d-582373595319",
+          "vct": "AirlineLoyalty",
+          "version": "1.0"
+        },
+        {
+          "attributes": [
+            {
+              "name": "member_id",
+              "sd": true
+            },
+            {
+              "name": "level",
+              "sd": true
+            }
+          ],
+          "branding": {},
+          "created_at": "2026-07-02T23:51:56.327224Z",
+          "format": "sd_jwt_vc",
+          "name": "Membership Card",
+          "revocable": true,
+          "status": "active",
+          "supersedes": null,
+          "uuid": "55f10983-2c9f-405d-aa57-313e9572935c",
+          "vct": "MembershipCard",
+          "version": "1.0"
+        },
+        {
+          "attributes": [
+            {
+              "name": "over_18",
+              "sd": true
+            },
+            {
+              "name": "birth_year",
+              "sd": true
+            }
+          ],
+          "branding": {},
+          "created_at": "2026-07-02T23:51:56.326008Z",
+          "format": "sd_jwt_vc",
+          "name": "Age Credential",
+          "revocable": true,
+          "status": "active",
+          "supersedes": null,
+          "uuid": "d3dc98eb-b9c3-42d3-876f-af0252f27b50",
+          "vct": "AgeOver18",
+          "version": "1.0"
+        },
+        {
+          "attributes": [
+            {
+              "name": "student_id",
+              "sd": true
+            },
+            {
+              "name": "program",
+              "sd": true
+            },
+            {
+              "name": "enrollment_year",
+              "sd": true
+            }
+          ],
+          "branding": {},
+          "created_at": "2026-07-02T23:51:56.325151Z",
+          "format": "sd_jwt_vc",
+          "name": "Student ID",
+          "revocable": true,
+          "status": "active",
+          "supersedes": null,
+          "uuid": "7160d273-3f4d-4211-ac95-b06193185a97",
+          "vct": "StudentID",
+          "version": "1.0"
+        },
+        {
+          "attributes": [
+            {
+              "name": "employee_id",
+              "sd": true
+            },
+            {
+              "name": "role",
+              "sd": true
+            },
+            {
+              "name": "department",
+              "sd": true
+            }
+          ],
+          "branding": {},
+          "created_at": "2026-07-02T23:51:56.324396Z",
+          "format": "sd_jwt_vc",
+          "name": "Employee Badge",
+          "revocable": true,
+          "status": "active",
+          "supersedes": null,
+          "uuid": "60f8f2c1-612e-444c-8b0b-ba292a12b5a3",
+          "vct": "EmployeeBadge",
+          "version": "1.0"
+        },
+        {
+          "attributes": [
+            {
+              "name": "given_name",
+              "sd": true
+            },
+            {
+              "name": "tier",
+              "sd": true
+            },
+            {
+              "name": "frequent_flyer_number",
+              "sd": true
+            }
+          ],
+          "branding": {},
+          "created_at": "2026-07-02T23:51:56.323039Z",
+          "format": "sd_jwt_vc",
+          "name": "Airline Loyalty",
+          "revocable": true,
+          "status": "active",
+          "supersedes": null,
+          "uuid": "6f36cb43-719a-4741-84b9-b61395dbe392",
+          "vct": "AirlineLoyalty",
+          "version": "1.0"
+        }
+      ]
+    },
+    "source": "captured-live",
+    "summary": "List the tenant's credential schemas."
+  },
+  "GET /v1/credential-schemas/{uuid}": {
+    "errors": [],
+    "responses": {
+      "200": {
+        "attributes": [
+          {
+            "name": "given_name",
+            "sd": true
+          },
+          {
+            "name": "tier",
+            "sd": true
+          }
+        ],
+        "branding": {},
+        "created_at": "2026-07-02T23:51:57.328099Z",
+        "format": "sd_jwt_vc",
+        "name": "Loyalty Membership",
+        "revocable": true,
+        "status": "active",
+        "supersedes": null,
+        "uuid": "5e41f295-5b7b-456a-989d-582373595319",
+        "vct": "AirlineLoyalty",
+        "version": "1.0",
+        "versions": [
+          {
+            "created_at": "2026-07-02T23:51:57.328099+00:00",
+            "is_latest": true,
+            "issued_count": 0,
+            "status": "active",
+            "supersedes": null,
+            "uuid": "5e41f295-5b7b-456a-989d-582373595319",
+            "vct": "AirlineLoyalty",
+            "version": "1.0"
+          }
+        ]
+      }
+    },
+    "source": "captured-live",
+    "summary": "Fetch one schema plus its full version family."
+  },
+  "GET /v1/credential-templates": {
+    "errors": [],
+    "responses": {
+      "200": [
+        {
+          "created_at": "2026-07-02T23:51:57.339031Z",
+          "name": "standard",
+          "schema": "5e41f295-5b7b-456a-989d-582373595319",
+          "uuid": "b18c99cb-5b7b-4915-938c-038c2ddefb6f",
+          "validity_seconds": 31536000
+        },
+        {
+          "created_at": "2026-07-02T23:51:56.327605Z",
+          "name": "Membership Card (default)",
+          "schema": "55f10983-2c9f-405d-aa57-313e9572935c",
+          "uuid": "52daca56-2241-43d9-9960-9af2c40b1ece",
+          "validity_seconds": 31536000
+        },
+        {
+          "created_at": "2026-07-02T23:51:56.326881Z",
+          "name": "Age Credential (default)",
+          "schema": "d3dc98eb-b9c3-42d3-876f-af0252f27b50",
+          "uuid": "8aab4ece-cc38-4bb1-901d-414d6530d42d",
+          "validity_seconds": 31536000
+        },
+        {
+          "created_at": "2026-07-02T23:51:56.325673Z",
+          "name": "Student ID (default)",
+          "schema": "7160d273-3f4d-4211-ac95-b06193185a97",
+          "uuid": "528cd9cc-54e4-4e49-97a8-a940d225bd7a",
+          "validity_seconds": 31536000
+        },
+        {
+          "created_at": "2026-07-02T23:51:56.324826Z",
+          "name": "Employee Badge (default)",
+          "schema": "60f8f2c1-612e-444c-8b0b-ba292a12b5a3",
+          "uuid": "519ac101-fbd6-49a4-955d-614c0cdfa9e5",
+          "validity_seconds": 31536000
+        },
+        {
+          "created_at": "2026-07-02T23:51:56.323867Z",
+          "name": "Airline Loyalty (default)",
+          "schema": "6f36cb43-719a-4741-84b9-b61395dbe392",
+          "uuid": "c52b81d8-adc7-4991-9920-b8a1fded038c",
+          "validity_seconds": 31536000
+        }
+      ]
+    },
+    "source": "captured-live",
+    "summary": "List the tenant's issuance templates."
+  },
+  "GET /v1/credentials": {
+    "errors": [
+      {
+        "body": {
+          "detail": "Authentication credentials were not provided."
+        },
+        "note": "missing bearer token",
+        "status": 401
+      }
+    ],
+    "responses": {
+      "200": [
+        {
+          "expires_at": "2027-07-02T23:51:57.346460Z",
+          "holder_cnf": {
+            "crv": "P-256",
+            "kty": "EC",
+            "x": "Y5JQ00Kvn2iW7tc5OuwTHlxyPYrxWdmbFtpR5oeXDtk",
+            "y": "DSUZdwoe8qqxMYuNRt2uzUftY0-Aaq1tlx4ER-pPOZ4"
+          },
+          "iss": "http://localhost:8011/v1/issuers/docs-capture-z2373a",
+          "issued_at": "2026-07-02T23:51:57.346854Z",
+          "source_session_id": "",
+          "status": "issued",
+          "status_idx": 34,
+          "uuid": "c9d0940f-d03f-4c1d-8132-278c2c3016f4",
+          "vct": "AirlineLoyalty"
+        },
+        {
+          "expires_at": "2027-07-02T23:51:56.412973Z",
+          "holder_cnf": {
+            "crv": "P-256",
+            "d": "ENlSO38cEfdyQFO5t6ohMrU2KjOlqM0L-u6IBg1JLuI",
+            "kty": "EC",
+            "x": "tVtAhPwoYfTTYOrPZieW9uqquapGzCtz9paliT5EnMA",
+            "y": "WLQmScYlBR2nt2PVyLI6On0PM80tfSPmP5nt-2Namh0"
+          },
+          "iss": "http://localhost:8011/v1/issuers/docs-capture-z2373a",
+          "issued_at": "2026-07-02T23:51:56.413208Z",
+          "source_session_id": "",
+          "status": "issued",
+          "status_idx": 33,
+          "uuid": "bc5fec61-a6af-40a8-9ba3-f87ef58247c1",
+          "vct": "MembershipCard"
+        },
+        {
+          "expires_at": "2027-07-02T23:51:56.407712Z",
+          "holder_cnf": {
+            "crv": "P-256",
+            "d": "Mf17_9vkQDzUIo95V5xmXdIRJZ452LFB5A0M_hbzEUE",
+            "kty": "EC",
+            "x": "cnCIzcBwWAUdC1Ngz2TC4lESr19cUxxcsysxeVm1hss",
+            "y": "ytLNO3uv9DNB6BsenEo31zvasBIDZdwvgrx7jevI4kk"
+          },
+          "iss": "http://localhost:8011/v1/issuers/docs-capture-z2373a",
+          "issued_at": "2026-07-02T23:51:56.407950Z",
+          "source_session_id": "",
+          "status": "issued",
+          "status_idx": 32,
+          "uuid": "281d97b0-0d32-48f8-bc40-94fd4fc91c2f",
+          "vct": "AgeOver18"
+        },
+        {
+          "expires_at": "2027-07-02T23:51:56.400717Z",
+          "holder_cnf": {
+            "crv": "P-256",
+            "d": "ycSkjqdvB1OgoREdBdKdqi9HClLsKa9Kbn92GKJwmP0",
+            "kty": "EC",
+            "x": "sgnhLnLQ8EtlUoicGPeXrKxpJdUCrSiVjmWShPprPsg",
+            "y": "NsIyzO54S4PYgyxwW8JibEnJJFovYRV3wdwxEwMbVxE"
+          },
+          "iss": "http://localhost:8011/v1/issuers/docs-capture-z2373a",
+          "issued_at": "2026-07-02T23:51:56.401017Z",
+          "source_session_id": "",
+          "status": "issued",
+          "status_idx": 31,
+          "uuid": "a90c3075-0707-44d1-a8b1-f945011f61e1",
+          "vct": "EmployeeBadge"
+        },
+        {
+          "expires_at": "2027-07-02T23:51:56.394271Z",
+          "holder_cnf": {
+            "crv": "P-256",
+            "d": "W-CHd5qrybndC6tQrU1qGzHBjI1U2Rxq4ZKzXmAsvTg",
+            "kty": "EC",
+            "x": "E991_b4wvCMY-TmpFugbobKCb_1g1pkdQCXCM9Fzohk",
+            "y": "IN4oQD0kqumcAmEKEKYnOpEetAYeNjZGcfVpB6ZhjKQ"
+          },
+          "iss": "http://localhost:8011/v1/issuers/docs-capture-z2373a",
+          "issued_at": "2026-07-02T23:51:56.394508Z",
+          "source_session_id": "",
+          "status": "issued",
+          "status_idx": 30,
+          "uuid": "84be4953-06da-463f-a842-2abf1f250145",
+          "vct": "AirlineLoyalty"
+        },
+        {
+          "expires_at": "2027-07-02T23:51:56.391452Z",
+          "holder_cnf": {
+            "crv": "P-256",
+            "kty": "EC",
+            "x": "7j6KD7cZM8dfigvnJKIUro9FyCQMrUFi75iVbqrNWxw",
+            "y": "5Dw9W1OE5AIDuMWd3esXhrvwdwC_fTIJRiQ3Cc2qnuc"
+          },
+          "iss": "http://localhost:8011/v1/issuers/docs-capture-z2373a",
+          "issued_at": "2026-07-02T23:51:56.391680Z",
+          "source_session_id": "",
+          "status": "issued",
+          "status_idx": 29,
+          "uuid": "0a032bd8-f135-4bc3-b779-4ce62e3d143c",
+          "vct": "MembershipCard"
+        },
+        {
+          "expires_at": "2027-07-02T23:51:56.389013Z",
+          "holder_cnf": {
+            "crv": "P-256",
+            "kty": "EC",
+            "x": "96qW4Ug_awNAAyCoJ9PbTU70C0sV-0bzz-u-n90rI-g",
+            "y": "z8pm98q3juT38IKGqtFrUGpXDAAnLa4q2ZlytdAyZoU"
+          },
+          "iss": "http://localhost:8011/v1/issuers/docs-capture-z2373a",
+          "issued_at": "2026-07-02T23:51:56.389235Z",
+          "source_session_id": "",
+          "status": "revoked",
+          "status_idx": 28,
+          "uuid": "e28e2eb5-3557-40ce-8fb6-a20319274f4f",
+          "vct": "MembershipCard"
+        },
+        {
+          "expires_at": "2027-07-02T23:51:56.386722Z",
+          "holder_cnf": {
+            "crv": "P-256",
+            "kty": "EC",
+            "x": "lYpMRwcj5_WnhXpQtG-pLL6pjmq4HWsW5Q2RjgwFvog",
+            "y": "PB5hqpO6K4KqfyUJflcFWizp_QFPYHFtmb8pB41yugU"
+          },
+          "iss": "http://localhost:8011/v1/issuers/docs-capture-z2373a",
+          "issued_at": "2026-07-02T23:51:56.386940Z",
+          "source_session_id": "",
+          "status": "suspended",
+          "status_idx": 27,
+          "uuid": "0ab8a7fe-5a46-4511-b64e-c658ce034b6d",
+          "vct": "MembershipCard"
+        },
+        {
+          "expires_at": "2027-07-02T23:51:56.384834Z",
+          "holder_cnf": {
+            "crv": "P-256",
+            "kty": "EC",
+            "x": "0jlUAfELStZNeEjcTKYR4WmvXUUSIbfjL9hl0rJQRig",
+            "y": "pP0JgpxPfPosPrwMnu2KSYIjUEkOoKcsM5mBCVWZ4lk"
+          },
+          "iss": "http://localhost:8011/v1/issuers/docs-capture-z2373a",
+          "issued_at": "2026-07-02T23:51:56.385065Z",
+          "source_session_id": "",
+          "status": "issued",
+          "status_idx": 26,
+          "uuid": "b497b4d1-aab9-4c27-b750-d305320a3018",
+          "vct": "MembershipCard"
+        },
+        {
+          "expires_at": "2027-07-02T23:51:56.383309Z",
+          "holder_cnf": {
+            "crv": "P-256",
+            "kty": "EC",
+            "x": "u8YRVKTTIEgp3GY2oYWu9rqAfpBgIDyzRxFsFRUOOXQ",
+            "y": "mOyRgh4a-msxJX3ijB7-q-lxu0K3xnHyVtBWpJHFpho"
+          },
+          "iss": "http://localhost:8011/v1/issuers/docs-capture-z2373a",
+          "issued_at": "2026-07-02T23:51:56.383556Z",
+          "source_session_id": "",
+          "status": "issued",
+          "status_idx": 25,
+          "uuid": "7263b3aa-0cbe-43d5-8e54-5e2616a77273",
+          "vct": "MembershipCard"
+        },
+        {
+          "expires_at": "2027-07-02T23:51:56.381399Z",
+          "holder_cnf": {
+            "crv": "P-256",
+            "kty": "EC",
+            "x": "PgcUfi4UvdZfKcnwM6viMHAq0C7QkIByaTWV4Pj1Bzo",
+            "y": "TxtsQrTVoMSdn7wAElCTSJKNTsyJW5znSao8TxmT9Ok"
+          },
+          "iss": "http://localhost:8011/v1/issuers/docs-capture-z2373a",
+          "issued_at": "2026-07-02T23:51:56.381649Z",
+          "source_session_id": "",
+          "status": "issued",
+          "status_idx": 24,
+          "uuid": "d0428efc-f1f0-4fa7-b802-9e1755eaa9d9",
+          "vct": "MembershipCard"
+        },
+        {
+          "expires_at": "2027-07-02T23:51:56.379515Z",
+          "holder_cnf": {
+            "crv": "P-256",
+            "kty": "EC",
+            "x": "8aOMbrPz1x98kuBmlOx2i2gZU9I-4V9GRNJ0mOdNtHI",
+            "y": "96x8qBoLG1PRurr_UVQMySr2X-27uSR6TJFkG_Hr6sI"
+          },
+          "iss": "http://localhost:8011/v1/issuers/docs-capture-z2373a",
+          "issued_at": "2026-07-02T23:51:56.379743Z",
+          "source_session_id": "",
+          "status": "issued",
+          "status_idx": 23,
+          "uuid": "0de85f52-15ca-4a12-a73e-c30bcb7435cc",
+          "vct": "AgeOver18"
+        },
+        {
+          "expires_at": "2027-07-02T23:51:56.377121Z",
+          "holder_cnf": {
+            "crv": "P-256",
+            "kty": "EC",
+            "x": "TIAakWswhOp8piYl3-UG13_XrBjO_5c5iKv_XeYI-Wk",
+            "y": "lRu2mqZoGmQDA6_P5-opFjTIJEJ8OtRvSAwRwIHc04o"
+          },
+          "iss": "http://localhost:8011/v1/issuers/docs-capture-z2373a",
+          "issued_at": "2026-07-02T23:51:56.377344Z",
+          "source_session_id": "",
+          "status": "revoked",
+          "status_idx": 22,
+          "uuid": "4fa09efc-f02d-4c17-9d99-e273720fb22d",
+          "vct": "AgeOver18"
+        },
+        {
+          "expires_at": "2027-07-02T23:51:56.374805Z",
+          "holder_cnf": {
+            "crv": "P-256",
+            "kty": "EC",
+            "x": "4DDsUiszMAHBgLMH5fAzh73SZ0jLzJaa2KJKmlM0r3Y",
+            "y": "18Y_RoK5Ck7WaAiIYFjy0qptaEeAPmZhw8G34_4ZdmY"
+          },
+          "iss": "http://localhost:8011/v1/issuers/docs-capture-z2373a",
+          "issued_at": "2026-07-02T23:51:56.375047Z",
+          "source_session_id": "",
+          "status": "suspended",
+          "status_idx": 21,
+          "uuid": "0ae13db0-a67d-4044-98aa-5a9bf0088d96",
+          "vct": "AgeOver18"
+        },
+        {
+          "expires_at": "2027-07-02T23:51:56.372827Z",
+          "holder_cnf": {
+            "crv": "P-256",
+            "kty": "EC",
+            "x": "3DxOI47KyvwBZ55X4E6UQ0SdU0-67iXhfBt9ACBb7Xk",
+            "y": "CyHqEAKa7LBRIhjrFfWIyTbodUT5XTgF3ZbBRNq_4AY"
+          },
+          "iss": "http://localhost:8011/v1/issuers/docs-capture-z2373a",
+          "issued_at": "2026-07-02T23:51:56.373049Z",
+          "source_session_id": "",
+          "status": "issued",
+          "status_idx": 20,
+          "uuid": "6cca70a3-6a2d-4f92-a2ef-789e4db8eba5",
+          "vct": "AgeOver18"
+        },
+        {
+          "expires_at": "2027-07-02T23:51:56.371206Z",
+          "holder_cnf": {
+            "crv": "P-256",
+            "kty": "EC",
+            "x": "B1FZD2xKedc78OhuchVvO7wutWZ8SbC1k2dBedQ7fI0",
+            "y": "YGOhjbmSWNrx6YWLrXOVoXTZrBApXz5h3Hz0JBQhFXg"
+          },
+          "iss": "http://localhost:8011/v1/issuers/docs-capture-z2373a",
+          "issued_at": "2026-07-02T23:51:56.371451Z",
+          "source_session_id": "",
+          "status": "issued",
+          "status_idx": 19,
+          "uuid": "41d05f4b-b365-44df-87ce-362082340326",
+          "vct": "AgeOver18"
+        },
+        {
+          "expires_at": "2027-07-02T23:51:56.369524Z",
+          "holder_cnf": {
+            "crv": "P-256",
+            "kty": "EC",
+            "x": "DNMhpiTqbXUKieAJFAssCB24JQxxVxgSBxwiZDb1wik",
+            "y": "Af-wONFtVI4CuoNHS83Ths0nwp65V7AmjjPsURAu4yY"
+          },
+          "iss": "http://localhost:8011/v1/issuers/docs-capture-z2373a",
+          "issued_at": "2026-07-02T23:51:56.369760Z",
+          "source_session_id": "",
+          "status": "issued",
+          "status_idx": 18,
+          "uuid": "f3ee7cd5-d436-4cbf-a045-cdb242ee97d4",
+          "vct": "AgeOver18"
+        },
+        {
+          "expires_at": "2027-07-02T23:51:56.367946Z",
+          "holder_cnf": {
+            "crv": "P-256",
+            "kty": "EC",
+            "x": "AjBKCh1Ms-s8P2oqvhR1qXoYIMUfsTT2uvZOk1ocCww",
+            "y": "rnLY4P0mQCiYbmXTalTeY4GlhfJCDHexa3xYFqqSczU"
+          },
+          "iss": "http://localhost:8011/v1/issuers/docs-capture-z2373a",
+          "issued_at": "2026-07-02T23:51:56.368205Z",
+          "source_session_id": "",
+          "status": "issued",
+          "status_idx": 17,
+          "uuid": "fd4acd27-74f6-411c-ae4a-581967531edc",
+          "vct": "StudentID"
+        },
+        {
+          "expires_at": "2027-07-02T23:51:56.364932Z",
+          "holder_cnf": {
+            "crv": "P-256",
+            "kty": "EC",
+            "x": "OSfjkR4D8CQD469Gn2L5ZyfzFTFxAnrkpRNWKTmi50k",
+            "y": "xFKlaS0kmzycWs7-i5SPhnNBWbZ130y869ARBy7vdxw"
+          },
+          "iss": "http://localhost:8011/v1/issuers/docs-capture-z2373a",
+          "issued_at": "2026-07-02T23:51:56.365166Z",
+          "source_session_id": "",
+          "status": "revoked",
+          "status_idx": 16,
+          "uuid": "c4dbe3ec-2ccb-4503-8309-5760968e0f3e",
+          "vct": "StudentID"
+        },
+        {
+          "expires_at": "2027-07-02T23:51:56.362661Z",
+          "holder_cnf": {
+            "crv": "P-256",
+            "kty": "EC",
+            "x": "9nQ6Gtk_bwS2Hg1_7MGVO86u188ZsogH-MLffroewtQ",
+            "y": "cUwTZz5o-1xMJCGMDrYIXF_X996lfYCEVJsDen2y6jc"
+          },
+          "iss": "http://localhost:8011/v1/issuers/docs-capture-z2373a",
+          "issued_at": "2026-07-02T23:51:56.362900Z",
+          "source_session_id": "",
+          "status": "suspended",
+          "status_idx": 15,
+          "uuid": "121b8a48-b809-4653-bfe3-2604a6276f39",
+          "vct": "StudentID"
+        },
+        {
+          "expires_at": "2027-07-02T23:51:56.361038Z",
+          "holder_cnf": {
+            "crv": "P-256",
+            "kty": "EC",
+            "x": "nXvl6KMzRPkZigt1Un5NSzsYdu8t8Tv7rwyKLaAvddU",
+            "y": "3sI_BkekPv4DDKG-m2c9-oWxbKVLY-XMYTpFHjP_iNE"
+          },
+          "iss": "http://localhost:8011/v1/issuers/docs-capture-z2373a",
+          "issued_at": "2026-07-02T23:51:56.361272Z",
+          "source_session_id": "",
+          "status": "issued",
+          "status_idx": 14,
+          "uuid": "47aa0795-4504-49e7-b605-a4b112956502",
+          "vct": "StudentID"
+        },
+        {
+          "expires_at": "2027-07-02T23:51:56.359426Z",
+          "holder_cnf": {
+            "crv": "P-256",
+            "kty": "EC",
+            "x": "M0vGXczfcclGptq5NruqFqDopJFhf86lEtqnYwIHwW0",
+            "y": "Z82aWGBYw3-ZuE91_rhe-9H3leuGXBBXETcp20ClhWw"
+          },
+          "iss": "http://localhost:8011/v1/issuers/docs-capture-z2373a",
+          "issued_at": "2026-07-02T23:51:56.359674Z",
+          "source_session_id": "",
+          "status": "issued",
+          "status_idx": 13,
+          "uuid": "d55f5841-7046-46cf-9edc-b5c34b68c0b1",
+          "vct": "StudentID"
+        },
+        {
+          "expires_at": "2027-07-02T23:51:56.357334Z",
+          "holder_cnf": {
+            "crv": "P-256",
+            "kty": "EC",
+            "x": "jVo9MeiqY8nvWOWSnozAGMeAnk3EGFz1wEMopgau2vA",
+            "y": "1XkwV8_bUJp41SvY8xjMDZ3Jv1hyMxCDMo9KxU5b_h4"
+          },
+          "iss": "http://localhost:8011/v1/issuers/docs-capture-z2373a",
+          "issued_at": "2026-07-02T23:51:56.357593Z",
+          "source_session_id": "",
+          "status": "issued",
+          "status_idx": 12,
+          "uuid": "4720f6ba-550c-4015-8a41-3f7d5fd3112c",
+          "vct": "StudentID"
+        },
+        {
+          "expires_at": "2027-07-02T23:51:56.355408Z",
+          "holder_cnf": {
+            "crv": "P-256",
+            "kty": "EC",
+            "x": "90FerQuzkRaqXKoWvyh-6Ss5lxAz6n4Nq8wD_Paa6J0",
+            "y": "44k-WW47kUJj6sPDGKsFrWXa0LXiMRmCEjzLJyPLlVM"
+          },
+          "iss": "http://localhost:8011/v1/issuers/docs-capture-z2373a",
+          "issued_at": "2026-07-02T23:51:56.355686Z",
+          "source_session_id": "",
+          "status": "issued",
+          "status_idx": 11,
+          "uuid": "f0c722eb-bc4c-4ac8-99ce-c8c72ec43614",
+          "vct": "EmployeeBadge"
+        },
+        {
+          "expires_at": "2027-07-02T23:51:56.352610Z",
+          "holder_cnf": {
+            "crv": "P-256",
+            "kty": "EC",
+            "x": "XOOkcdf5HNHdPoRK3KpRSN0B5HOkrDs4enxgXSwy0rk",
+            "y": "Huq31uvxhjpSV5z7qjZe_U7abB4B3_1j6gfDwaFBeDw"
+          },
+          "iss": "http://localhost:8011/v1/issuers/docs-capture-z2373a",
+          "issued_at": "2026-07-02T23:51:56.352860Z",
+          "source_session_id": "",
+          "status": "revoked",
+          "status_idx": 10,
+          "uuid": "5bbdc722-121b-4d58-9a40-ea9b3c291a25",
+          "vct": "EmployeeBadge"
+        },
+        {
+          "expires_at": "2027-07-02T23:51:56.350128Z",
+          "holder_cnf": {
+            "crv": "P-256",
+            "kty": "EC",
+            "x": "k1mQ2HAOWMy4XNCGpcz4Gvr5XH_4Wow3nQkLggka_o8",
+            "y": "-g6DuS0SSsDCfZ2wj-tobC-yMQi1I0PeG3HbZDYVdIM"
+          },
+          "iss": "http://localhost:8011/v1/issuers/docs-capture-z2373a",
+          "issued_at": "2026-07-02T23:51:56.350388Z",
+          "source_session_id": "",
+          "status": "suspended",
+          "status_idx": 9,
+          "uuid": "8914fe70-22c6-4851-b951-8bdfc3a53ef2",
+          "vct": "EmployeeBadge"
+        },
+        {
+          "expires_at": "2027-07-02T23:51:56.347810Z",
+          "holder_cnf": {
+            "crv": "P-256",
+            "kty": "EC",
+            "x": "pIIhmoh6Cj59ACP2iaqjEIYJwZfZ2D5hBQaOmwSJxz8",
+            "y": "7tyTAWVZlIG-ubAYGmh00gWclorMKlnEW2EqwXVF6tY"
+          },
+          "iss": "http://localhost:8011/v1/issuers/docs-capture-z2373a",
+          "issued_at": "2026-07-02T23:51:56.348061Z",
+          "source_session_id": "",
+          "status": "issued",
+          "status_idx": 8,
+          "uuid": "e9643186-f80e-46de-a480-63d5478c2152",
+          "vct": "EmployeeBadge"
+        },
+        {
+          "expires_at": "2027-07-02T23:51:56.345830Z",
+          "holder_cnf": {
+            "crv": "P-256",
+            "kty": "EC",
+            "x": "zqNJ4kS_U6XaQGndcb6FGq5hG2UwNYzmoZQcejU7Woc",
+            "y": "Xcx0vDe0ic4qpfI3xkht3Fi16JN8OjjUBC9IExMo9wE"
+          },
+          "iss": "http://localhost:8011/v1/issuers/docs-capture-z2373a",
+          "issued_at": "2026-07-02T23:51:56.346142Z",
+          "source_session_id": "",
+          "status": "issued",
+          "status_idx": 7,
+          "uuid": "27a5abff-d03e-4c72-85a2-40188262d536",
+          "vct": "EmployeeBadge"
+        },
+        {
+          "expires_at": "2027-07-02T23:51:56.344066Z",
+          "holder_cnf": {
+            "crv": "P-256",
+            "kty": "EC",
+            "x": "tNfHnbniRMLB95gqr1wyIiLqZRH03jaJcnE4a6my4T8",
+            "y": "60vfDgvXnNlkak1rFmdT3KOEYhlGv7bbw0_1SbtlhBA"
+          },
+          "iss": "http://localhost:8011/v1/issuers/docs-capture-z2373a",
+          "issued_at": "2026-07-02T23:51:56.344334Z",
+          "source_session_id": "",
+          "status": "issued",
+          "status_idx": 6,
+          "uuid": "6c830333-a5cb-46a2-a8da-b4ecdc4ee511",
+          "vct": "EmployeeBadge"
+        },
+        {
+          "expires_at": "2027-07-02T23:51:56.342390Z",
+          "holder_cnf": {
+            "crv": "P-256",
+            "kty": "EC",
+            "x": "RTgGXWqNJIzyhBJ85jYm0Et0APmDONrG6xYzJCevIY0",
+            "y": "C-UMQXjJ6gVQt3dhmhemuZ3fIhMScyBN29vm57_Z-yU"
+          },
+          "iss": "http://localhost:8011/v1/issuers/docs-capture-z2373a",
+          "issued_at": "2026-07-02T23:51:56.342663Z",
+          "source_session_id": "",
+          "status": "issued",
+          "status_idx": 5,
+          "uuid": "d2324c7f-54cb-410d-bbc7-059ac3194630",
+          "vct": "AirlineLoyalty"
+        },
+        {
+          "expires_at": "2027-07-02T23:51:56.339515Z",
+          "holder_cnf": {
+            "crv": "P-256",
+            "kty": "EC",
+            "x": "wv_LQ_7IsSw5xcIN0Vf3SBG123obet3JB5BrYIEkY8E",
+            "y": "KcRn3qXdxaMhd4Ix8SiSRYj9aAu1Ya5LGZJRTH8Owgg"
+          },
+          "iss": "http://localhost:8011/v1/issuers/docs-capture-z2373a",
+          "issued_at": "2026-07-02T23:51:56.339827Z",
+          "source_session_id": "",
+          "status": "revoked",
+          "status_idx": 4,
+          "uuid": "aaf88bb7-9f31-4a71-b234-d6784f76946b",
+          "vct": "AirlineLoyalty"
+        },
+        {
+          "expires_at": "2027-07-02T23:51:56.336786Z",
+          "holder_cnf": {
+            "crv": "P-256",
+            "kty": "EC",
+            "x": "B81LI7BNFoQxItvDzXwyB-UeAkk1oIWAOlJzRd5dkjw",
+            "y": "i8A1geRP0saz6BjJYAEDbtsFhsLVRw1EA-5re5WoPZ8"
+          },
+          "iss": "http://localhost:8011/v1/issuers/docs-capture-z2373a",
+          "issued_at": "2026-07-02T23:51:56.337102Z",
+          "source_session_id": "",
+          "status": "suspended",
+          "status_idx": 3,
+          "uuid": "059ba77f-f91c-4055-9e05-f56f0cdd4046",
+          "vct": "AirlineLoyalty"
+        },
+        {
+          "expires_at": "2027-07-02T23:51:56.334816Z",
+          "holder_cnf": {
+            "crv": "P-256",
+            "kty": "EC",
+            "x": "uN2B04oV7TZrf4-hnulsua-AqguL3GsYVaqRyWSKQy4",
+            "y": "L9XQEq2buD3pwYtjDXg4HrHY66e_l6nhUAB1_cYmGhU"
+          },
+          "iss": "http://localhost:8011/v1/issuers/docs-capture-z2373a",
+          "issued_at": "2026-07-02T23:51:56.335125Z",
+          "source_session_id": "",
+          "status": "issued",
+          "status_idx": 2,
+          "uuid": "5e9dcd0b-6c9f-4f26-91bd-ad180e2bc688",
+          "vct": "AirlineLoyalty"
+        },
+        {
+          "expires_at": "2027-07-02T23:51:56.332646Z",
+          "holder_cnf": {
+            "crv": "P-256",
+            "kty": "EC",
+            "x": "3DM7sLP-WXWnuXTwCKg7IwcPA0nAJqXuovVftRNcVGg",
+            "y": "KZE9ItERjWmwHR-G5UGF36JN9MsyErdPhHjyfEtTJd0"
+          },
+          "iss": "http://localhost:8011/v1/issuers/docs-capture-z2373a",
+          "issued_at": "2026-07-02T23:51:56.332949Z",
+          "source_session_id": "",
+          "status": "issued",
+          "status_idx": 1,
+          "uuid": "53cc888e-aa7f-4f9b-a500-bbdfe100fa87",
+          "vct": "AirlineLoyalty"
+        },
+        {
+          "expires_at": "2027-07-02T23:51:56.330297Z",
+          "holder_cnf": {
+            "crv": "P-256",
+            "kty": "EC",
+            "x": "qJC6-CbzqacJadgLEcbbljHhPxqpj-a8k6TuuJ7lXs8",
+            "y": "sFVnTP8hsjCIa-Zkqqet6geRsvCE4V7HNPUyhmlwisE"
+          },
+          "iss": "http://localhost:8011/v1/issuers/docs-capture-z2373a",
+          "issued_at": "2026-07-02T23:51:56.330669Z",
+          "source_session_id": "",
+          "status": "issued",
+          "status_idx": 0,
+          "uuid": "7d25f6e2-2602-4b5d-863c-b29329dac023",
+          "vct": "AirlineLoyalty"
+        }
+      ]
+    },
+    "source": "captured-live",
+    "summary": "List the tenant's issued credentials."
+  },
+  "GET /v1/credentials/{uuid}": {
+    "errors": [
+      {
+        "body": {
+          "detail": "No IssuedCredential matches the given query."
+        },
+        "note": "unknown credential id",
+        "status": 404
+      }
+    ],
+    "responses": {
+      "200": {
+        "expires_at": "2027-07-02T23:51:57.346460Z",
+        "holder_cnf": {
+          "crv": "P-256",
+          "kty": "EC",
+          "x": "Y5JQ00Kvn2iW7tc5OuwTHlxyPYrxWdmbFtpR5oeXDtk",
+          "y": "DSUZdwoe8qqxMYuNRt2uzUftY0-Aaq1tlx4ER-pPOZ4"
+        },
+        "iss": "http://localhost:8011/v1/issuers/docs-capture-z2373a",
+        "issued_at": "2026-07-02T23:51:57.346854Z",
+        "source_session_id": "",
+        "status": "issued",
+        "status_idx": 34,
+        "uuid": "c9d0940f-d03f-4c1d-8132-278c2c3016f4",
+        "vct": "AirlineLoyalty"
+      }
+    },
+    "source": "captured-live",
+    "summary": "Fetch one issued-credential management record."
+  },
+  "GET /v1/issuers/{slug}/.well-known/jwt-vc-issuer": {
+    "errors": [],
+    "responses": {
+      "200": {
+        "issuer": "http://localhost:8011/v1/issuers/docs-capture-z2373a",
+        "jwks": {
+          "keys": [
+            {
+              "crv": "P-256",
+              "kid": "DgJ8yLHSJHxiSzbaJvRRUZfHYoyGxOEfhj4pCdslUCY",
+              "kty": "EC",
+              "x": "_Cs0Wmu3BnuCY171v4dkGKdL30jAPGkF1yKBJw9VsIc",
+              "y": "HizpM7bgczntfxtwarx1l1ZQgpD6yQE7TbRae1d4l1c"
+            }
+          ]
+        }
+      }
+    },
+    "source": "captured-live",
+    "summary": "SD-JWT VC issuer JWKS document (the keys that verify this issuer's credentials)."
+  },
+  "GET /v1/issuers/{slug}/.well-known/openid-credential-issuer": {
+    "errors": [],
+    "responses": {
+      "200": {
+        "credential_configurations_supported": {
+          "AgeOver18": {
+            "credential_signing_alg_values_supported": [
+              "ES256"
+            ],
+            "cryptographic_binding_methods_supported": [
+              "jwk"
+            ],
+            "format": "dc+sd-jwt",
+            "proof_types_supported": {
+              "jwt": {
+                "proof_signing_alg_values_supported": [
+                  "<redacted>",
+                  "<redacted>"
+                ]
+              }
+            },
+            "vct": "AgeOver18"
+          },
+          "AirlineLoyalty": {
+            "credential_signing_alg_values_supported": [
+              "ES256"
+            ],
+            "cryptographic_binding_methods_supported": [
+              "jwk"
+            ],
+            "format": "dc+sd-jwt",
+            "proof_types_supported": {
+              "jwt": {
+                "proof_signing_alg_values_supported": [
+                  "<redacted>",
+                  "<redacted>"
+                ]
+              }
+            },
+            "vct": "AirlineLoyalty"
+          },
+          "EmployeeBadge": {
+            "credential_signing_alg_values_supported": [
+              "ES256"
+            ],
+            "cryptographic_binding_methods_supported": [
+              "jwk"
+            ],
+            "format": "dc+sd-jwt",
+            "proof_types_supported": {
+              "jwt": {
+                "proof_signing_alg_values_supported": [
+                  "<redacted>",
+                  "<redacted>"
+                ]
+              }
+            },
+            "vct": "EmployeeBadge"
+          },
+          "MembershipCard": {
+            "credential_signing_alg_values_supported": [
+              "ES256"
+            ],
+            "cryptographic_binding_methods_supported": [
+              "jwk"
+            ],
+            "format": "dc+sd-jwt",
+            "proof_types_supported": {
+              "jwt": {
+                "proof_signing_alg_values_supported": [
+                  "<redacted>",
+                  "<redacted>"
+                ]
+              }
+            },
+            "vct": "MembershipCard"
+          },
+          "StudentID": {
+            "credential_signing_alg_values_supported": [
+              "ES256"
+            ],
+            "cryptographic_binding_methods_supported": [
+              "jwk"
+            ],
+            "format": "dc+sd-jwt",
+            "proof_types_supported": {
+              "jwt": {
+                "proof_signing_alg_values_supported": [
+                  "<redacted>",
+                  "<redacted>"
+                ]
+              }
+            },
+            "vct": "StudentID"
+          }
+        },
+        "credential_endpoint": "http://localhost:8011/v1/credential",
+        "credential_issuer": "http://localhost:8011/v1/issuers/docs-capture-z2373a",
+        "jwt_vc_issuer": "http://localhost:8011/v1/issuers/docs-capture-z2373a/.well-known/jwt-vc-issuer",
+        "nonce_endpoint": "http://localhost:8011/v1/nonce",
+        "token_endpoint": "http://localhost:8011/v1/oauth/token"
+      }
+    },
+    "source": "captured-live",
+    "summary": "OpenID4VCI issuer metadata (endpoints + credential_configurations_supported)."
+  },
+  "GET /v1/keys": {
+    "errors": [],
+    "responses": {
+      "200": {
+        "jwks_uri": "http://localhost:8011/v1/issuers/docs-capture-z2373a/.well-known/jwt-vc-issuer",
+        "keys": [
+          {
+            "alg": "ES256",
+            "created_at": "2026-07-02T23:51:56.317195+00:00",
+            "id": "1cd08abb-eb0e-470e-af0d-771014596793",
+            "is_active": true,
+            "kid": "DgJ8yLHSJHxiSzbaJvRRUZfHYoyGxOEfhj4pCdslUCY",
+            "status": "active",
+            "valid_until": null
+          },
+          {
+            "alg": "ES256",
+            "created_at": "2026-07-02T23:51:56.316117+00:00",
+            "id": "fc53b01e-4be2-469c-a654-25d807b9b78a",
+            "is_active": false,
+            "kid": "Q07LPcci9DgrqA7ZUiXprqzJkmG-z9GsS2EZnQj_Hg8",
+            "status": "rotated",
+            "valid_until": "2027-07-02T23:51:56.316743+00:00"
+          }
+        ]
+      }
+    },
+    "source": "captured-live",
+    "summary": "List the tenant's issuer signing keys."
+  },
+  "GET /v1/keys/impact": {
+    "errors": [],
+    "responses": {
+      "200": {
+        "credentials_under_active_key": 28,
+        "default_overlap_days": 365,
+        "note": "These credentials would continue to verify under the current key after rotation (overlapping validity)."
+      }
+    },
+    "source": "captured-live",
+    "summary": "Preview how many live credentials a key rotation would affect."
+  },
+  "GET /v1/members": {
+    "errors": [],
+    "responses": {
+      "200": [
+        {
+          "capabilities": [
+            "create:credential-schemas",
+            "create:credential-templates",
+            "create:credentials",
+            "create:presentations",
+            "create:relying-parties",
+            "create:trust-frameworks",
+            "create:trusted-issuers",
+            "delete:credential-schemas",
+            "delete:relying-parties",
+            "delete:trust-frameworks",
+            "delete:trusted-issuers",
+            "write:credential-schemas",
+            "write:credentials",
+            "write:members",
+            "write:signing-keys",
+            "write:trust-frameworks",
+            "write:trusted-issuers"
+          ],
+          "created_at": "2026-07-02T23:51:56.416502+00:00",
+          "email": "docs-capture-z2373a@diditcapture.dev",
+          "name": "docs-capture-z2373a@diditcapture.dev",
+          "role": "owner"
+        }
+      ]
+    },
+    "source": "captured-live",
+    "summary": "List the tenant's team members + roles."
+  },
+  "GET /v1/presentations/request": {
+    "errors": [],
+    "responses": {
+      "200": [
+        {
+          "aud": "checkin-rp",
+          "created_at": "2026-07-02T23:51:57.366681Z",
+          "dcql": {
+            "credentials": [
+              {
+                "claims": [
+                  {
+                    "path": [
+                      "tier"
+                    ]
+                  }
+                ],
+                "format": "dc+sd-jwt",
+                "id": "cred1",
+                "meta": {
+                  "vct_values": [
+                    "AirlineLoyalty"
+                  ]
+                }
+              }
+            ]
+          },
+          "nonce": "<redacted>",
+          "purpose": "Verify loyalty tier for lounge access",
+          "requested_claims": [
+            "tier"
+          ],
+          "requested_vct": "AirlineLoyalty",
+          "status": "pending",
+          "transaction_id": "287d95fb-798b-47ee-9762-ccafca4aa3b0",
+          "trusted_iss": "",
+          "uuid": "1a2a5c82-3779-424b-a900-2062fdfaf5d2"
+        },
+        {
+          "aud": "checkin-rp",
+          "created_at": "2026-07-02T23:51:57.360146Z",
+          "dcql": {
+            "credentials": [
+              {
+                "claims": [
+                  {
+                    "path": [
+                      "tier"
+                    ]
+                  }
+                ],
+                "format": "dc+sd-jwt",
+                "id": "cred1",
+                "meta": {
+                  "vct_values": [
+                    "AirlineLoyalty"
+                  ]
+                }
+              }
+            ]
+          },
+          "nonce": "<redacted>",
+          "purpose": "Verify loyalty tier for lounge access",
+          "requested_claims": [
+            "tier"
+          ],
+          "requested_vct": "AirlineLoyalty",
+          "status": "pending",
+          "transaction_id": "dd82f2c2-4c7b-477d-a1b6-4f0f95fd2af2",
+          "trusted_iss": "",
+          "uuid": "b713a8e2-9a10-4050-b800-6917b5ac50d7"
+        },
+        {
+          "aud": "partner-portal",
+          "created_at": "2026-07-02T23:51:56.411321Z",
+          "dcql": {
+            "credentials": [
+              {
+                "claims": [
+                  {
+                    "path": [
+                      "member_id"
+                    ]
+                  }
+                ],
+                "format": "dc+sd-jwt",
+                "id": "cred1",
+                "meta": {
+                  "vct_values": [
+                    "MembershipCard"
+                  ]
+                }
+              }
+            ]
+          },
+          "nonce": "<redacted>",
+          "purpose": "",
+          "requested_claims": [
+            "member_id"
+          ],
+          "requested_vct": "MembershipCard",
+          "status": "verified",
+          "transaction_id": "f92d71ad-8dfb-41ab-b96a-4b1492187edf",
+          "trusted_iss": "",
+          "uuid": "f036007d-a1ef-4e28-a274-f3622f825e61"
+        },
+        {
+          "aud": "gate-check",
+          "created_at": "2026-07-02T23:51:56.406050Z",
+          "dcql": {
+            "credentials": [
+              {
+                "claims": [
+                  {
+                    "path": [
+                      "over_18"
+                    ]
+                  }
+                ],
+                "format": "dc+sd-jwt",
+                "id": "cred1",
+                "meta": {
+                  "vct_values": [
+                    "AgeOver18"
+                  ]
+                }
+              }
+            ]
+          },
+          "nonce": "<redacted>",
+          "purpose": "",
+          "requested_claims": [
+            "over_18"
+          ],
+          "requested_vct": "AgeOver18",
+          "status": "verified",
+          "transaction_id": "f9c18fa4-62ab-4700-8897-505606efb425",
+          "trusted_iss": "",
+          "uuid": "cc9f1072-ba5c-4f83-916b-d6cedd7c3202"
+        },
+        {
+          "aud": "campus-door",
+          "created_at": "2026-07-02T23:51:56.404588Z",
+          "dcql": {
+            "credentials": [
+              {
+                "claims": [
+                  {
+                    "path": [
+                      "student_id"
+                    ]
+                  }
+                ],
+                "format": "dc+sd-jwt",
+                "id": "cred1",
+                "meta": {
+                  "vct_values": [
+                    "StudentID"
+                  ]
+                }
+              }
+            ]
+          },
+          "nonce": "<redacted>",
+          "purpose": "",
+          "requested_claims": [
+            "student_id"
+          ],
+          "requested_vct": "StudentID",
+          "status": "failed",
+          "transaction_id": "12c35261-6cd9-48d9-9005-dc3039dc99b5",
+          "trusted_iss": "",
+          "uuid": "113ce031-764b-467f-85f3-fd408121f132"
+        },
+        {
+          "aud": "partner-portal",
+          "created_at": "2026-07-02T23:51:56.398292Z",
+          "dcql": {
+            "credentials": [
+              {
+                "claims": [
+                  {
+                    "path": [
+                      "employee_id"
+                    ]
+                  }
+                ],
+                "format": "dc+sd-jwt",
+                "id": "cred1",
+                "meta": {
+                  "vct_values": [
+                    "EmployeeBadge"
+                  ]
+                }
+              }
+            ]
+          },
+          "nonce": "<redacted>",
+          "purpose": "",
+          "requested_claims": [
+            "employee_id"
+          ],
+          "requested_vct": "EmployeeBadge",
+          "status": "verified",
+          "transaction_id": "2538c162-7ec5-44da-96e2-4fa35b5984ec",
+          "trusted_iss": "",
+          "uuid": "17783b2b-4513-46b3-b05c-19ab6d105121"
+        },
+        {
+          "aud": "gate-check",
+          "created_at": "2026-07-02T23:51:56.392462Z",
+          "dcql": {
+            "credentials": [
+              {
+                "claims": [
+                  {
+                    "path": [
+                      "given_name"
+                    ]
+                  }
+                ],
+                "format": "dc+sd-jwt",
+                "id": "cred1",
+                "meta": {
+                  "vct_values": [
+                    "AirlineLoyalty"
+                  ]
+                }
+              }
+            ]
+          },
+          "nonce": "<redacted>",
+          "purpose": "",
+          "requested_claims": [
+            "given_name"
+          ],
+          "requested_vct": "AirlineLoyalty",
+          "status": "verified",
+          "transaction_id": "566153aa-c113-467d-ae34-e217163277ce",
+          "trusted_iss": "",
+          "uuid": "32f5432a-5dc4-416a-bf57-549e648d19ae"
+        }
+      ]
+    },
+    "source": "captured-live",
+    "summary": "List the tenant's presentation requests (alias of /presentations/requests)."
+  },
+  "GET /v1/presentations/requests": {
+    "errors": [],
+    "responses": {
+      "200": [
+        {
+          "aud": "checkin-rp",
+          "created_at": "2026-07-02T23:51:57.360146Z",
+          "dcql": {
+            "credentials": [
+              {
+                "claims": [
+                  {
+                    "path": [
+                      "tier"
+                    ]
+                  }
+                ],
+                "format": "dc+sd-jwt",
+                "id": "cred1",
+                "meta": {
+                  "vct_values": [
+                    "AirlineLoyalty"
+                  ]
+                }
+              }
+            ]
+          },
+          "nonce": "<redacted>",
+          "purpose": "Verify loyalty tier for lounge access",
+          "requested_claims": [
+            "tier"
+          ],
+          "requested_vct": "AirlineLoyalty",
+          "status": "pending",
+          "transaction_id": "dd82f2c2-4c7b-477d-a1b6-4f0f95fd2af2",
+          "trusted_iss": "",
+          "uuid": "b713a8e2-9a10-4050-b800-6917b5ac50d7"
+        },
+        {
+          "aud": "partner-portal",
+          "created_at": "2026-07-02T23:51:56.411321Z",
+          "dcql": {
+            "credentials": [
+              {
+                "claims": [
+                  {
+                    "path": [
+                      "member_id"
+                    ]
+                  }
+                ],
+                "format": "dc+sd-jwt",
+                "id": "cred1",
+                "meta": {
+                  "vct_values": [
+                    "MembershipCard"
+                  ]
+                }
+              }
+            ]
+          },
+          "nonce": "<redacted>",
+          "purpose": "",
+          "requested_claims": [
+            "member_id"
+          ],
+          "requested_vct": "MembershipCard",
+          "status": "verified",
+          "transaction_id": "f92d71ad-8dfb-41ab-b96a-4b1492187edf",
+          "trusted_iss": "",
+          "uuid": "f036007d-a1ef-4e28-a274-f3622f825e61"
+        },
+        {
+          "aud": "gate-check",
+          "created_at": "2026-07-02T23:51:56.406050Z",
+          "dcql": {
+            "credentials": [
+              {
+                "claims": [
+                  {
+                    "path": [
+                      "over_18"
+                    ]
+                  }
+                ],
+                "format": "dc+sd-jwt",
+                "id": "cred1",
+                "meta": {
+                  "vct_values": [
+                    "AgeOver18"
+                  ]
+                }
+              }
+            ]
+          },
+          "nonce": "<redacted>",
+          "purpose": "",
+          "requested_claims": [
+            "over_18"
+          ],
+          "requested_vct": "AgeOver18",
+          "status": "verified",
+          "transaction_id": "f9c18fa4-62ab-4700-8897-505606efb425",
+          "trusted_iss": "",
+          "uuid": "cc9f1072-ba5c-4f83-916b-d6cedd7c3202"
+        },
+        {
+          "aud": "campus-door",
+          "created_at": "2026-07-02T23:51:56.404588Z",
+          "dcql": {
+            "credentials": [
+              {
+                "claims": [
+                  {
+                    "path": [
+                      "student_id"
+                    ]
+                  }
+                ],
+                "format": "dc+sd-jwt",
+                "id": "cred1",
+                "meta": {
+                  "vct_values": [
+                    "StudentID"
+                  ]
+                }
+              }
+            ]
+          },
+          "nonce": "<redacted>",
+          "purpose": "",
+          "requested_claims": [
+            "student_id"
+          ],
+          "requested_vct": "StudentID",
+          "status": "failed",
+          "transaction_id": "12c35261-6cd9-48d9-9005-dc3039dc99b5",
+          "trusted_iss": "",
+          "uuid": "113ce031-764b-467f-85f3-fd408121f132"
+        },
+        {
+          "aud": "partner-portal",
+          "created_at": "2026-07-02T23:51:56.398292Z",
+          "dcql": {
+            "credentials": [
+              {
+                "claims": [
+                  {
+                    "path": [
+                      "employee_id"
+                    ]
+                  }
+                ],
+                "format": "dc+sd-jwt",
+                "id": "cred1",
+                "meta": {
+                  "vct_values": [
+                    "EmployeeBadge"
+                  ]
+                }
+              }
+            ]
+          },
+          "nonce": "<redacted>",
+          "purpose": "",
+          "requested_claims": [
+            "employee_id"
+          ],
+          "requested_vct": "EmployeeBadge",
+          "status": "verified",
+          "transaction_id": "2538c162-7ec5-44da-96e2-4fa35b5984ec",
+          "trusted_iss": "",
+          "uuid": "17783b2b-4513-46b3-b05c-19ab6d105121"
+        },
+        {
+          "aud": "gate-check",
+          "created_at": "2026-07-02T23:51:56.392462Z",
+          "dcql": {
+            "credentials": [
+              {
+                "claims": [
+                  {
+                    "path": [
+                      "given_name"
+                    ]
+                  }
+                ],
+                "format": "dc+sd-jwt",
+                "id": "cred1",
+                "meta": {
+                  "vct_values": [
+                    "AirlineLoyalty"
+                  ]
+                }
+              }
+            ]
+          },
+          "nonce": "<redacted>",
+          "purpose": "",
+          "requested_claims": [
+            "given_name"
+          ],
+          "requested_vct": "AirlineLoyalty",
+          "status": "verified",
+          "transaction_id": "566153aa-c113-467d-ae34-e217163277ce",
+          "trusted_iss": "",
+          "uuid": "32f5432a-5dc4-416a-bf57-549e648d19ae"
+        }
+      ]
+    },
+    "source": "captured-live",
+    "summary": "List the tenant's presentation requests."
+  },
+  "GET /v1/presentations/{uuid}": {
+    "errors": [],
+    "responses": {
+      "200": {
+        "aud": "checkin-rp",
+        "claims": [
+          {
+            "label": "Tier",
+            "name": "tier",
+            "requested": true,
+            "selective_disclosure": true
+          }
+        ],
+        "created_at": "2026-07-02T23:51:57.360146Z",
+        "dcql": {
+          "credentials": [
+            {
+              "claims": [
+                {
+                  "path": [
+                    "tier"
+                  ]
+                }
+              ],
+              "format": "dc+sd-jwt",
+              "id": "cred1",
+              "meta": {
+                "vct_values": [
+                  "AirlineLoyalty"
+                ]
+              }
+            }
+          ]
+        },
+        "nonce": "<redacted>",
+        "purpose": "Verify loyalty tier for lounge access",
+        "requested_claims": [
+          "tier"
+        ],
+        "requested_vct": "AirlineLoyalty",
+        "requester": {
+          "did": "did:web:docs-capture-z2373a.didit.test",
+          "id": "relying-party",
+          "name": "checkin-rp",
+          "purpose": "Verify loyalty tier for lounge access"
+        },
+        "status": "pending",
+        "transaction_id": "dd82f2c2-4c7b-477d-a1b6-4f0f95fd2af2",
+        "trusted_iss": "",
+        "uuid": "b713a8e2-9a10-4050-b800-6917b5ac50d7"
+      }
+    },
+    "source": "captured-live",
+    "summary": "Public holder-poll view of a presentation request + terminal result summary."
+  },
+  "GET /v1/presentations/{uuid}/request": {
+    "errors": [],
+    "responses": {
+      "200": {
+        "client_id": "checkin-rp",
+        "dcql_query": {
+          "credentials": [
+            {
+              "claims": [
+                {
+                  "path": [
+                    "tier"
+                  ]
+                }
+              ],
+              "format": "dc+sd-jwt",
+              "id": "cred1",
+              "meta": {
+                "vct_values": [
+                  "AirlineLoyalty"
+                ]
+              }
+            }
+          ]
+        },
+        "nonce": "<redacted>",
+        "response_mode": "direct_post",
+        "response_type": "vp_token",
+        "response_uri": "http://localhost:8011/v1/presentations/b713a8e2-9a10-4050-b800-6917b5ac50d7/response",
+        "state": "dd82f2c2-4c7b-477d-a1b6-4f0f95fd2af2"
+      }
+    },
+    "source": "captured-live",
+    "summary": "The signed OpenID4VP request parameters a wallet dereferences (public)."
+  },
+  "GET /v1/relying-parties": {
+    "errors": [],
+    "responses": {
+      "200": [
+        {
+          "client_id": "",
+          "created_at": "2026-07-02T23:51:58.746686+00:00",
+          "id": "44b2d61a-1634-486b-a35a-df26eb653a1a",
+          "name": "Campus Door",
+          "origin": "https://door.acme.example",
+          "status": "active"
+        },
+        {
+          "client_id": "campus-door",
+          "created_at": "2026-07-02T23:51:56.322685+00:00",
+          "id": "00cd910f-834f-46ec-a1a6-5288d1da2cbc",
+          "name": "Campus Door",
+          "origin": "https://door.contoso.edu.example",
+          "status": "active"
+        },
+        {
+          "client_id": "partner-portal",
+          "created_at": "2026-07-02T23:51:56.322215+00:00",
+          "id": "f2f5f0b5-5fdc-485b-bd90-f9cb68458b04",
+          "name": "Partner Portal",
+          "origin": "https://partners.globex.example",
+          "status": "active"
+        },
+        {
+          "client_id": "gate-check",
+          "created_at": "2026-07-02T23:51:56.321719+00:00",
+          "id": "d19aa1b3-a36c-4faf-b538-5119395bb9f1",
+          "name": "Gate Check RP",
+          "origin": "https://gate.acme-air.example",
+          "status": "active"
+        }
+      ]
+    },
+    "source": "captured-live",
+    "summary": "List the tenant's relying parties."
+  },
+  "GET /v1/status-lists/{slug}/{uuid}": {
+    "errors": [],
+    "responses": {
+      "200": {
+        "bits_b64": "GIZhGDAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\u2026(truncated)",
+        "size": 131072,
+        "uri": "http://localhost:8011/v1/status-lists/docs-capture-z2373a/097648d0-379f-494b-ad67-87ee146ace1b"
+      }
+    },
+    "source": "captured-live",
+    "summary": "Fetch a Token-Status-List (the revocation/suspension bitstring token)."
+  },
+  "GET /v1/trust-frameworks": {
+    "errors": [],
+    "responses": {
+      "200": [
+        {
+          "custom": false,
+          "description": "Mobile driving licence (proximity + online).",
+          "editable": false,
+          "formats": [
+            "mdoc"
+          ],
+          "governed": true,
+          "id": "44f87e28-1869-46de-a029-af9dc748e1c0",
+          "name": "ISO/IEC 18013-5 mDL",
+          "profile": "ISO mDL",
+          "region": "Global",
+          "slug": "iso-mdl"
+        },
+        {
+          "custom": false,
+          "description": "Swiss federal e-ID.",
+          "editable": false,
+          "formats": [
+            "sd_jwt_vc"
+          ],
+          "governed": true,
+          "id": "036ac374-efa4-482b-b79d-ad63d8fd387e",
+          "name": "Swiss e-ID",
+          "profile": "national",
+          "region": "CH",
+          "slug": "swiss-eid"
+        },
+        {
+          "custom": false,
+          "description": "AAMVA Digital Trust Service.",
+          "editable": false,
+          "formats": [
+            "mdoc"
+          ],
+          "governed": true,
+          "id": "a1eb7240-3160-4832-88a9-54d2fbf1f31b",
+          "name": "US mDL (AAMVA)",
+          "profile": "AAMVA",
+          "region": "US",
+          "slug": "us-mdl"
+        },
+        {
+          "custom": false,
+          "description": "EU Digital Identity Wallet framework.",
+          "editable": false,
+          "formats": [
+            "sd_jwt_vc",
+            "mdoc"
+          ],
+          "governed": true,
+          "id": "d345d71c-8410-4705-9557-0bd8073f8c34",
+          "name": "eIDAS 2.0 (EUDI)",
+          "profile": "HAIP",
+          "region": "EU",
+          "slug": "eidas2"
+        }
+      ]
+    },
+    "source": "captured-live",
+    "summary": "List governed (platform-catalog) + custom trust frameworks."
+  },
+  "GET /v1/trust-frameworks/{slug}": {
+    "errors": [],
+    "responses": {
+      "200": {
+        "custom": true,
+        "description": "Partner onboarding trust rules.",
+        "editable": true,
+        "formats": [
+          "sd_jwt_vc"
+        ],
+        "governed": false,
+        "id": "ef84dbdc-c2d3-4b8d-91f7-3c94089ed228",
+        "name": "ACME Partner Framework y4bf",
+        "profile": "custom",
+        "region": "EU",
+        "slug": "acme-partner-framework-y4bf"
+      }
+    },
+    "source": "captured-live",
+    "summary": "Fetch one trust framework by slug."
+  },
+  "GET /v1/trusted-issuers": {
+    "errors": [],
+    "responses": {
+      "200": [
+        {
+          "added_by": "TenantPrincipal<docs-capture-z2373a:owner>",
+          "created_at": "2026-07-02T23:51:58.727290+00:00",
+          "did": "",
+          "framework": "acme-partner-framework-y4bf",
+          "id": "ef799a56-23dc-467d-9760-9fd20a8457fa",
+          "iss": "http://localhost:8011/v1/issuers/docs-external-issuer-b2u6ty",
+          "jwks_uri": "",
+          "name": "Gov PID Issuer",
+          "status": "active",
+          "trust_anchor": "https-jwks"
+        },
+        {
+          "added_by": "system",
+          "created_at": "2026-07-02T23:51:56.396577+00:00",
+          "did": "",
+          "framework": null,
+          "id": "6618df5c-b4e7-401e-8321-70acb7e9744e",
+          "iss": "http://localhost:8011/v1/issuers/docs-capture-z2373a",
+          "jwks_uri": "",
+          "name": "docs-capture-z2373a (self)",
+          "status": "active",
+          "trust_anchor": "https-jwks"
+        },
+        {
+          "added_by": "demo-seed",
+          "created_at": "2026-07-02T23:51:56.320771+00:00",
+          "did": "",
+          "framework": null,
+          "id": "3effd357-8c2b-475a-baa9-6a55bda48f01",
+          "iss": "https://access.initech.example",
+          "jwks_uri": "",
+          "name": "Initech Access",
+          "status": "active",
+          "trust_anchor": "https-jwks"
+        },
+        {
+          "added_by": "demo-seed",
+          "created_at": "2026-07-02T23:51:56.320158+00:00",
+          "did": "",
+          "framework": null,
+          "id": "916bc506-9793-4ef6-90fc-50e89ae17649",
+          "iss": "https://hr.globex.example",
+          "jwks_uri": "",
+          "name": "Globex Corp HR",
+          "status": "active",
+          "trust_anchor": "https-jwks"
+        },
+        {
+          "added_by": "demo-seed",
+          "created_at": "2026-07-02T23:51:56.319597+00:00",
+          "did": "",
+          "framework": null,
+          "id": "051015ae-8b52-4c53-a6f4-fc23ff644eb0",
+          "iss": "https://id.contoso.edu.example",
+          "jwks_uri": "",
+          "name": "Contoso University",
+          "status": "active",
+          "trust_anchor": "https-jwks"
+        },
+        {
+          "added_by": "demo-seed",
+          "created_at": "2026-07-02T23:51:56.318638+00:00",
+          "did": "",
+          "framework": null,
+          "id": "02ba969f-3a33-4a10-a7a2-3774d8286096",
+          "iss": "https://issuer.acme-air.example",
+          "jwks_uri": "",
+          "name": "Acme Airlines",
+          "status": "active",
+          "trust_anchor": "https-jwks"
+        }
+      ]
+    },
+    "source": "captured-live",
+    "summary": "List the tenant's trusted issuers."
+  },
+  "GET /v1/verifications": {
+    "errors": [],
+    "responses": {
+      "200": [
+        {
+          "checks": {
+            "alg_allowlist": true,
+            "aud": true,
+            "key_binding": true,
+            "nonce": true,
+            "not_expired": true,
+            "not_revoked": true,
+            "signature": true
+          },
+          "created_at": "2026-07-02T23:51:57.440034+00:00",
+          "disclosed_claims": {
+            "tier": "gold"
+          },
+          "error": "",
+          "id": "8b58a284-a711-4406-b2f4-dfece3741c36",
+          "request_id": "b713a8e2-9a10-4050-b800-6917b5ac50d7",
+          "requested_claims": [
+            "tier"
+          ],
+          "vct": "AirlineLoyalty",
+          "verdict": "verified",
+          "verifier": "checkin-rp"
+        },
+        {
+          "checks": {
+            "alg_allowlist": true,
+            "aud": true,
+            "key_binding": true,
+            "nonce": true,
+            "not_expired": true,
+            "not_revoked": true,
+            "signature": true
+          },
+          "created_at": "2026-07-02T23:51:56.415908+00:00",
+          "disclosed_claims": {
+            "member_id": "demo-member_id"
+          },
+          "error": "",
+          "id": "e35d91a5-9157-4edf-85c1-52ed770eeb4e",
+          "request_id": "f036007d-a1ef-4e28-a274-f3622f825e61",
+          "requested_claims": [
+            "member_id"
+          ],
+          "vct": "MembershipCard",
+          "verdict": "verified",
+          "verifier": "partner-portal"
+        },
+        {
+          "checks": {
+            "alg_allowlist": true,
+            "aud": true,
+            "key_binding": true,
+            "nonce": true,
+            "not_expired": true,
+            "not_revoked": true,
+            "signature": true
+          },
+          "created_at": "2026-07-02T23:51:56.410356+00:00",
+          "disclosed_claims": {
+            "over_18": "demo-over_18"
+          },
+          "error": "",
+          "id": "467e5da6-7649-4144-88f9-99f6665cade6",
+          "request_id": "cc9f1072-ba5c-4f83-916b-d6cedd7c3202",
+          "requested_claims": [
+            "over_18"
+          ],
+          "vct": "AgeOver18",
+          "verdict": "verified",
+          "verifier": "gate-check"
+        },
+        {
+          "checks": {
+            "alg_allowlist": true,
+            "aud": true,
+            "key_binding": true,
+            "nonce": true,
+            "not_expired": true,
+            "not_revoked": false,
+            "signature": true
+          },
+          "created_at": "2026-07-02T23:51:56.405041+00:00",
+          "disclosed_claims": {},
+          "error": "Credential is revoked (status list bit set).",
+          "id": "333bbe0a-945f-42ce-b3ed-8c1b0a5825b2",
+          "request_id": "113ce031-764b-467f-85f3-fd408121f132",
+          "requested_claims": [
+            "student_id"
+          ],
+          "vct": "StudentID",
+          "verdict": "failed",
+          "verifier": "campus-door"
+        },
+        {
+          "checks": {
+            "alg_allowlist": true,
+            "aud": true,
+            "key_binding": true,
+            "nonce": true,
+            "not_expired": true,
+            "not_revoked": true,
+            "signature": true
+          },
+          "created_at": "2026-07-02T23:51:56.403836+00:00",
+          "disclosed_claims": {
+            "employee_id": "demo-employee_id"
+          },
+          "error": "",
+          "id": "b2ae33e8-c001-41ee-85a5-f25ec007f49f",
+          "request_id": "17783b2b-4513-46b3-b05c-19ab6d105121",
+          "requested_claims": [
+            "employee_id"
+          ],
+          "vct": "EmployeeBadge",
+          "verdict": "verified",
+          "verifier": "partner-portal"
+        },
+        {
+          "checks": {
+            "alg_allowlist": true,
+            "aud": true,
+            "key_binding": true,
+            "nonce": true,
+            "not_expired": true,
+            "not_revoked": true,
+            "signature": true
+          },
+          "created_at": "2026-07-02T23:51:56.397534+00:00",
+          "disclosed_claims": {
+            "given_name": "demo-given_name"
+          },
+          "error": "",
+          "id": "12743871-a649-431a-8f28-f628edc3233b",
+          "request_id": "32f5432a-5dc4-416a-bf57-549e648d19ae",
+          "requested_claims": [
+            "given_name"
+          ],
+          "vct": "AirlineLoyalty",
+          "verdict": "verified",
+          "verifier": "gate-check"
+        }
+      ]
+    },
+    "source": "captured-live",
+    "summary": "List completed verification results for the tenant."
+  },
+  "GET /v1/verifications/{uuid}": {
+    "errors": [],
+    "responses": {
+      "200": {
+        "checks": {
+          "alg_allowlist": true,
+          "aud": true,
+          "key_binding": true,
+          "nonce": true,
+          "not_expired": true,
+          "not_revoked": true,
+          "signature": true
+        },
+        "created_at": "2026-07-02T23:51:57.440034+00:00",
+        "disclosed_claims": {
+          "tier": "gold"
+        },
+        "error": "",
+        "id": "8b58a284-a711-4406-b2f4-dfece3741c36",
+        "request_id": "b713a8e2-9a10-4050-b800-6917b5ac50d7",
+        "requested_claims": [
+          "tier"
+        ],
+        "vct": "AirlineLoyalty",
+        "verdict": "verified",
+        "verifier": "checkin-rp"
+      }
+    },
+    "source": "captured-live",
+    "summary": "Fetch one verification result incl. disclosed claims (tenant-authed; by request or result id)."
+  },
+  "PATCH /v1/credential-schemas/{uuid}": {
+    "errors": [],
+    "request": {
+      "status": "deprecated"
+    },
+    "responses": {
+      "200": {
+        "attributes": [
+          {
+            "name": "employee_id",
+            "sd": true
+          },
+          {
+            "name": "department",
+            "sd": false
+          }
+        ],
+        "branding": {},
+        "created_at": "2026-07-02T23:51:57.488704Z",
+        "format": "sd_jwt_vc",
+        "name": "Employee Badge 2uq3",
+        "revocable": true,
+        "status": "deprecated",
+        "supersedes": null,
+        "uuid": "17be73de-c44f-4f7d-ab62-b37199cc5e2f",
+        "vct": "EmployeeBadge",
+        "version": "1.0",
+        "versions": [
+          {
+            "created_at": "2026-07-02T23:51:57.499691+00:00",
+            "is_latest": true,
+            "issued_count": 0,
+            "status": "active",
+            "supersedes": "17be73de-c44f-4f7d-ab62-b37199cc5e2f",
+            "uuid": "e7b1f75a-c253-4460-84cf-594939db452d",
+            "vct": "EmployeeBadge",
+            "version": "1.1"
+          },
+          {
+            "created_at": "2026-07-02T23:51:57.488704+00:00",
+            "is_latest": false,
+            "issued_count": 1,
+            "status": "deprecated",
+            "supersedes": null,
+            "uuid": "17be73de-c44f-4f7d-ab62-b37199cc5e2f",
+            "vct": "EmployeeBadge",
+            "version": "1.0"
+          }
+        ]
+      }
+    },
+    "source": "captured-live",
+    "summary": "Deprecate or reactivate a schema version (deprecated blocks NEW issuance only)."
+  },
+  "PATCH /v1/members/{email}": {
+    "errors": [],
+    "request": {
+      "role": "admin"
+    },
+    "responses": {
+      "200": {
+        "capabilities": [
+          "create:credential-schemas",
+          "create:credential-templates",
+          "create:credentials",
+          "create:presentations",
+          "create:relying-parties",
+          "create:trust-frameworks",
+          "create:trusted-issuers",
+          "delete:credential-schemas",
+          "delete:relying-parties",
+          "delete:trust-frameworks",
+          "delete:trusted-issuers",
+          "write:credential-schemas",
+          "write:credentials",
+          "write:members",
+          "write:signing-keys",
+          "write:trust-frameworks",
+          "write:trusted-issuers"
+        ],
+        "created_at": "2026-07-02T23:51:58.759756+00:00",
+        "email": "teammate-b2v9@diditcapture.dev",
+        "name": "teammate-b2v9@diditcapture.dev",
+        "role": "admin"
+      }
+    },
+    "source": "captured-live",
+    "summary": "Change a member's role."
+  },
+  "PATCH /v1/trust-frameworks/{slug}": {
+    "errors": [
+      {
+        "body": {
+          "detail": "'eIDAS 2.0 (EUDI)' is a governed framework managed by its governance authority \u2014 it cannot be edited or deleted. Create a custom framework instead."
+        },
+        "note": "editing a governed framework",
+        "status": 403
+      }
+    ],
+    "request": {
+      "description": "Updated partner onboarding trust rules."
+    },
+    "responses": {
+      "200": {
+        "custom": true,
+        "description": "Updated partner onboarding trust rules.",
+        "editable": true,
+        "formats": [
+          "sd_jwt_vc"
+        ],
+        "governed": false,
+        "id": "ef84dbdc-c2d3-4b8d-91f7-3c94089ed228",
+        "name": "ACME Partner Framework y4bf",
+        "profile": "custom",
+        "region": "EU",
+        "slug": "acme-partner-framework-y4bf"
+      }
+    },
+    "source": "captured-live",
+    "summary": "Edit a custom framework (governed frameworks are immutable -> 403)."
+  },
+  "PATCH /v1/trusted-issuers/{uuid}": {
+    "errors": [],
+    "request": {
+      "status": "disabled"
+    },
+    "responses": {
+      "200": {
+        "added_by": "TenantPrincipal<docs-capture-z2373a:owner>",
+        "created_at": "2026-07-02T23:51:58.727290+00:00",
+        "did": "",
+        "framework": "acme-partner-framework-y4bf",
+        "id": "ef799a56-23dc-467d-9760-9fd20a8457fa",
+        "iss": "http://localhost:8011/v1/issuers/docs-external-issuer-b2u6ty",
+        "jwks_uri": "",
+        "name": "Gov PID Issuer",
+        "status": "disabled",
+        "trust_anchor": "https-jwks"
+      }
+    },
+    "source": "captured-live",
+    "summary": "Enable or disable a trusted issuer (disabled fails the trust gate but keeps the entry)."
+  },
+  "POST /v1/credential": {
+    "errors": [
+      {
+        "body": {
+          "error": "invalid_token",
+          "error_description": "invalid access token"
+        },
+        "note": "invalid issuance access token",
+        "status": 401
+      }
+    ],
+    "request": {
+      "proof": {
+        "jwt": "<redacted>",
+        "proof_type": "<redacted>"
+      }
+    },
+    "responses": {
+      "200": {
+        "credential": "<redacted>",
+        "credentials": [
+          {
+            "credential": "<redacted>"
+          }
+        ],
+        "vct": "AirlineLoyalty"
+      }
+    },
+    "source": "captured-live",
+    "summary": "Redeem the access token + holder proof for the issued SD-JWT VC (OpenID4VCI)."
+  },
+  "POST /v1/credential-offers": {
+    "errors": [],
+    "request": {
+      "claims": {
+        "given_name": "Ada",
+        "tier": "gold"
+      },
+      "template_id": "b18c99cb-5b7b-4915-938c-038c2ddefb6f"
+    },
+    "responses": {
+      "201": {
+        "claim_url": "http://localhost:3012/claim?offer=e6233586-9a63-459a-b799-a0500f97d577",
+        "credential_issuer": "http://localhost:8011/v1/issuers/docs-capture-z2373a",
+        "credential_offer_uri": "openid-credential-offer://?credential_offer_uri=http%3A%2F%2Flocalhost%3A8011%2Fv1%2Fcredential-offers%2Fe6233586-9a63-459a-b799-a0500f97d577%2Foffer",
+        "email_sent": false,
+        "expires_at": "2026-07-03T00:01:57.511106+00:00",
+        "grants": {
+          "urn:ietf:params:oauth:grant-type:pre-authorized_code": {
+            "pre-authorized_code": "<redacted>"
+          }
+        },
+        "offer_id": "e6233586-9a63-459a-b799-a0500f97d577",
+        "pre_authorized_code": "<redacted>",
+        "recipient_email": "",
+        "tx_code": "<redacted>"
+      }
+    },
+    "source": "captured-live",
+    "summary": "Create a credential offer (returns the pre-authorized code + QR/deep-link URI)."
+  },
+  "POST /v1/credential-offers/{uuid}/accept": {
+    "errors": [],
+    "request": {},
+    "responses": {
+      "200": {
+        "credential": {
+          "claims": [
+            {
+              "label": "<redacted>",
+              "name": "<redacted>",
+              "selective_disclosure": true,
+              "value": "<redacted>"
+            },
+            {
+              "label": "<redacted>",
+              "name": "<redacted>",
+              "selective_disclosure": true,
+              "value": "<redacted>"
+            }
+          ],
+          "credential_name": "<redacted>",
+          "expires_at": "<redacted>",
+          "format": "<redacted>",
+          "id": "<redacted>",
+          "issued_at": "<redacted>",
+          "issuer": {
+            "did": "<redacted>",
+            "domain": "<redacted>",
+            "id": "<redacted>",
+            "name": "<redacted>"
+          },
+          "sd_jwt": "<redacted>",
+          "status": "<redacted>",
+          "subject": "<redacted>",
+          "vct": "<redacted>"
+        },
+        "holder_jwk": {
+          "crv": "P-256",
+          "kty": "EC",
+          "x": "XhoOXR1CgeFdeSw8M6MF3sfCcGVuLMENv3T9eBU3WFs",
+          "y": "XMADS5elXCUDOkf-sTCbo6mUtegEwk9vq1axIE9R2nI"
+        },
+        "vct": "AirlineLoyalty"
+      }
+    },
+    "source": "captured-live",
+    "summary": "Dev-only shortcut: server-side accept an offer and mint the credential (404 in production)."
+  },
+  "POST /v1/credential-offers/{uuid}/resend-email": {
+    "errors": [],
+    "request": {},
+    "responses": {
+      "200": {
+        "claim_url": "http://localhost:3012/claim?offer=6ba6f012-900b-4cfa-8c3b-50498c90c640",
+        "email_send_count": 1,
+        "email_sent": true,
+        "expires_at": "2026-07-09T23:51:57.526712+00:00",
+        "offer_id": "6ba6f012-900b-4cfa-8c3b-50498c90c640",
+        "recipient_email": "holder@diditcapture.dev"
+      }
+    },
+    "source": "captured-live",
+    "summary": "Re-send the claim email for a pending email-delivery offer."
+  },
+  "POST /v1/credential-schemas": {
+    "errors": [],
+    "request": {
+      "attributes": [
+        {
+          "name": "given_name",
+          "sd": true
+        },
+        {
+          "name": "tier",
+          "sd": true
+        }
+      ],
+      "name": "Loyalty Membership",
+      "vct": "AirlineLoyalty"
+    },
+    "responses": {
+      "201": {
+        "attributes": [
+          {
+            "name": "given_name",
+            "sd": true
+          },
+          {
+            "name": "tier",
+            "sd": true
+          }
+        ],
+        "branding": {},
+        "created_at": "2026-07-02T23:51:57.328099Z",
+        "format": "sd_jwt_vc",
+        "name": "Loyalty Membership",
+        "revocable": true,
+        "status": "active",
+        "supersedes": null,
+        "uuid": "5e41f295-5b7b-456a-989d-582373595319",
+        "vct": "AirlineLoyalty",
+        "version": "1.0"
+      }
+    },
+    "source": "captured-live",
+    "summary": "Create a credential schema (the reusable claim + VCT definition)."
+  },
+  "POST /v1/credential-schemas/{uuid}/revoke-credentials": {
+    "errors": [],
+    "request": {},
+    "responses": {
+      "200": {
+        "revoked": 1,
+        "schema_id": "17be73de-c44f-4f7d-ab62-b37199cc5e2f",
+        "version": "1.0"
+      }
+    },
+    "source": "captured-live",
+    "summary": "Bulk-revoke every live credential issued under this schema version (destructive)."
+  },
+  "POST /v1/credential-schemas/{uuid}/versions": {
+    "errors": [],
+    "request": {
+      "attributes": [
+        {
+          "name": "employee_id",
+          "sd": true
+        },
+        {
+          "name": "department",
+          "sd": false
+        },
+        {
+          "name": "clearance",
+          "sd": true
+        }
+      ]
+    },
+    "responses": {
+      "201": {
+        "attributes": [
+          {
+            "name": "employee_id",
+            "sd": true
+          },
+          {
+            "name": "department",
+            "sd": false
+          },
+          {
+            "name": "clearance",
+            "sd": true
+          }
+        ],
+        "branding": {},
+        "created_at": "2026-07-02T23:51:57.499691Z",
+        "format": "sd_jwt_vc",
+        "name": "Employee Badge 2uq3",
+        "revocable": true,
+        "status": "active",
+        "supersedes": "17be73de-c44f-4f7d-ab62-b37199cc5e2f",
+        "uuid": "e7b1f75a-c253-4460-84cf-594939db452d",
+        "vct": "EmployeeBadge",
+        "version": "1.1",
+        "versions": [
+          {
+            "created_at": "2026-07-02T23:51:57.499691+00:00",
+            "is_latest": true,
+            "issued_count": 0,
+            "status": "active",
+            "supersedes": "17be73de-c44f-4f7d-ab62-b37199cc5e2f",
+            "uuid": "e7b1f75a-c253-4460-84cf-594939db452d",
+            "vct": "EmployeeBadge",
+            "version": "1.1"
+          },
+          {
+            "created_at": "2026-07-02T23:51:57.488704+00:00",
+            "is_latest": false,
+            "issued_count": 1,
+            "status": "deprecated",
+            "supersedes": null,
+            "uuid": "17be73de-c44f-4f7d-ab62-b37199cc5e2f",
+            "vct": "EmployeeBadge",
+            "version": "1.0"
+          }
+        ]
+      }
+    },
+    "source": "captured-live",
+    "summary": "Cut the next immutable version of a schema (bumps version, deprecates the source)."
+  },
+  "POST /v1/credential-templates": {
+    "errors": [],
+    "request": {
+      "name": "standard",
+      "schema": "5e41f295-5b7b-456a-989d-582373595319",
+      "validity_seconds": 31536000
+    },
+    "responses": {
+      "201": {
+        "created_at": "2026-07-02T23:51:57.339031Z",
+        "name": "standard",
+        "schema": "5e41f295-5b7b-456a-989d-582373595319",
+        "uuid": "b18c99cb-5b7b-4915-938c-038c2ddefb6f",
+        "validity_seconds": 31536000
+      }
+    },
+    "source": "captured-live",
+    "summary": "Create an issuance template bound to a schema."
+  },
+  "POST /v1/credentials/issue": {
+    "errors": [],
+    "request": {
+      "claims": {
+        "given_name": "Ada",
+        "tier": "gold"
+      },
+      "holder_jwk": {
+        "crv": "P-256",
+        "kty": "EC",
+        "x": "Y5JQ00Kvn2iW7tc5OuwTHlxyPYrxWdmbFtpR5oeXDtk",
+        "y": "DSUZdwoe8qqxMYuNRt2uzUftY0-Aaq1tlx4ER-pPOZ4"
+      },
+      "template_id": "b18c99cb-5b7b-4915-938c-038c2ddefb6f"
+    },
+    "responses": {
+      "201": {
+        "credential_id": "c9d0940f-d03f-4c1d-8132-278c2c3016f4",
+        "sd_jwt": "<redacted>",
+        "status_idx": 34,
+        "vct": "AirlineLoyalty"
+      }
+    },
+    "source": "captured-live",
+    "summary": "Issue an SD-JWT VC directly to a holder's public JWK."
+  },
+  "POST /v1/credentials/{uuid}/reactivate": {
+    "errors": [
+      {
+        "body": {
+          "detail": "Cannot reactivate a credential in status 'issued'."
+        },
+        "note": "reactivating an already-issued credential",
+        "status": 409
+      }
+    ],
+    "request": {},
+    "responses": {
+      "200": {
+        "expires_at": "2027-07-02T23:51:57.468035Z",
+        "holder_cnf": {
+          "crv": "P-256",
+          "kty": "EC",
+          "x": "dn5TeSJBDFzSmO0lDn_SMbWaHliRw5ltXBpICoYQYMo",
+          "y": "EeAIC7ebbfCVYRn6g7PGgdh8ShlFKYCBpX3AgmppF4w"
+        },
+        "iss": "http://localhost:8011/v1/issuers/docs-capture-z2373a",
+        "issued_at": "2026-07-02T23:51:57.468376Z",
+        "source_session_id": "",
+        "status": "issued",
+        "status_idx": 36,
+        "uuid": "7bae29ed-12c0-49fd-8f3f-2f1b395747a7",
+        "vct": "AirlineLoyalty"
+      }
+    },
+    "source": "captured-live",
+    "summary": "Return a suspended credential to issued."
+  },
+  "POST /v1/credentials/{uuid}/revoke": {
+    "errors": [
+      {
+        "body": {
+          "detail": "Cannot revoke a credential in status 'revoked'."
+        },
+        "note": "re-revoking a revoked credential",
+        "status": 409
+      }
+    ],
+    "request": {},
+    "responses": {
+      "200": {
+        "expires_at": "2027-07-02T23:51:57.468035Z",
+        "holder_cnf": {
+          "crv": "P-256",
+          "kty": "EC",
+          "x": "dn5TeSJBDFzSmO0lDn_SMbWaHliRw5ltXBpICoYQYMo",
+          "y": "EeAIC7ebbfCVYRn6g7PGgdh8ShlFKYCBpX3AgmppF4w"
+        },
+        "iss": "http://localhost:8011/v1/issuers/docs-capture-z2373a",
+        "issued_at": "2026-07-02T23:51:57.468376Z",
+        "source_session_id": "",
+        "status": "revoked",
+        "status_idx": 36,
+        "uuid": "7bae29ed-12c0-49fd-8f3f-2f1b395747a7",
+        "vct": "AirlineLoyalty"
+      }
+    },
+    "source": "captured-live",
+    "summary": "Permanently revoke a credential (terminal)."
+  },
+  "POST /v1/credentials/{uuid}/suspend": {
+    "errors": [
+      {
+        "body": {
+          "detail": "Cannot suspend a credential in status 'suspended'."
+        },
+        "note": "already suspended (only issued -> suspended)",
+        "status": 409
+      }
+    ],
+    "request": {},
+    "responses": {
+      "200": {
+        "expires_at": "2027-07-02T23:51:57.468035Z",
+        "holder_cnf": {
+          "crv": "P-256",
+          "kty": "EC",
+          "x": "dn5TeSJBDFzSmO0lDn_SMbWaHliRw5ltXBpICoYQYMo",
+          "y": "EeAIC7ebbfCVYRn6g7PGgdh8ShlFKYCBpX3AgmppF4w"
+        },
+        "iss": "http://localhost:8011/v1/issuers/docs-capture-z2373a",
+        "issued_at": "2026-07-02T23:51:57.468376Z",
+        "source_session_id": "",
+        "status": "suspended",
+        "status_idx": 36,
+        "uuid": "7bae29ed-12c0-49fd-8f3f-2f1b395747a7",
+        "vct": "AirlineLoyalty"
+      }
+    },
+    "source": "captured-live",
+    "summary": "Temporarily disable a credential (reversible)."
+  },
+  "POST /v1/keys/rotate": {
+    "errors": [],
+    "request": {
+      "overlap_days": 7
+    },
+    "responses": {
+      "201": {
+        "impact": {
+          "credentials_under_previous_key": 24,
+          "note": "Existing credentials keep verifying under the rotated key for 7 days (overlapping validity); new credentials sign with the new key immediately."
+        },
+        "new_key": {
+          "alg": "ES256",
+          "created_at": "2026-07-02T23:51:58.700242+00:00",
+          "id": "3daad7e7-5ba6-4cba-b950-9dc93fe774fc",
+          "is_active": true,
+          "kid": "ZN9Bx4TFcfMO-f8eJkeURheDnapmjk4noTjHS7p_eA4",
+          "status": "active",
+          "valid_until": null
+        },
+        "overlap_days": 7,
+        "rotated_key": {
+          "alg": "ES256",
+          "created_at": "2026-07-02T23:51:58.601175+00:00",
+          "id": "edfa643d-f84c-4338-be20-b09aebb7a17a",
+          "is_active": false,
+          "kid": "EFAu2SYIrvBBB8Xm7zIeLOj67SCLqlCBk4kSnUYtnM4",
+          "status": "rotated",
+          "valid_until": "2026-07-09T23:51:58.699746+00:00"
+        }
+      }
+    },
+    "source": "captured-live",
+    "summary": "Rotate the issuer signing key with an overlap window (old key still verifies)."
+  },
+  "POST /v1/members": {
+    "errors": [],
+    "request": {
+      "email": "teammate-b2v9@diditcapture.dev",
+      "role": "reader"
+    },
+    "responses": {
+      "201": {
+        "capabilities": [],
+        "created_at": "2026-07-02T23:51:58.759756+00:00",
+        "email": "teammate-b2v9@diditcapture.dev",
+        "name": "teammate-b2v9@diditcapture.dev",
+        "role": "reader"
+      }
+    },
+    "source": "captured-live",
+    "summary": "Invite a team member with a role."
+  },
+  "POST /v1/nonce": {
+    "errors": [],
+    "request": {},
+    "responses": {
+      "200": {
+        "c_nonce": "<redacted>",
+        "c_nonce_expires_in": 60
+      }
+    },
+    "source": "captured-live",
+    "summary": "Mint a single-use c_nonce the holder proof must bind to."
+  },
+  "POST /v1/oauth/token": {
+    "errors": [],
+    "request": {
+      "grant_type": "urn:ietf:params:oauth:grant-type:pre-authorized_code",
+      "pre-authorized_code": "<redacted>",
+      "tx_code": "<redacted>"
+    },
+    "responses": {
+      "200": {
+        "access_token": "<redacted>",
+        "expires_in": 300,
+        "token_type": "Bearer"
+      }
+    },
+    "source": "captured-live",
+    "summary": "Redeem a pre-authorized code (+ tx_code) for a short-lived issuance access token."
+  },
+  "POST /v1/presentations/request": {
+    "errors": [],
+    "request": {
+      "aud": "checkin-rp",
+      "purpose": "Verify loyalty tier for lounge access",
+      "requested_claims": [
+        "tier"
+      ],
+      "requested_vct": "AirlineLoyalty"
+    },
+    "responses": {
+      "201": {
+        "aud": "checkin-rp",
+        "created_at": "2026-07-02T23:51:57.360146Z",
+        "dcql": {
+          "credentials": [
+            {
+              "claims": [
+                {
+                  "path": [
+                    "tier"
+                  ]
+                }
+              ],
+              "format": "dc+sd-jwt",
+              "id": "cred1",
+              "meta": {
+                "vct_values": [
+                  "AirlineLoyalty"
+                ]
+              }
+            }
+          ]
+        },
+        "nonce": "<redacted>",
+        "purpose": "Verify loyalty tier for lounge access",
+        "requested_claims": [
+          "tier"
+        ],
+        "requested_vct": "AirlineLoyalty",
+        "status": "pending",
+        "transaction_id": "dd82f2c2-4c7b-477d-a1b6-4f0f95fd2af2",
+        "trusted_iss": "",
+        "uuid": "b713a8e2-9a10-4050-b800-6917b5ac50d7"
+      }
+    },
+    "source": "captured-live",
+    "summary": "Create an OpenID4VP presentation request (mints a single-use nonce + DCQL query)."
+  },
+  "POST /v1/presentations/requests": {
+    "errors": [],
+    "request": {
+      "aud": "checkin-rp",
+      "purpose": "Verify loyalty tier for lounge access",
+      "requested_claims": [
+        "tier"
+      ],
+      "requested_vct": "AirlineLoyalty"
+    },
+    "responses": {
+      "201": {
+        "aud": "checkin-rp",
+        "created_at": "2026-07-02T23:51:57.366681Z",
+        "dcql": {
+          "credentials": [
+            {
+              "claims": [
+                {
+                  "path": [
+                    "tier"
+                  ]
+                }
+              ],
+              "format": "dc+sd-jwt",
+              "id": "cred1",
+              "meta": {
+                "vct_values": [
+                  "AirlineLoyalty"
+                ]
+              }
+            }
+          ]
+        },
+        "nonce": "<redacted>",
+        "purpose": "Verify loyalty tier for lounge access",
+        "requested_claims": [
+          "tier"
+        ],
+        "requested_vct": "AirlineLoyalty",
+        "status": "pending",
+        "transaction_id": "287d95fb-798b-47ee-9762-ccafca4aa3b0",
+        "trusted_iss": "",
+        "uuid": "1a2a5c82-3779-424b-a900-2062fdfaf5d2"
+      }
+    },
+    "source": "captured-live",
+    "summary": "Create a presentation request (alias of POST /v1/presentations/request)."
+  },
+  "POST /v1/presentations/{uuid}/demo-present": {
+    "errors": [],
+    "request": {},
+    "responses": {
+      "200": {
+        "checks": {
+          "alg_allowlist": true,
+          "aud": true,
+          "key_binding": true,
+          "nonce": true,
+          "not_expired": true,
+          "not_revoked": true,
+          "signature": true
+        },
+        "created_at": "2026-07-02T23:51:57.463767+00:00",
+        "disclosed_claims": {
+          "tier": "demo-tier"
+        },
+        "error": "",
+        "id": "222e597f-96ff-4c63-a08f-6587c5a6d058",
+        "request_id": "92e1ced4-84e5-4601-8588-4ce4925db178",
+        "requested_claims": [
+          "tier"
+        ],
+        "vct": "AirlineLoyalty",
+        "verdict": "verified",
+        "verifier": "checkin-rp"
+      }
+    },
+    "source": "captured-live",
+    "summary": "Dev-only shortcut: server-side present a sample credential against the request (404 in production)."
+  },
+  "POST /v1/presentations/{uuid}/response": {
+    "errors": [
+      {
+        "body": {
+          "checks": {},
+          "error": "SignatureError: malformed issuer JWS: 'utf-8' codec can't decode byte 0x9e in position 0: invalid start byte",
+          "verdict": "failed"
+        },
+        "note": "malformed vp_token fails verification",
+        "status": 422
+      }
+    ],
+    "request": {
+      "vp_token": "<redacted>"
+    },
+    "responses": {
+      "200": {
+        "checks": {
+          "alg_allowlist": true,
+          "aud": true,
+          "key_binding": true,
+          "nonce": true,
+          "not_expired": true,
+          "not_revoked": true,
+          "signature": true
+        },
+        "created_at": "2026-07-02T23:51:57.440034Z",
+        "disclosed_claims": {
+          "tier": "gold"
+        },
+        "error": "",
+        "uuid": "8b58a284-a711-4406-b2f4-dfece3741c36",
+        "verdict": "verified"
+      }
+    },
+    "source": "captured-live",
+    "summary": "Wallet posts the vp_token; the verifier returns the verdict (public endpoint)."
+  },
+  "POST /v1/relying-parties": {
+    "errors": [],
+    "request": {
+      "name": "Campus Door",
+      "origin": "https://door.acme.example"
+    },
+    "responses": {
+      "201": {
+        "client_id": "",
+        "created_at": "2026-07-02T23:51:58.746686+00:00",
+        "id": "44b2d61a-1634-486b-a35a-df26eb653a1a",
+        "name": "Campus Door",
+        "origin": "https://door.acme.example",
+        "status": "active"
+      }
+    },
+    "source": "captured-live",
+    "summary": "Register a relying party / verifier origin."
+  },
+  "POST /v1/tenant/bootstrap": {
+    "errors": [],
+    "request": {},
+    "responses": {
+      "200": {
+        "api_key": "<redacted>",
+        "email": "docs-capture-z2373a@diditcapture.dev",
+        "environment": "sandbox",
+        "role": "owner",
+        "seeded": true,
+        "tenant": {
+          "name": "docs-capture-z2373a",
+          "slug": "docs-capture-z2373a"
+        }
+      }
+    },
+    "source": "captured-live",
+    "summary": "Exchange a user access token for a tenant API key (first call seeds the tenant's signing key + demo schemas)."
+  },
+  "POST /v1/trust-frameworks": {
+    "errors": [],
+    "request": {
+      "description": "Partner onboarding trust rules.",
+      "formats": [
+        "sd_jwt_vc"
+      ],
+      "name": "ACME Partner Framework y4bf",
+      "profile": "custom",
+      "region": "EU"
+    },
+    "responses": {
+      "201": {
+        "custom": true,
+        "description": "Partner onboarding trust rules.",
+        "editable": true,
+        "formats": [
+          "sd_jwt_vc"
+        ],
+        "governed": false,
+        "id": "ef84dbdc-c2d3-4b8d-91f7-3c94089ed228",
+        "name": "ACME Partner Framework y4bf",
+        "profile": "custom",
+        "region": "EU",
+        "slug": "acme-partner-framework-y4bf"
+      }
+    },
+    "source": "captured-live",
+    "summary": "Create a custom, tenant-owned trust framework."
+  },
+  "POST /v1/trusted-issuers": {
+    "errors": [],
+    "request": {
+      "framework": "acme-partner-framework-y4bf",
+      "iss": "http://localhost:8011/v1/issuers/docs-external-issuer-b2u6ty",
+      "name": "Gov PID Issuer",
+      "trust_anchor": "https-jwks"
+    },
+    "responses": {
+      "201": {
+        "added_by": "TenantPrincipal<docs-capture-z2373a:owner>",
+        "created_at": "2026-07-02T23:51:58.727290+00:00",
+        "did": "",
+        "framework": "acme-partner-framework-y4bf",
+        "id": "ef799a56-23dc-467d-9760-9fd20a8457fa",
+        "iss": "http://localhost:8011/v1/issuers/docs-external-issuer-b2u6ty",
+        "jwks_uri": "",
+        "name": "Gov PID Issuer",
+        "status": "active",
+        "trust_anchor": "https-jwks"
+      }
+    },
+    "source": "captured-live",
+    "summary": "Register a trusted issuer whose credentials this tenant will accept."
+  },
+  "POST /v1/trusted-issuers/{uuid}/validate": {
+    "errors": [],
+    "request": {},
+    "responses": {
+      "200": {
+        "added_by": "TenantPrincipal<docs-capture-z2373a:owner>",
+        "created_at": "2026-07-02T23:51:58.727290+00:00",
+        "did": "",
+        "framework": "acme-partner-framework-y4bf",
+        "id": "ef799a56-23dc-467d-9760-9fd20a8457fa",
+        "iss": "http://localhost:8011/v1/issuers/docs-external-issuer-b2u6ty",
+        "jwks_uri": "",
+        "name": "Gov PID Issuer",
+        "status": "active",
+        "trust_anchor": "https-jwks",
+        "validation": {
+          "anchor_ok": true,
+          "reachable": true,
+          "status": "active"
+        }
+      }
+    },
+    "source": "captured-live",
+    "summary": "Probe a trusted issuer's trust anchor (reachability + key resolution)."
+  }
+}
