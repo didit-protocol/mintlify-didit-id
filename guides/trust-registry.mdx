@@ -21,12 +21,12 @@ A trust framework is the policy context for a trusted issuer. Didit ID includes 
 
     <CodeGroup>
       ```bash cURL
-      curl http://localhost:8011/v1/trust-frameworks \
+      curl https://idv0.staging.didit.me/v1/trust-frameworks \
         -H "Authorization: Bearer $DIDIT_API_KEY"
       ```
 
       ```js JavaScript
-      const response = await fetch("http://localhost:8011/v1/trust-frameworks", {
+      const response = await fetch("https://idv0.staging.didit.me/v1/trust-frameworks", {
         headers: {
           Authorization: `Bearer ${process.env.DIDIT_API_KEY}`,
         },
@@ -64,7 +64,7 @@ Create a trusted issuer entry with [`POST /trusted-issuers`](/api-reference/trus
 
 <CodeGroup>
   ```bash cURL
-  curl -X POST http://localhost:8011/v1/trusted-issuers \
+  curl -X POST https://idv0.staging.didit.me/v1/trusted-issuers \
     -H "Authorization: Bearer $DIDIT_API_KEY" \
     -H "Content-Type: application/json" \
     -d '{
@@ -76,7 +76,7 @@ Create a trusted issuer entry with [`POST /trusted-issuers`](/api-reference/trus
   ```
 
   ```js JavaScript
-  const response = await fetch("http://localhost:8011/v1/trusted-issuers", {
+  const response = await fetch("https://idv0.staging.didit.me/v1/trusted-issuers", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${process.env.DIDIT_API_KEY}`,
@@ -122,14 +122,14 @@ Use [`POST /trusted-issuers/{uuid}/validate`](/api-reference/trust/trusted-issue
 
 <CodeGroup>
   ```bash cURL
-  curl -X POST http://localhost:8011/v1/trusted-issuers/$TRUSTED_ISSUER_ID/validate \
+  curl -X POST https://idv0.staging.didit.me/v1/trusted-issuers/$TRUSTED_ISSUER_ID/validate \
     -H "Authorization: Bearer $DIDIT_API_KEY"
   ```
 
   ```js JavaScript
   const trustedIssuerId = process.env.TRUSTED_ISSUER_ID;
 
-  await fetch(`http://localhost:8011/v1/trusted-issuers/${trustedIssuerId}/validate`, {
+  await fetch(`https://idv0.staging.didit.me/v1/trusted-issuers/${trustedIssuerId}/validate`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${process.env.DIDIT_API_KEY}`,
@@ -148,7 +148,7 @@ When you create a presentation request, pass `trusted_iss` to constrain the Open
 
 <CodeGroup>
   ```bash cURL
-  curl -X POST http://localhost:8011/v1/presentations/request \
+  curl -X POST https://idv0.staging.didit.me/v1/presentations/request \
     -H "Authorization: Bearer $DIDIT_API_KEY" \
     -H "Content-Type: application/json" \
     -d '{
@@ -160,7 +160,7 @@ When you create a presentation request, pass `trusted_iss` to constrain the Open
   ```
 
   ```js JavaScript
-  const response = await fetch("http://localhost:8011/v1/presentations/request", {
+  const response = await fetch("https://idv0.staging.didit.me/v1/presentations/request", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${process.env.DIDIT_API_KEY}`,
@@ -186,22 +186,22 @@ Register relying parties with [`POST /relying-parties`](/api-reference/trust/rel
 
 <CodeGroup>
   ```bash cURL
-  curl -X POST http://localhost:8011/v1/relying-parties \
+  curl -X POST https://idv0.staging.didit.me/v1/relying-parties \
     -H "Authorization: Bearer $DIDIT_API_KEY"
 
-  curl http://localhost:8011/v1/relying-parties \
+  curl https://idv0.staging.didit.me/v1/relying-parties \
     -H "Authorization: Bearer $DIDIT_API_KEY"
   ```
 
   ```js JavaScript
-  await fetch("http://localhost:8011/v1/relying-parties", {
+  await fetch("https://idv0.staging.didit.me/v1/relying-parties", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${process.env.DIDIT_API_KEY}`,
     },
   });
 
-  const response = await fetch("http://localhost:8011/v1/relying-parties", {
+  const response = await fetch("https://idv0.staging.didit.me/v1/relying-parties", {
     headers: {
       Authorization: `Bearer ${process.env.DIDIT_API_KEY}`,
     },
@@ -217,22 +217,22 @@ Remove trusted issuers and relying parties by UUID. Removal deletes the registry
 
 <CodeGroup>
   ```bash cURL
-  curl -X DELETE http://localhost:8011/v1/trusted-issuers/$TRUSTED_ISSUER_ID \
+  curl -X DELETE https://idv0.staging.didit.me/v1/trusted-issuers/$TRUSTED_ISSUER_ID \
     -H "Authorization: Bearer $DIDIT_API_KEY"
 
-  curl -X DELETE http://localhost:8011/v1/relying-parties/$RELYING_PARTY_ID \
+  curl -X DELETE https://idv0.staging.didit.me/v1/relying-parties/$RELYING_PARTY_ID \
     -H "Authorization: Bearer $DIDIT_API_KEY"
   ```
 
   ```js JavaScript
-  await fetch(`http://localhost:8011/v1/trusted-issuers/${process.env.TRUSTED_ISSUER_ID}`, {
+  await fetch(`https://idv0.staging.didit.me/v1/trusted-issuers/${process.env.TRUSTED_ISSUER_ID}`, {
     method: "DELETE",
     headers: {
       Authorization: `Bearer ${process.env.DIDIT_API_KEY}`,
     },
   });
 
-  await fetch(`http://localhost:8011/v1/relying-parties/${process.env.RELYING_PARTY_ID}`, {
+  await fetch(`https://idv0.staging.didit.me/v1/relying-parties/${process.env.RELYING_PARTY_ID}`, {
     method: "DELETE",
     headers: {
       Authorization: `Bearer ${process.env.DIDIT_API_KEY}`,

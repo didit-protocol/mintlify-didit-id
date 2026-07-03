@@ -5,7 +5,7 @@ description: "A copy-paste setup prompt for an AI coding agent to wire Didit ID 
 
 This page gives you a ready-to-run setup prompt. Paste it into a coding agent such as Cursor or Claude Code and let the agent wire Didit ID into your backend. The prompt walks the agent through programmatic auth, the tenant bootstrap bridge, and a minimal issue, present, and verify integration against the `/v1` management API.
 
-The development base server is `http://localhost:8011`. In production, replace it with your deployed host. Programmatic auth lives under `/auth/v2/programmatic/`, the tenant bridge is `POST /v1/tenant/bootstrap`, and management endpoints live under `/v1`.
+The development base server is `https://idv0.staging.didit.me`. In production, replace it with your deployed host. Programmatic auth lives under `/auth/v2/programmatic/`, the tenant bridge is `POST /v1/tenant/bootstrap`, and management endpoints live under `/v1`.
 
 ## How to integrate and run
 
@@ -44,8 +44,8 @@ OpenID4VP verification, SD-JWT VC) into this codebase. Build a minimal, working
 issue -> present -> verify integration on the backend. Follow this spec exactly.
 
 BASE SERVER
-- Dev:  http://localhost:8011
-- Prod: replace http://localhost:8011 with the deployed host.
+- Dev:  https://idv0.staging.didit.me
+- Prod: replace https://idv0.staging.didit.me with the deployed host.
 - Programmatic auth: {BASE}/auth/v2/programmatic/*  (public, no auth header, CORS-open)
 - Tenant bridge:     {BASE}/v1/tenant/bootstrap      (Bearer <access_token>)
 - Management API:    {BASE}/v1/*                      (Bearer <tenant api_key>)

@@ -30,12 +30,12 @@ Preview rotation before you create a new key. [`GET /keys/impact`](/api-referenc
 
     <CodeGroup>
       ```bash cURL
-      curl http://localhost:8011/v1/keys \
+      curl https://idv0.staging.didit.me/v1/keys \
         -H "Authorization: Bearer $DIDIT_API_KEY"
       ```
 
       ```js JavaScript
-      const response = await fetch("http://localhost:8011/v1/keys", {
+      const response = await fetch("https://idv0.staging.didit.me/v1/keys", {
         headers: {
           Authorization: `Bearer ${process.env.DIDIT_API_KEY}`,
         },
@@ -51,12 +51,12 @@ Preview rotation before you create a new key. [`GET /keys/impact`](/api-referenc
 
     <CodeGroup>
       ```bash cURL
-      curl http://localhost:8011/v1/keys/impact \
+      curl https://idv0.staging.didit.me/v1/keys/impact \
         -H "Authorization: Bearer $DIDIT_API_KEY"
       ```
 
       ```js JavaScript
-      const response = await fetch("http://localhost:8011/v1/keys/impact", {
+      const response = await fetch("https://idv0.staging.didit.me/v1/keys/impact", {
         headers: {
           Authorization: `Bearer ${process.env.DIDIT_API_KEY}`,
         },
@@ -74,14 +74,14 @@ Call [`POST /keys/rotate`](/api-reference/keys/keys-rotate-post) to create a new
 
 <CodeGroup>
   ```bash cURL
-  curl -X POST http://localhost:8011/v1/keys/rotate \
+  curl -X POST https://idv0.staging.didit.me/v1/keys/rotate \
     -H "Authorization: Bearer $DIDIT_API_KEY" \
     -H "Content-Type: application/json" \
     -d '{}'
   ```
 
   ```js JavaScript
-  const response = await fetch("http://localhost:8011/v1/keys/rotate", {
+  const response = await fetch("https://idv0.staging.didit.me/v1/keys/rotate", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${process.env.DIDIT_API_KEY}`,
@@ -141,14 +141,14 @@ After rotation, fetch the issuer JWKS for the tenant issuer slug. The active key
 
 <CodeGroup>
   ```bash cURL
-  curl http://localhost:8011/v1/issuers/$ISSUER_SLUG/.well-known/jwt-vc-issuer
+  curl https://idv0.staging.didit.me/v1/issuers/$ISSUER_SLUG/.well-known/jwt-vc-issuer
   ```
 
   ```js JavaScript
   const issuerSlug = process.env.ISSUER_SLUG;
 
   const response = await fetch(
-    `http://localhost:8011/v1/issuers/${issuerSlug}/.well-known/jwt-vc-issuer`
+    `https://idv0.staging.didit.me/v1/issuers/${issuerSlug}/.well-known/jwt-vc-issuer`
   );
 
   const jwks = await response.json();

@@ -10487,12 +10487,12 @@
   },
   "servers": [
     {
-      "url": "http://localhost:8011",
-      "description": "Local dev"
+      "url": "https://idv0.staging.didit.me",
+      "description": "Staging (Amadeus POC)"
     },
     {
-      "url": "https://credentials.didit.me",
-      "description": "Production (placeholder)"
+      "url": "http://localhost:8011",
+      "description": "Local dev"
     }
   ],
   "tags": [

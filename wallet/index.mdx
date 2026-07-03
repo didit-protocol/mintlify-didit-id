@@ -9,7 +9,7 @@ Use it as the reference wallet for the whole flow: an issuer emails a claim link
 
 ## What the wallet is
 
-- **Browser-based.** A Next.js app served at `http://localhost:3012` in local dev. No native install, no server-side holder state.
+- **Browser-based.** A Next.js app served at `https://wallet-idv0.staging.didit.me` in local dev. No native install, no server-side holder state.
 - **Passkey account.** Sign-in uses a passkey (WebAuthn). The passkey authenticates the account — it is not the credential holder key.
 - **WebCrypto holder keys.** Each credential is bound to its own non-extractable ECDSA P-256 (ES256) signing key generated with WebCrypto. The public key goes into the credential's `cnf.jwk`; the private key never leaves the browser.
 - **IndexedDB storage.** Credentials, per-credential keys, activity, and cached status lists live in a local IndexedDB vault, scoped per account.

@@ -56,7 +56,7 @@ For every management request, choose the API key for the tenant that should own 
       ```bash cURL
       export DIDIT_API_KEY=$ACME_CORP_DIDIT_API_KEY
 
-      curl -X POST http://localhost:8011/v1/credential-schemas \
+      curl -X POST https://idv0.staging.didit.me/v1/credential-schemas \
         -H "Authorization: Bearer $DIDIT_API_KEY" \
         -H "Content-Type: application/json" \
         -d '{
@@ -84,7 +84,7 @@ For every management request, choose the API key for the tenant that should own 
 
       ```js JavaScript
       async function createEmployeeBadgeSchema(apiKey) {
-        const response = await fetch("http://localhost:8011/v1/credential-schemas", {
+        const response = await fetch("https://idv0.staging.didit.me/v1/credential-schemas", {
           method: "POST",
           headers: {
             Authorization: `Bearer ${apiKey}`,
@@ -126,12 +126,12 @@ For every management request, choose the API key for the tenant that should own 
 
     <CodeGroup>
       ```bash cURL
-      curl http://localhost:8011/v1/credential-schemas \
+      curl https://idv0.staging.didit.me/v1/credential-schemas \
         -H "Authorization: Bearer $DIDIT_API_KEY"
       ```
 
       ```js JavaScript
-      const response = await fetch("http://localhost:8011/v1/credential-schemas", {
+      const response = await fetch("https://idv0.staging.didit.me/v1/credential-schemas", {
         headers: {
           Authorization: `Bearer ${process.env.ACME_CORP_DIDIT_API_KEY}`,
         },
@@ -163,11 +163,11 @@ Wallets and verifiers need public protocol endpoints. Do not require a tenant AP
 
 <CodeGroup>
   ```bash cURL
-  curl http://localhost:8011/v1/issuers/$ISSUER_SLUG/.well-known/openid-credential-issuer
+  curl https://idv0.staging.didit.me/v1/issuers/$ISSUER_SLUG/.well-known/openid-credential-issuer
 
-  curl http://localhost:8011/v1/issuers/$ISSUER_SLUG/.well-known/jwt-vc-issuer
+  curl https://idv0.staging.didit.me/v1/issuers/$ISSUER_SLUG/.well-known/jwt-vc-issuer
 
-  curl http://localhost:8011/v1/status-lists/$ISSUER_SLUG/$STATUS_LIST_ID
+  curl https://idv0.staging.didit.me/v1/status-lists/$ISSUER_SLUG/$STATUS_LIST_ID
   ```
 
   ```js JavaScript
@@ -175,15 +175,15 @@ Wallets and verifiers need public protocol endpoints. Do not require a tenant AP
   const statusListId = process.env.STATUS_LIST_ID;
 
   const issuerMetadata = await fetch(
-    `http://localhost:8011/v1/issuers/${issuerSlug}/.well-known/openid-credential-issuer`
+    `https://idv0.staging.didit.me/v1/issuers/${issuerSlug}/.well-known/openid-credential-issuer`
   ).then((response) => response.json());
 
   const issuerJwks = await fetch(
-    `http://localhost:8011/v1/issuers/${issuerSlug}/.well-known/jwt-vc-issuer`
+    `https://idv0.staging.didit.me/v1/issuers/${issuerSlug}/.well-known/jwt-vc-issuer`
   ).then((response) => response.json());
 
   const statusList = await fetch(
-    `http://localhost:8011/v1/status-lists/${issuerSlug}/${statusListId}`
+    `https://idv0.staging.didit.me/v1/status-lists/${issuerSlug}/${statusListId}`
   ).then((response) => response.json());
   ```
 </CodeGroup>

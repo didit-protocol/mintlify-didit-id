@@ -8,7 +8,7 @@ OpenID4VCI is the wallet-facing protocol that lets you issue verifiable credenti
 Use this page to understand the protocol shape. Use the [issuance guide](/guides/issuance) when you are ready to build the full flow.
 
 <Note>
-  The development base URL is `http://localhost:8011/v1`. Management calls use `Authorization: Bearer $DIDIT_API_KEY`. Protocol and holder-facing endpoints do not use the tenant API key.
+  The development base URL is `https://idv0.staging.didit.me/v1`. Management calls use `Authorization: Bearer $DIDIT_API_KEY`. Protocol and holder-facing endpoints do not use the tenant API key.
 </Note>
 
 ## Issuance sequence
@@ -91,7 +91,7 @@ Use this page to understand the protocol shape. Use the [issuance guide](/guides
 <CodeGroup>
 
 ```bash cURL
-curl -s -X POST http://localhost:8011/v1/credential-offers \
+curl -s -X POST https://idv0.staging.didit.me/v1/credential-offers \
   -H "Authorization: Bearer $DIDIT_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -104,7 +104,7 @@ curl -s -X POST http://localhost:8011/v1/credential-offers \
 ```
 
 ```javascript JavaScript
-const offerResponse = await fetch("http://localhost:8011/v1/credential-offers", {
+const offerResponse = await fetch("https://idv0.staging.didit.me/v1/credential-offers", {
   method: "POST",
   headers: {
     Authorization: `Bearer ${process.env.DIDIT_API_KEY}`,
@@ -159,7 +159,7 @@ The wallet redeems the offer at `POST /oauth/token` with the pre-authorized code
 <CodeGroup>
 
 ```bash cURL
-curl -s -X POST http://localhost:8011/v1/oauth/token \
+curl -s -X POST https://idv0.staging.didit.me/v1/oauth/token \
   -H "Content-Type: application/json" \
   -d '{
     "grant_type": "urn:ietf:params:oauth:grant-type:pre-authorized_code",
@@ -169,7 +169,7 @@ curl -s -X POST http://localhost:8011/v1/oauth/token \
 ```
 
 ```javascript JavaScript
-const tokenResponse = await fetch("http://localhost:8011/v1/oauth/token", {
+const tokenResponse = await fetch("https://idv0.staging.didit.me/v1/oauth/token", {
   method: "POST",
   headers: {
     "Content-Type": "application/json",
@@ -199,13 +199,13 @@ After the token exchange, request a credential nonce from `POST /nonce`.
 <CodeGroup>
 
 ```bash cURL
-curl -s -X POST http://localhost:8011/v1/nonce \
+curl -s -X POST https://idv0.staging.didit.me/v1/nonce \
   -H "Content-Type: application/json" \
   -d '{}'
 ```
 
 ```javascript JavaScript
-const nonceResponse = await fetch("http://localhost:8011/v1/nonce", {
+const nonceResponse = await fetch("https://idv0.staging.didit.me/v1/nonce", {
   method: "POST",
   headers: {
     "Content-Type": "application/json",
@@ -272,7 +272,7 @@ Proof payload:
 <CodeGroup>
 
 ```bash cURL
-curl -s -X POST http://localhost:8011/v1/credential \
+curl -s -X POST https://idv0.staging.didit.me/v1/credential \
   -H "Content-Type: application/json" \
   -d '{
     "proof": {
@@ -283,7 +283,7 @@ curl -s -X POST http://localhost:8011/v1/credential \
 ```
 
 ```javascript JavaScript
-const credentialResponse = await fetch("http://localhost:8011/v1/credential", {
+const credentialResponse = await fetch("https://idv0.staging.didit.me/v1/credential", {
   method: "POST",
   headers: {
     "Content-Type": "application/json",

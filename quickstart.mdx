@@ -5,7 +5,7 @@ description: "Issue and verify your first Didit ID credential in five minutes."
 
 Issue a demo `EmployeeBadge` SD-JWT VC, accept it with the demo holder endpoint, and verify a selective-disclosure presentation with Didit ID.
 
-This quickstart uses the local API at `http://localhost:8011/v1`. Management endpoints use `Authorization: Bearer $DIDIT_API_KEY`. Holder and verifier protocol endpoints are public.
+This quickstart uses the local API at `https://idv0.staging.didit.me/v1`. Management endpoints use `Authorization: Bearer $DIDIT_API_KEY`. Holder and verifier protocol endpoints are public.
 
 <Note>
   The examples use `curl` and `jq`. Set `DIDIT_API_KEY` to a tenant API key from the Didit Console.
@@ -17,7 +17,7 @@ This quickstart uses the local API at `http://localhost:8011/v1`. Management end
 
 <CodeGroup>
 ```bash cURL
-export DIDIT_API_BASE="http://localhost:8011/v1"
+export DIDIT_API_BASE="https://idv0.staging.didit.me/v1"
 export DIDIT_API_KEY="<tenant-api-key>"
 
 curl -sS "$DIDIT_API_BASE/credential-schemas" \
@@ -28,7 +28,7 @@ curl -sS "$DIDIT_API_BASE/credential-schemas" \
 import os
 import requests
 
-api_base = os.environ.get("DIDIT_API_BASE", "http://localhost:8011/v1")
+api_base = os.environ.get("DIDIT_API_BASE", "https://idv0.staging.didit.me/v1")
 api_key = os.environ["DIDIT_API_KEY"]
 auth = {"Authorization": f"Bearer {api_key}"}
 

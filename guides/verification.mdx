@@ -83,7 +83,7 @@ Call `POST /presentations/request` from your backend. Didit ID creates a present
 <CodeGroup>
 
 ```bash cURL
-curl -X POST "http://localhost:8011/v1/presentations/request" \
+curl -X POST "https://idv0.staging.didit.me/v1/presentations/request" \
   -H "Authorization: Bearer $DIDIT_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -95,7 +95,7 @@ curl -X POST "http://localhost:8011/v1/presentations/request" \
 ```
 
 ```js JavaScript
-const response = await fetch("http://localhost:8011/v1/presentations/request", {
+const response = await fetch("https://idv0.staging.didit.me/v1/presentations/request", {
   method: "POST",
   headers: {
     Authorization: `Bearer ${process.env.DIDIT_API_KEY}`,
@@ -116,7 +116,7 @@ const presentation = await response.json();
 import os
 import requests
 
-api_base = "http://localhost:8011/v1"
+api_base = "https://idv0.staging.didit.me/v1"
 auth = {"Authorization": f"Bearer {os.environ['DIDIT_API_KEY']}"}
 
 response = requests.post(
@@ -189,7 +189,7 @@ Send the wallet's `vp_token` to `POST /presentations/{uuid}/response`. This endp
 <CodeGroup>
 
 ```bash cURL
-curl -X POST "http://localhost:8011/v1/presentations/$PRESENTATION_ID/response" \
+curl -X POST "https://idv0.staging.didit.me/v1/presentations/$PRESENTATION_ID/response" \
   -H "Content-Type: application/json" \
   -d '{
     "vp_token": "<sd-jwt-vc presentation with KB-JWT>"
@@ -198,7 +198,7 @@ curl -X POST "http://localhost:8011/v1/presentations/$PRESENTATION_ID/response" 
 
 ```js JavaScript
 const response = await fetch(
-  `http://localhost:8011/v1/presentations/${presentation.uuid}/response`,
+  `https://idv0.staging.didit.me/v1/presentations/${presentation.uuid}/response`,
   {
     method: "POST",
     headers: {
@@ -300,14 +300,14 @@ Use `POST /presentations/{uuid}/demo-present` to run a real server-side issue, p
 <CodeGroup>
 
 ```bash cURL
-curl -X POST "http://localhost:8011/v1/presentations/$PRESENTATION_ID/demo-present" \
+curl -X POST "https://idv0.staging.didit.me/v1/presentations/$PRESENTATION_ID/demo-present" \
   -H "Content-Type: application/json" \
   -d '{}'
 ```
 
 ```js JavaScript
 const response = await fetch(
-  `http://localhost:8011/v1/presentations/${presentation.uuid}/demo-present`,
+  `https://idv0.staging.didit.me/v1/presentations/${presentation.uuid}/demo-present`,
   {
     method: "POST",
     headers: {
@@ -352,7 +352,7 @@ result = response.json()
 Wallet or verifier clients can poll `GET /presentations/{uuid}` to read the current presentation request state.
 
 ```bash
-curl "http://localhost:8011/v1/presentations/$PRESENTATION_ID"
+curl "https://idv0.staging.didit.me/v1/presentations/$PRESENTATION_ID"
 ```
 
 Use polling when the wallet response happens out of band, such as a mobile handoff or fallback deep link.
@@ -364,12 +364,12 @@ Use `GET /verifications` to read the tenant verification log. Use `GET /verifica
 <CodeGroup>
 
 ```bash cURL
-curl "http://localhost:8011/v1/verifications" \
+curl "https://idv0.staging.didit.me/v1/verifications" \
   -H "Authorization: Bearer $DIDIT_API_KEY"
 ```
 
 ```js JavaScript
-const response = await fetch("http://localhost:8011/v1/verifications", {
+const response = await fetch("https://idv0.staging.didit.me/v1/verifications", {
   headers: {
     Authorization: `Bearer ${process.env.DIDIT_API_KEY}`,
   },

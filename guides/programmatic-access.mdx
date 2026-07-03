@@ -7,7 +7,7 @@ Programmatic access lets a script or an AI agent onboard to Didit ID end to end 
 
 Use this flow when a backend service, a CI job, or a coding agent needs to obtain its own Didit ID credentials and start issuing and verifying without a human clicking through the Console.
 
-The development base server is `http://localhost:8011`. In production, use your deployed host in place of `http://localhost:8011`. Programmatic auth endpoints live under `/auth/v2/programmatic/`, the tenant bridge lives at `/v1/tenant/bootstrap`, and the management API lives under `/v1`.
+The development base server is `https://idv0.staging.didit.me`. In production, use your deployed host in place of `https://idv0.staging.didit.me`. Programmatic auth endpoints live under `/auth/v2/programmatic/`, the tenant bridge lives at `/v1/tenant/bootstrap`, and the management API lives under `/v1`.
 
 <Note>
   `POST /auth/v2/programmatic/verify-email/` is the one-time bootstrap for a new account. It returns your `access_token` and `refresh_token`, and it also provisions and returns your `organization` and `application`. Later, use `POST /auth/v2/programmatic/login/` whenever you need fresh tokens.
@@ -42,7 +42,7 @@ The programmatic auth endpoints are public and CORS-open. They take no `Authoriz
 
     <CodeGroup>
     ```bash cURL
-    curl -X POST "http://localhost:8011/auth/v2/programmatic/register/" \
+    curl -X POST "https://idv0.staging.didit.me/auth/v2/programmatic/register/" \
       -H "Content-Type: application/json" \
       -d '{
         "email": "agent@example.com",
@@ -52,7 +52,7 @@ The programmatic auth endpoints are public and CORS-open. They take no `Authoriz
 
     ```js JavaScript
     const response = await fetch(
-      "http://localhost:8011/auth/v2/programmatic/register/",
+      "https://idv0.staging.didit.me/auth/v2/programmatic/register/",
       {
         method: "POST",
         headers: {
@@ -71,7 +71,7 @@ The programmatic auth endpoints are public and CORS-open. They take no `Authoriz
     ```python Python
     import requests
 
-    base = "http://localhost:8011"
+    base = "https://idv0.staging.didit.me"
 
     response = requests.post(
         f"{base}/auth/v2/programmatic/register/",
@@ -90,7 +90,7 @@ The programmatic auth endpoints are public and CORS-open. They take no `Authoriz
 
     <CodeGroup>
     ```bash cURL
-    curl -X POST "http://localhost:8011/auth/v2/programmatic/resend-otp/" \
+    curl -X POST "https://idv0.staging.didit.me/auth/v2/programmatic/resend-otp/" \
       -H "Content-Type: application/json" \
       -d '{
         "email": "agent@example.com",
@@ -100,7 +100,7 @@ The programmatic auth endpoints are public and CORS-open. They take no `Authoriz
 
     ```js JavaScript
     const response = await fetch(
-      "http://localhost:8011/auth/v2/programmatic/resend-otp/",
+      "https://idv0.staging.didit.me/auth/v2/programmatic/resend-otp/",
       {
         method: "POST",
         headers: {
@@ -142,7 +142,7 @@ The programmatic auth endpoints are public and CORS-open. They take no `Authoriz
 
     <CodeGroup>
     ```bash cURL
-    curl -X POST "http://localhost:8011/auth/v2/programmatic/verify-email/" \
+    curl -X POST "https://idv0.staging.didit.me/auth/v2/programmatic/verify-email/" \
       -H "Content-Type: application/json" \
       -d '{
         "email": "agent@example.com",
@@ -152,7 +152,7 @@ The programmatic auth endpoints are public and CORS-open. They take no `Authoriz
 
     ```js JavaScript
     const response = await fetch(
-      "http://localhost:8011/auth/v2/programmatic/verify-email/",
+      "https://idv0.staging.didit.me/auth/v2/programmatic/verify-email/",
       {
         method: "POST",
         headers: {
@@ -220,7 +220,7 @@ The programmatic auth endpoints are public and CORS-open. They take no `Authoriz
 
     <CodeGroup>
     ```bash cURL
-    curl -X POST "http://localhost:8011/auth/v2/programmatic/login/" \
+    curl -X POST "https://idv0.staging.didit.me/auth/v2/programmatic/login/" \
       -H "Content-Type: application/json" \
       -d '{
         "email": "agent@example.com",
@@ -230,7 +230,7 @@ The programmatic auth endpoints are public and CORS-open. They take no `Authoriz
 
     ```js JavaScript
     const response = await fetch(
-      "http://localhost:8011/auth/v2/programmatic/login/",
+      "https://idv0.staging.didit.me/auth/v2/programmatic/login/",
       {
         method: "POST",
         headers: {
@@ -270,12 +270,12 @@ The programmatic auth endpoints are public and CORS-open. They take no `Authoriz
 
     <CodeGroup>
     ```bash cURL
-    curl -X POST "http://localhost:8011/v1/tenant/bootstrap" \
+    curl -X POST "https://idv0.staging.didit.me/v1/tenant/bootstrap" \
       -H "Authorization: Bearer $DIDIT_ACCESS_TOKEN"
     ```
 
     ```js JavaScript
-    const response = await fetch("http://localhost:8011/v1/tenant/bootstrap", {
+    const response = await fetch("https://idv0.staging.didit.me/v1/tenant/bootstrap", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${process.env.DIDIT_ACCESS_TOKEN}`,
@@ -321,12 +321,12 @@ The programmatic auth endpoints are public and CORS-open. They take no `Authoriz
 
     <CodeGroup>
     ```bash cURL
-    curl "http://localhost:8011/v1/credential-schemas" \
+    curl "https://idv0.staging.didit.me/v1/credential-schemas" \
       -H "Authorization: Bearer $DIDIT_API_KEY"
     ```
 
     ```js JavaScript
-    const response = await fetch("http://localhost:8011/v1/credential-schemas", {
+    const response = await fetch("https://idv0.staging.didit.me/v1/credential-schemas", {
       headers: {
         Authorization: `Bearer ${process.env.DIDIT_API_KEY}`,
       },

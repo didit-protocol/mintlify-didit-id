@@ -39,7 +39,7 @@ The credential carries the information a verifier needs to locate the status ent
   "status": {
     "status_list": {
       "idx": 0,
-      "uri": "http://localhost:8011/v1/status-lists/state-university/<uuid>"
+      "uri": "https://idv0.staging.didit.me/v1/status-lists/state-university/<uuid>"
     }
   }
 }
@@ -73,12 +73,12 @@ Fetch status lists with `GET /v1/status-lists/{slug}/{uuid}`.
 
 <CodeGroup>
 ```bash cURL
-curl "http://localhost:8011/v1/status-lists/$TENANT_SLUG/$STATUS_LIST_ID"
+curl "https://idv0.staging.didit.me/v1/status-lists/$TENANT_SLUG/$STATUS_LIST_ID"
 ```
 
 ```js JavaScript
 const response = await fetch(
-  `http://localhost:8011/v1/status-lists/${tenantSlug}/${statusListId}`,
+  `https://idv0.staging.didit.me/v1/status-lists/${tenantSlug}/${statusListId}`,
 );
 
 const statusList = await response.json();
@@ -104,17 +104,17 @@ Manage lifecycle state through the credential endpoints. These endpoints require
 
 <CodeGroup>
 ```bash Revoke
-curl -X POST "http://localhost:8011/v1/credentials/$CREDENTIAL_ID/revoke" \
+curl -X POST "https://idv0.staging.didit.me/v1/credentials/$CREDENTIAL_ID/revoke" \
   -H "Authorization: Bearer $DIDIT_API_KEY"
 ```
 
 ```bash Suspend
-curl -X POST "http://localhost:8011/v1/credentials/$CREDENTIAL_ID/suspend" \
+curl -X POST "https://idv0.staging.didit.me/v1/credentials/$CREDENTIAL_ID/suspend" \
   -H "Authorization: Bearer $DIDIT_API_KEY"
 ```
 
 ```bash Reactivate
-curl -X POST "http://localhost:8011/v1/credentials/$CREDENTIAL_ID/reactivate" \
+curl -X POST "https://idv0.staging.didit.me/v1/credentials/$CREDENTIAL_ID/reactivate" \
   -H "Authorization: Bearer $DIDIT_API_KEY"
 ```
 </CodeGroup>

@@ -60,7 +60,7 @@ Credential offers are created by issuers with [`POST /credential-offers`](/api-r
 Use [`GET /credential-offers/{uuid}`](/api-reference/openid4vci/credential-offers-uuid-get) when the wallet needs to preview the offer before acceptance.
 
 ```bash
-curl "http://localhost:8011/v1/credential-offers/$OFFER_ID"
+curl "https://idv0.staging.didit.me/v1/credential-offers/$OFFER_ID"
 ```
 
 For demos, use [`POST /credential-offers/{uuid}/accept`](/api-reference/openid4vci/credential-offers-uuid-accept-post). This endpoint runs a server-side proof-of-possession path so you can test offer acceptance without implementing local wallet signing first.
@@ -68,14 +68,14 @@ For demos, use [`POST /credential-offers/{uuid}/accept`](/api-reference/openid4v
 <CodeGroup>
 
 ```bash cURL
-curl -X POST "http://localhost:8011/v1/credential-offers/$OFFER_ID/accept" \
+curl -X POST "https://idv0.staging.didit.me/v1/credential-offers/$OFFER_ID/accept" \
   -H "Content-Type: application/json" \
   -d '{}'
 ```
 
 ```js JavaScript
 const response = await fetch(
-  `http://localhost:8011/v1/credential-offers/${offerId}/accept`,
+  `https://idv0.staging.didit.me/v1/credential-offers/${offerId}/accept`,
   {
     method: "POST",
     headers: {
@@ -99,7 +99,7 @@ Production wallets follow the OpenID4VCI protocol endpoints directly. Exchange t
 <CodeGroup>
 
 ```bash cURL
-curl -X POST "http://localhost:8011/v1/oauth/token" \
+curl -X POST "https://idv0.staging.didit.me/v1/oauth/token" \
   -H "Content-Type: application/json" \
   -d '{
     "grant_type": "urn:ietf:params:oauth:grant-type:pre-authorized_code",
@@ -109,7 +109,7 @@ curl -X POST "http://localhost:8011/v1/oauth/token" \
 ```
 
 ```js JavaScript
-const tokenResponse = await fetch("http://localhost:8011/v1/oauth/token", {
+const tokenResponse = await fetch("https://idv0.staging.didit.me/v1/oauth/token", {
   method: "POST",
   headers: {
     "Content-Type": "application/json",
@@ -141,13 +141,13 @@ Next, request a credential nonce.
 <CodeGroup>
 
 ```bash cURL
-curl -X POST "http://localhost:8011/v1/nonce" \
+curl -X POST "https://idv0.staging.didit.me/v1/nonce" \
   -H "Content-Type: application/json" \
   -d '{}'
 ```
 
 ```js JavaScript
-const nonceResponse = await fetch("http://localhost:8011/v1/nonce", {
+const nonceResponse = await fetch("https://idv0.staging.didit.me/v1/nonce", {
   method: "POST",
   headers: {
     "Content-Type": "application/json",
@@ -165,7 +165,7 @@ Submit the holder proof to [`POST /credential`](/api-reference/openid4vci/creden
 <CodeGroup>
 
 ```bash cURL
-curl -X POST "http://localhost:8011/v1/credential" \
+curl -X POST "https://idv0.staging.didit.me/v1/credential" \
   -H "Content-Type: application/json" \
   -d '{
     "proof": {
@@ -176,7 +176,7 @@ curl -X POST "http://localhost:8011/v1/credential" \
 ```
 
 ```js JavaScript
-const credentialResponse = await fetch("http://localhost:8011/v1/credential", {
+const credentialResponse = await fetch("https://idv0.staging.didit.me/v1/credential", {
   method: "POST",
   headers: {
     "Content-Type": "application/json",
@@ -273,7 +273,7 @@ Submit that token to Didit ID:
 ```js
 async function submitPresentationResponse({ presentationId, vpToken }) {
   const response = await fetch(
-    `http://localhost:8011/v1/presentations/${presentationId}/response`,
+    `https://idv0.staging.didit.me/v1/presentations/${presentationId}/response`,
     {
       method: "POST",
       headers: {
@@ -342,7 +342,7 @@ If the fallback opens a mobile wallet or another device, poll the presentation r
 ```js
 async function pollPresentation({ presentationId }) {
   const response = await fetch(
-    `http://localhost:8011/v1/presentations/${presentationId}`
+    `https://idv0.staging.didit.me/v1/presentations/${presentationId}`
   );
 
   return response.json();

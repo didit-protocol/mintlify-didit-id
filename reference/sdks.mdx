@@ -15,13 +15,13 @@ Configure the client with the Didit ID base URL and your tenant API key.
 
 ```js
 const didit = createDiditIdClient({
-  baseUrl: "http://localhost:8011/v1",
+  baseUrl: "https://idv0.staging.didit.me/v1",
   apiKey: process.env.DIDIT_API_KEY,
 });
 ```
 
 <ParamField body="baseUrl" type="string" required>
-  API base URL. Use `http://localhost:8011/v1` for local development.
+  API base URL. Use `https://idv0.staging.didit.me/v1` for local development.
 </ParamField>
 
 <ParamField body="apiKey" type="string" required>
@@ -54,7 +54,7 @@ console.log(offer.txCode);
 ```
 
 ```bash cURL
-curl -X POST "http://localhost:8011/v1/credential-offers" \
+curl -X POST "https://idv0.staging.didit.me/v1/credential-offers" \
   -H "Authorization: Bearer $DIDIT_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -95,7 +95,7 @@ console.log(credential.sdJwt);
 ```
 
 ```bash cURL
-curl -X POST "http://localhost:8011/v1/credentials/issue" \
+curl -X POST "https://idv0.staging.didit.me/v1/credentials/issue" \
   -H "Authorization: Bearer $DIDIT_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -146,7 +146,7 @@ deliverToWallet({
 ```
 
 ```bash cURL
-curl -X POST "http://localhost:8011/v1/presentations/request" \
+curl -X POST "https://idv0.staging.didit.me/v1/presentations/request" \
   -H "Authorization: Bearer $DIDIT_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -175,7 +175,7 @@ if (result.verdict === "verified") {
 ```
 
 ```bash cURL
-curl -X POST "http://localhost:8011/v1/presentations/<uuid>/response" \
+curl -X POST "https://idv0.staging.didit.me/v1/presentations/<uuid>/response" \
   -H "Content-Type: application/json" \
   -d '{
     "vp_token": "<sd-jwt-vc presentation with KB-JWT>"

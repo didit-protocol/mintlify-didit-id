@@ -17,7 +17,7 @@ You need a schema and a template (see [issue credentials](/guides/issuance)), pl
 
 | Variable | Purpose |
 | --- | --- |
-| `WALLET_BASE_URL` | Base URL of the holder wallet. The claim link is `WALLET_BASE_URL/claim?offer=<offer_id>`. Defaults to `http://localhost:3012`. |
+| `WALLET_BASE_URL` | Base URL of the holder wallet. The claim link is `WALLET_BASE_URL/claim?offer=<offer_id>`. Defaults to `https://wallet-idv0.staging.didit.me`. |
 | `DJANGO_EMAIL_HOST_PASSWORD` | The Postmark server token. When set, Didit ID sends the claim email through Postmark. |
 
 <Note>
@@ -50,7 +50,7 @@ Call `POST /v1/credential-offers` with the template, the claims for this holder,
 
 <CodeGroup>
 ```bash cURL
-curl -X POST "http://localhost:8011/v1/credential-offers" \
+curl -X POST "https://idv0.staging.didit.me/v1/credential-offers" \
   -H "Authorization: Bearer $DIDIT_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -67,7 +67,7 @@ curl -X POST "http://localhost:8011/v1/credential-offers" \
 ```
 
 ```js JavaScript
-const response = await fetch("http://localhost:8011/v1/credential-offers", {
+const response = await fetch("https://idv0.staging.didit.me/v1/credential-offers", {
   method: "POST",
   headers: {
     Authorization: `Bearer ${process.env.DIDIT_API_KEY}`,
@@ -94,7 +94,7 @@ import os
 import requests
 
 response = requests.post(
-    "http://localhost:8011/v1/credential-offers",
+    "https://idv0.staging.didit.me/v1/credential-offers",
     headers={"Authorization": f"Bearer {os.environ['DIDIT_API_KEY']}"},
     json={
         "template_id": os.environ["TEMPLATE_ID"],
@@ -124,7 +124,7 @@ A `201` response confirms the offer and reports whether the email went out.
   "tx_code": "517082",
   "recipient_email": "ada@acme-corp.example",
   "email_sent": true,
-  "claim_url": "http://localhost:3012/claim?offer=0f3c8a12-...",
+  "claim_url": "https://wallet-idv0.staging.didit.me/claim?offer=0f3c8a12-...",
   "expires_at": "2026-07-08T12:00:00Z"
 }
 ```
@@ -221,7 +221,7 @@ claim_url = last_email["claim_url"]
 {
   "to": "ada@acme-corp.example",
   "subject": "Claim your Employee Badge credential",
-  "claim_url": "http://localhost:3012/claim?offer=0f3c8a12-..."
+  "claim_url": "https://wallet-idv0.staging.didit.me/claim?offer=0f3c8a12-..."
 }
 ```
 
@@ -231,13 +231,13 @@ If the holder loses the email or the offer's expiry window elapses, resend it wi
 
 <CodeGroup>
 ```bash cURL
-curl -X POST "http://localhost:8011/v1/credential-offers/$OFFER_ID/resend-email" \
+curl -X POST "https://idv0.staging.didit.me/v1/credential-offers/$OFFER_ID/resend-email" \
   -H "Authorization: Bearer $DIDIT_API_KEY"
 ```
 
 ```js JavaScript
 const response = await fetch(
-  `http://localhost:8011/v1/credential-offers/${offerId}/resend-email`,
+  `https://idv0.staging.didit.me/v1/credential-offers/${offerId}/resend-email`,
   {
     method: "POST",
     headers: {
@@ -251,7 +251,7 @@ const resend = await response.json();
 
 ```python Python
 response = requests.post(
-    f"http://localhost:8011/v1/credential-offers/{offer_id}/resend-email",
+    f"https://idv0.staging.didit.me/v1/credential-offers/{offer_id}/resend-email",
     headers={"Authorization": f"Bearer {os.environ['DIDIT_API_KEY']}"},
 )
 

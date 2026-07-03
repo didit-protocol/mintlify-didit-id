@@ -5,7 +5,7 @@ description: "Authenticate tenant management requests and keep public OpenID4VCI
 
 Didit ID uses tenant API keys for management actions. Wallet and verifier protocol exchanges stay public so holders can complete OpenID4VCI and OpenID4VP flows without receiving your tenant secret.
 
-The development base URL is `http://localhost:8011/v1`. Send the API key in the `Authorization` header when an endpoint requires tenant authentication.
+The development base URL is `https://idv0.staging.didit.me/v1`. Send the API key in the `Authorization` header when an endpoint requires tenant authentication.
 
 <ParamField header="Authorization" type="string" required>
   Use `Bearer <tenant API key>` for management endpoints.
@@ -52,7 +52,7 @@ The management endpoint creates the transaction. The public protocol endpoints c
 
 <CodeGroup>
 ```bash cURL
-curl -X POST "http://localhost:8011/v1/credential-offers" \
+curl -X POST "https://idv0.staging.didit.me/v1/credential-offers" \
   -H "Authorization: Bearer $DIDIT_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -65,7 +65,7 @@ curl -X POST "http://localhost:8011/v1/credential-offers" \
 ```
 
 ```js JavaScript
-const response = await fetch("http://localhost:8011/v1/credential-offers", {
+const response = await fetch("https://idv0.staging.didit.me/v1/credential-offers", {
   method: "POST",
   headers: {
     Authorization: `Bearer ${process.env.DIDIT_API_KEY}`,
@@ -101,7 +101,7 @@ For example, the OpenID4VCI token endpoint is public because the holder exchange
 
 <CodeGroup>
 ```bash cURL
-curl -X POST "http://localhost:8011/v1/oauth/token" \
+curl -X POST "https://idv0.staging.didit.me/v1/oauth/token" \
   -H "Content-Type: application/json" \
   -d '{
     "grant_type": "urn:ietf:params:oauth:grant-type:pre-authorized_code",
@@ -111,7 +111,7 @@ curl -X POST "http://localhost:8011/v1/oauth/token" \
 ```
 
 ```js JavaScript
-const response = await fetch("http://localhost:8011/v1/oauth/token", {
+const response = await fetch("https://idv0.staging.didit.me/v1/oauth/token", {
   method: "POST",
   headers: {
     "Content-Type": "application/json",
