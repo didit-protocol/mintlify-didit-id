@@ -35,7 +35,7 @@
     "primary": {
       "type": "button",
       "label": "Console",
-      "href": "https://business.didit.me"
+      "href": "https://console-idv0.staging.didit.me/"
     }
   },
   "openapi": [
@@ -223,7 +223,7 @@
         },
         {
           "anchor": "Console",
-          "href": "https://business.didit.me",
+          "href": "https://console-idv0.staging.didit.me/",
           "icon": "gauge"
         }
       ]
