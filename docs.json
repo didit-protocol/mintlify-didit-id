@@ -185,11 +185,15 @@
               "api-reference/trust/relying-parties-get",
               "api-reference/trust/relying-parties-post",
               "api-reference/trust/relying-parties-uuid-delete",
+              "api-reference/trust/relying-parties-uuid-patch",
               "api-reference/trust/trust-frameworks-get",
               "api-reference/trust/trust-frameworks-post",
               "api-reference/trust/trust-frameworks-slug-delete",
               "api-reference/trust/trust-frameworks-slug-get",
               "api-reference/trust/trust-frameworks-slug-patch",
+              "api-reference/trust/trust-frameworks-slug-trust-get",
+              "api-reference/trust/trust-frameworks-slug-trust-put",
+              "api-reference/trust/trust-frameworks-slug-issuer-overrides-post",
               "api-reference/trust/trusted-issuers-get",
               "api-reference/trust/trusted-issuers-post",
               "api-reference/trust/trusted-issuers-uuid-delete",
@@ -203,6 +207,27 @@
               "api-reference/keys/keys-get",
               "api-reference/keys/keys-impact-get",
               "api-reference/keys/keys-rotate-post"
+            ]
+          },
+          {
+            "group": "Webhooks",
+            "pages": [
+              "api-reference/webhooks/webhooks-get",
+              "api-reference/webhooks/webhooks-post",
+              "api-reference/webhooks/webhooks-uuid-patch",
+              "api-reference/webhooks/webhooks-uuid-delete",
+              "api-reference/webhooks/webhooks-uuid-test-post",
+              "api-reference/webhooks/webhooks-deliveries-get",
+              "api-reference/webhooks/webhook-events-get"
+            ]
+          },
+          {
+            "group": "API Keys",
+            "pages": [
+              "api-reference/api-keys/api-keys-get",
+              "api-reference/api-keys/api-keys-post",
+              "api-reference/api-keys/api-keys-uuid-rotate-post",
+              "api-reference/api-keys/api-keys-uuid-delete"
             ]
           },
           {

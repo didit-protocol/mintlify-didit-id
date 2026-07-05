@@ -2663,6 +2663,20 @@
                         "example": "1a2a5c82-3779-424b-a900-2062fdfaf5d2",
                         "description": "Identifies the presentation request.",
                         "format": "uuid"
+                      },
+                      "relying_party": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "description": "You receive the relying party UUID this request is scoped to, or null when it is not scoped to one.",
+                        "example": null,
+                        "format": "uuid"
+                      },
+                      "trust_policy": {
+                        "type": "string",
+                        "description": "You receive the effective trust policy for this request: `tenant` or `custom`.",
+                        "example": "tenant"
                       }
                     }
                   }
@@ -3131,6 +3145,20 @@
                       "description": "Records when the presentation request was created.",
                       "example": "2026-07-02T23:33:33.500617Z",
                       "format": "date-time"
+                    },
+                    "relying_party": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "description": "You receive the relying party UUID this request is scoped to, or null when it is not scoped to one.",
+                      "example": null,
+                      "format": "uuid"
+                    },
+                    "trust_policy": {
+                      "type": "string",
+                      "description": "You receive the effective trust policy for this request: `tenant` or `custom`.",
+                      "example": "tenant"
                     }
                   }
                 },
@@ -3212,6 +3240,12 @@
                     "type": "string",
                     "description": "Explains why you request the presentation.",
                     "example": "Verify loyalty tier for lounge access"
+                  },
+                  "relying_party_id": {
+                    "type": "string",
+                    "description": "You optionally scope this request to a registered relying party by UUID. When set, the relying party's per-RP trust rules apply on top of the tenant registry.",
+                    "example": "44b2d61a-1634-486b-a35a-df26eb653a1a",
+                    "format": "uuid"
                   }
                 },
                 "required": [
@@ -3364,6 +3398,20 @@
                         "example": "b713a8e2-9a10-4050-b800-6917b5ac50d7",
                         "description": "Identifies the presentation request.",
                         "format": "uuid"
+                      },
+                      "relying_party": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "description": "You receive the relying party UUID this request is scoped to, or null when it is not scoped to one.",
+                        "example": null,
+                        "format": "uuid"
+                      },
+                      "trust_policy": {
+                        "type": "string",
+                        "description": "You receive the effective trust policy for this request: `tenant` or `custom`.",
+                        "example": "tenant"
                       }
                     }
                   }
@@ -3689,6 +3737,20 @@
                     "uuid": {
                       "type": "string",
                       "example": "1a2a5c82-3779-424b-a900-2062fdfaf5d2"
+                    },
+                    "relying_party": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "description": "You receive the relying party UUID this request is scoped to, or null when it is not scoped to one.",
+                      "example": null,
+                      "format": "uuid"
+                    },
+                    "trust_policy": {
+                      "type": "string",
+                      "description": "You receive the effective trust policy for this request: `tenant` or `custom`.",
+                      "example": "tenant"
                     }
                   }
                 },
@@ -3762,6 +3824,12 @@
                   "requested_vct": {
                     "type": "string",
                     "example": "AirlineLoyalty"
+                  },
+                  "relying_party_id": {
+                    "type": "string",
+                    "description": "You optionally scope this request to a registered relying party by UUID. When set, the relying party's per-RP trust rules apply on top of the tenant registry.",
+                    "example": "44b2d61a-1634-486b-a35a-df26eb653a1a",
+                    "format": "uuid"
                   }
                 }
               },
@@ -5404,6 +5472,16 @@
                         "type": "string",
                         "example": "iso-mdl",
                         "description": "You use this URL-safe identifier in the `framework` field when you register a trusted issuer."
+                      },
+                      "trusted": {
+                        "type": "boolean",
+                        "description": "You receive `true` when this framework is currently trusted for the tenant. Governed frameworks are trusted by default.",
+                        "example": true
+                      },
+                      "member_issuer_count": {
+                        "type": "integer",
+                        "description": "You receive the number of trusted issuers registered under this framework for the tenant.",
+                        "example": 3
                       }
                     }
                   }
@@ -5549,6 +5627,16 @@
                       "type": "boolean",
                       "description": "You receive `true` when a governance authority manages the framework.",
                       "example": false
+                    },
+                    "trusted": {
+                      "type": "boolean",
+                      "description": "You receive `true` when this framework is currently trusted for the tenant. Governed frameworks are trusted by default.",
+                      "example": true
+                    },
+                    "member_issuer_count": {
+                      "type": "integer",
+                      "description": "You receive the number of trusted issuers registered under this framework for the tenant.",
+                      "example": 3
                     }
                   }
                 },
@@ -5704,6 +5792,20 @@
                         "type": "string",
                         "example": "https-jwks",
                         "description": "You receive the signing-key anchor type. `https-jwks` resolves through a JSON Web Key Set (JWKS) endpoint when one is configured."
+                      },
+                      "validation_state": {
+                        "type": "string",
+                        "description": "You receive the trust-anchor validation state: `unverified`, `verified`, or `failed`.",
+                        "example": "unverified"
+                      },
+                      "last_validated_at": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "description": "You receive the timestamp of the most recent validation run, or null when the issuer has never been validated.",
+                        "example": null,
+                        "format": "date-time"
                       }
                     }
                   }
@@ -5862,6 +5964,20 @@
                       "description": "You receive the timestamp when this trusted issuer was registered.",
                       "example": "2026-07-02T23:33:35.153496+00:00",
                       "format": "date-time"
+                    },
+                    "validation_state": {
+                      "type": "string",
+                      "description": "You receive the trust-anchor validation state: `unverified`, `verified`, or `failed`.",
+                      "example": "unverified"
+                    },
+                    "last_validated_at": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "description": "You receive the timestamp of the most recent validation run, or null when the issuer has never been validated.",
+                      "example": null,
+                      "format": "date-time"
                     }
                   }
                 },
@@ -5876,6 +5992,26 @@
                   "name": "Gov PID Issuer",
                   "status": "active",
                   "trust_anchor": "https-jwks"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict \u2014 a trusted issuer with this `iss` already exists for the tenant.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "detail": {
+                      "type": "string",
+                      "description": "You receive the reason the issuer could not be created.",
+                      "example": "Trusted issuer 'https://issuer.gov.example' already exists for this tenant."
+                    }
+                  }
+                },
+                "example": {
+                  "detail": "Trusted issuer 'https://issuer.gov.example' already exists for this tenant."
                 }
               }
             }
@@ -5915,6 +6051,17 @@
                     "type": "string",
                     "description": "You set the trust framework slug to associate with this issuer.",
                     "example": "acme-partner-framework-ypr5"
+                  },
+                  "jwks_uri": {
+                    "type": "string",
+                    "description": "You optionally set the JSON Web Key Set (JWKS) endpoint used to resolve the issuer signing keys.",
+                    "example": "https://issuer.gov.example/.well-known/jwks.json",
+                    "format": "uri"
+                  },
+                  "did": {
+                    "type": "string",
+                    "description": "You optionally set the decentralized identifier (DID) for the issuer.",
+                    "example": ""
                   }
                 },
                 "required": [
@@ -5969,8 +6116,8 @@
           "Trust Registry"
         ],
         "operationId": "patchTrustedIssuersUuid",
-        "summary": "Enable or disable a trusted issuer (disabled fails the trust gate but keeps the entry).",
-        "description": "Enable or disable a trusted issuer. A disabled issuer stays in the registry but fails the trust gate during credential verification.",
+        "summary": "Update a trusted issuer",
+        "description": "Update a trusted issuer's metadata (`name`, `trust_anchor`, `jwks_uri`, `did`, `framework`) or its `status` (`active` / `disabled`). The `iss` is immutable \u2014 attempting to change it returns 400; delete and recreate the issuer instead. Editing any metadata field resets `validation_state` to `unverified`. A disabled issuer stays in the registry but fails the verification trust gate.",
         "security": [
           {
             "bearerAuth": []
@@ -6039,6 +6186,20 @@
                       "description": "You receive the timestamp when this trusted issuer was registered.",
                       "example": "2026-07-02T23:33:35.153496+00:00",
                       "format": "date-time"
+                    },
+                    "validation_state": {
+                      "type": "string",
+                      "description": "You receive the trust-anchor validation state: `unverified`, `verified`, or `failed`.",
+                      "example": "unverified"
+                    },
+                    "last_validated_at": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "description": "You receive the timestamp of the most recent validation run, or null when the issuer has never been validated.",
+                      "example": null,
+                      "format": "date-time"
                     }
                   }
                 },
@@ -6053,6 +6214,28 @@
                   "name": "Gov PID Issuer",
                   "status": "disabled",
                   "trust_anchor": "https-jwks"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request \u2014 you attempted to edit the immutable `iss` field.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "iss": {
+                      "type": "string",
+                      "description": "You receive the reason the field cannot be edited.",
+                      "example": "Issuer URL cannot be edited. Delete and recreate the issuer instead."
+                    }
+                  }
+                },
+                "example": {
+                  "iss": [
+                    "Issuer URL cannot be edited. Delete and recreate the issuer instead."
+                  ]
                 }
               }
             }
@@ -6071,21 +6254,47 @@
           }
         ],
         "requestBody": {
-          "required": true,
+          "required": false,
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
                 "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "You optionally set the trusted issuer display name.",
+                    "example": "Gov PID Issuer"
+                  },
+                  "trust_anchor": {
+                    "type": "string",
+                    "description": "You optionally set the signing-key anchor type: `https-jwks`, `did-web`, or `x509`.",
+                    "example": "https-jwks"
+                  },
+                  "jwks_uri": {
+                    "type": "string",
+                    "description": "You optionally set the JSON Web Key Set (JWKS) endpoint.",
+                    "example": "https://issuer.gov.example/.well-known/jwks.json",
+                    "format": "uri"
+                  },
+                  "did": {
+                    "type": "string",
+                    "description": "You optionally set the decentralized identifier (DID) for the issuer.",
+                    "example": ""
+                  },
+                  "framework": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "You optionally set (or clear with null) the trust framework slug this issuer belongs to.",
+                    "example": "acme-partner-framework-ypr5"
+                  },
                   "status": {
                     "type": "string",
-                    "description": "You set the updated trust-gate status for this issuer.",
+                    "description": "You optionally set the trust-gate status: `active` or `disabled`.",
                     "example": "disabled"
                   }
-                },
-                "required": [
-                  "status"
-                ]
+                }
               },
               "example": {
                 "status": "disabled"
@@ -6179,24 +6388,58 @@
                     },
                     "validation": {
                       "type": "object",
-                      "description": "You receive the result of the trust-anchor check.",
                       "properties": {
-                        "anchor_ok": {
-                          "type": "boolean",
-                          "description": "You receive `true` when key resolution succeeds.",
-                          "example": true
-                        },
                         "reachable": {
                           "type": "boolean",
-                          "description": "You receive `true` when Didit ID can reach the issuer trust anchor.",
+                          "description": "You receive `true` when Didit ID could reach the issuer trust anchor.",
                           "example": true
+                        },
+                        "anchor_ok": {
+                          "type": "boolean",
+                          "description": "You receive `true` when signing-key resolution against the trust anchor succeeded.",
+                          "example": true
+                        },
+                        "issuer_matches": {
+                          "type": "boolean",
+                          "description": "You receive `true` when the resolved issuer metadata matches the registered `iss`.",
+                          "example": true
+                        },
+                        "jwks_keys": {
+                          "type": "integer",
+                          "description": "You receive the number of keys discovered in the resolved JSON Web Key Set (JWKS).",
+                          "example": 2
+                        },
+                        "error": {
+                          "type": "string",
+                          "description": "You receive a human-readable error string when resolution fails, otherwise an empty string.",
+                          "example": ""
                         },
                         "status": {
                           "type": "string",
                           "description": "You receive the registry status used during validation.",
                           "example": "active"
+                        },
+                        "validation_state": {
+                          "type": "string",
+                          "description": "You receive the trust-anchor validation state: `unverified`, `verified`, or `failed`.",
+                          "example": "unverified"
                         }
-                      }
+                      },
+                      "description": "You receive the result of the live issuer-metadata resolution and trust-anchor check."
+                    },
+                    "validation_state": {
+                      "type": "string",
+                      "description": "You receive the trust-anchor validation state: `unverified`, `verified`, or `failed`.",
+                      "example": "unverified"
+                    },
+                    "last_validated_at": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "description": "You receive the timestamp of the most recent validation run, or null when the issuer has never been validated.",
+                      "example": null,
+                      "format": "date-time"
                     }
                   }
                 },
@@ -6290,6 +6533,11 @@
                         "type": "string",
                         "example": "active",
                         "description": "You receive the registration status for this relying party."
+                      },
+                      "trust_policy": {
+                        "type": "string",
+                        "description": "You receive the trust policy for this relying party: `tenant` (inherit the tenant trust registry) or `custom` (per-relying-party trust rules).",
+                        "example": "tenant"
                       }
                     }
                   }
@@ -6385,6 +6633,11 @@
                       "description": "You receive the timestamp when this relying party was registered.",
                       "example": "2026-07-02T23:33:35.172947+00:00",
                       "format": "date-time"
+                    },
+                    "trust_policy": {
+                      "type": "string",
+                      "description": "You receive the trust policy for this relying party: `tenant` (inherit the tenant trust registry) or `custom` (per-relying-party trust rules).",
+                      "example": "tenant"
                     }
                   }
                 },
@@ -6424,6 +6677,16 @@
                     "description": "You set the web origin for this relying party.",
                     "example": "https://door.acme.example",
                     "format": "uri"
+                  },
+                  "client_id": {
+                    "type": "string",
+                    "description": "You optionally set the OpenID4VP (OpenID for Verifiable Presentations) client identifier.",
+                    "example": "campus-door"
+                  },
+                  "trust_policy": {
+                    "type": "string",
+                    "description": "You optionally set the trust policy: `tenant` (default, inherit the tenant registry) or `custom` (per-relying-party trust rules).",
+                    "example": "tenant"
                   }
                 },
                 "required": [
@@ -6470,6 +6733,133 @@
             "bearerAuth": []
           }
         ]
+      },
+      "patch": {
+        "operationId": "patchRelyingPartiesUuid",
+        "tags": [
+          "Trust Registry"
+        ],
+        "summary": "Update a relying party",
+        "description": "Update a relying party's `name`, `origin`, `client_id`, `status` (`active` / `disabled`), or `trust_policy` (`tenant` / `custom`). Send only the fields you want to change.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "uuid",
+            "in": "path",
+            "required": true,
+            "description": "UUID of the relying party registration to update.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "You optionally set the relying party display name.",
+                    "example": "Campus Door"
+                  },
+                  "origin": {
+                    "type": "string",
+                    "description": "You optionally set the registered web origin.",
+                    "example": "https://door.acme.example",
+                    "format": "uri"
+                  },
+                  "client_id": {
+                    "type": "string",
+                    "description": "You optionally set the OpenID4VP client identifier.",
+                    "example": "campus-door"
+                  },
+                  "status": {
+                    "type": "string",
+                    "description": "You optionally set the registration status: `active` or `disabled`.",
+                    "example": "disabled"
+                  },
+                  "trust_policy": {
+                    "type": "string",
+                    "description": "You optionally set the trust policy: `tenant` or `custom`.",
+                    "example": "custom"
+                  }
+                }
+              },
+              "example": {
+                "trust_policy": "custom"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The relying party was updated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "description": "You receive the UUID for this relying party registration.",
+                      "example": "44b2d61a-1634-486b-a35a-df26eb653a1a",
+                      "format": "uuid"
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "You receive the relying party display name.",
+                      "example": "Campus Door"
+                    },
+                    "origin": {
+                      "type": "string",
+                      "description": "You receive the registered web origin.",
+                      "example": "https://door.acme.example",
+                      "format": "uri"
+                    },
+                    "client_id": {
+                      "type": "string",
+                      "description": "You receive the OpenID4VP client identifier.",
+                      "example": "campus-door"
+                    },
+                    "status": {
+                      "type": "string",
+                      "description": "You receive the registration status.",
+                      "example": "active"
+                    },
+                    "trust_policy": {
+                      "type": "string",
+                      "description": "You receive the trust policy for this relying party: `tenant` (inherit the tenant trust registry) or `custom` (per-relying-party trust rules).",
+                      "example": "tenant"
+                    },
+                    "created_at": {
+                      "type": "string",
+                      "description": "You receive the timestamp when this relying party was registered.",
+                      "example": "2026-07-02T23:51:58.746686+00:00",
+                      "format": "date-time"
+                    }
+                  }
+                },
+                "example": {
+                  "id": "44b2d61a-1634-486b-a35a-df26eb653a1a",
+                  "name": "Campus Door",
+                  "origin": "https://door.acme.example",
+                  "client_id": "campus-door",
+                  "status": "active",
+                  "trust_policy": "custom",
+                  "created_at": "2026-07-02T23:51:58.746686+00:00"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/v1/keys": {
@@ -9396,6 +9786,57 @@
                       "type": "boolean",
                       "description": "You receive `true` when a governance authority manages the framework.",
                       "example": false
+                    },
+                    "trusted": {
+                      "type": "boolean",
+                      "description": "You receive `true` when this framework is currently trusted for the tenant. Governed frameworks are trusted by default.",
+                      "example": true
+                    },
+                    "member_issuer_count": {
+                      "type": "integer",
+                      "description": "You receive the number of trusted issuers registered under this framework for the tenant.",
+                      "example": 3
+                    },
+                    "member_issuers": {
+                      "type": "array",
+                      "description": "You receive up to `member_issuer_limit` issuers registered under this framework, each annotated with whether an override blocks it.",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "description": "You receive the UUID of the member issuer.",
+                            "example": "ef799a56-23dc-467d-9760-9fd20a8457fa",
+                            "format": "uuid"
+                          },
+                          "name": {
+                            "type": "string",
+                            "description": "You receive the member issuer display name.",
+                            "example": "Gov PID Issuer"
+                          },
+                          "iss": {
+                            "type": "string",
+                            "description": "You receive the member issuer identifier.",
+                            "example": "https://issuer.gov.example",
+                            "format": "uri"
+                          },
+                          "blocked": {
+                            "type": "boolean",
+                            "description": "You receive `true` when this issuer is blocked within the framework by an issuer override.",
+                            "example": false
+                          }
+                        }
+                      }
+                    },
+                    "member_issuer_limit": {
+                      "type": "integer",
+                      "description": "You receive the maximum number of issuers returned in `member_issuers`.",
+                      "example": 100
+                    },
+                    "member_issuers_truncated": {
+                      "type": "boolean",
+                      "description": "You receive `true` when `member_issuer_count` exceeds `member_issuer_limit`, meaning `member_issuers` is truncated.",
+                      "example": false
                     }
                   }
                 },
@@ -10473,6 +10914,1400 @@
           }
         }
       }
+    },
+    "/v1/trust-frameworks/{slug}/trust": {
+      "get": {
+        "operationId": "getTrustFrameworksSlugTrust",
+        "tags": [
+          "Trust Registry"
+        ],
+        "summary": "Get framework trust state",
+        "description": "Return whether a trust framework is currently trusted for the tenant, and whether that value is the framework default or an explicit override. Pass an optional `relying_party` query parameter to read the per-relying-party trust state.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "description": "Slug of the trust framework.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "relying_party",
+            "in": "query",
+            "required": false,
+            "description": "Optional relying party UUID to scope the trust state to.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The framework trust state for the tenant.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "slug": {
+                      "type": "string",
+                      "description": "You receive the framework slug.",
+                      "example": "eidas2"
+                    },
+                    "enabled": {
+                      "type": "boolean",
+                      "description": "You receive `true` when the framework is trusted.",
+                      "example": true
+                    },
+                    "is_default": {
+                      "type": "boolean",
+                      "description": "You receive `true` when `enabled` is the framework default (no explicit override exists).",
+                      "example": true
+                    }
+                  }
+                },
+                "example": {
+                  "slug": "eidas2",
+                  "enabled": true,
+                  "is_default": true
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "putTrustFrameworksSlugTrust",
+        "tags": [
+          "Trust Registry"
+        ],
+        "summary": "Trust or untrust a framework",
+        "description": "Trust or untrust an entire framework for the tenant in one call. Every issuer that belongs to a trusted framework passes the verification trust gate without being registered individually. Pass an optional `relying_party` to scope the setting to one relying party.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "description": "Slug of the trust framework.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "enabled": {
+                    "type": "boolean",
+                    "description": "You set whether the framework is trusted.",
+                    "example": true
+                  },
+                  "relying_party": {
+                    "type": "string",
+                    "description": "You optionally scope the setting to a relying party by UUID.",
+                    "example": "44b2d61a-1634-486b-a35a-df26eb653a1a",
+                    "format": "uuid"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ]
+              },
+              "example": {
+                "enabled": true
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The framework trust setting was applied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "slug": {
+                      "type": "string",
+                      "description": "You receive the framework slug.",
+                      "example": "eidas2"
+                    },
+                    "enabled": {
+                      "type": "boolean",
+                      "description": "You receive the stored trust value.",
+                      "example": true
+                    },
+                    "effective": {
+                      "type": "boolean",
+                      "description": "You receive the effective trust decision after applying overrides.",
+                      "example": true
+                    }
+                  }
+                },
+                "example": {
+                  "slug": "eidas2",
+                  "enabled": true,
+                  "effective": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/trust-frameworks/{slug}/issuer-overrides": {
+      "post": {
+        "operationId": "postTrustFrameworksSlugIssuerOverrides",
+        "tags": [
+          "Trust Registry"
+        ],
+        "summary": "Block or unblock an issuer in a framework",
+        "description": "Block or unblock a single issuer within a trusted framework. Blocking removes just that issuer from the framework's blanket trust while leaving every other member issuer trusted. Send `blocked: false` to lift a previously set block. Pass an optional `relying_party` to scope the override to one relying party.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "description": "Slug of the trust framework.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "iss": {
+                    "type": "string",
+                    "description": "You set the issuer identifier to block or unblock.",
+                    "example": "https://issuer.gov.example",
+                    "format": "uri"
+                  },
+                  "blocked": {
+                    "type": "boolean",
+                    "description": "You set `true` to block the issuer, `false` to unblock it.",
+                    "example": true
+                  },
+                  "relying_party": {
+                    "type": "string",
+                    "description": "You optionally scope the override to a relying party by UUID.",
+                    "example": "44b2d61a-1634-486b-a35a-df26eb653a1a",
+                    "format": "uuid"
+                  }
+                },
+                "required": [
+                  "iss",
+                  "blocked"
+                ]
+              },
+              "example": {
+                "iss": "https://issuer.gov.example",
+                "blocked": true
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The issuer override was applied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "slug": {
+                      "type": "string",
+                      "description": "You receive the framework slug.",
+                      "example": "eidas2"
+                    },
+                    "iss": {
+                      "type": "string",
+                      "description": "You receive the normalized issuer identifier.",
+                      "example": "https://issuer.gov.example",
+                      "format": "uri"
+                    },
+                    "blocked": {
+                      "type": "boolean",
+                      "description": "You receive the effective blocked state for this issuer in the framework.",
+                      "example": true
+                    }
+                  }
+                },
+                "example": {
+                  "slug": "eidas2",
+                  "iss": "https://issuer.gov.example",
+                  "blocked": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/webhooks": {
+      "get": {
+        "operationId": "getWebhooks",
+        "tags": [
+          "Webhooks"
+        ],
+        "summary": "List webhook endpoints",
+        "description": "List the webhook endpoints registered under the tenant. Signing secrets are masked in this response \u2014 the full secret is only returned when you create an endpoint or rotate its secret. The response is a bare JSON array ordered by most recent creation time.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A bare JSON array of webhook endpoint objects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "description": "You receive the UUID for this webhook endpoint.",
+                        "example": "b8f0f4a2-2b1e-4b3a-9d0e-4a1c2d3e4f50",
+                        "format": "uuid"
+                      },
+                      "label": {
+                        "type": "string",
+                        "description": "You receive the endpoint label.",
+                        "example": "Production events"
+                      },
+                      "url": {
+                        "type": "string",
+                        "description": "You receive the destination URL that receives POST deliveries.",
+                        "example": "https://api.acme.example/webhooks/didit",
+                        "format": "uri"
+                      },
+                      "secret": {
+                        "type": "string",
+                        "description": "You receive the masked signing secret (only the last 4 characters are shown).",
+                        "example": "********s9Zx"
+                      },
+                      "subscribed_events": {
+                        "type": "array",
+                        "description": "You receive the event types this endpoint is subscribed to. An empty array means all event types are delivered.",
+                        "items": {
+                          "type": "string",
+                          "description": "You receive one subscribed event type.",
+                          "example": "credential.issued",
+                          "enum": [
+                            "offer.created",
+                            "offer.redeemed",
+                            "credential.issued",
+                            "credential.claimed",
+                            "credential.revoked",
+                            "credential.suspended",
+                            "credential.reactivated",
+                            "presentation.created",
+                            "presentation.verified",
+                            "presentation.failed",
+                            "schema.created",
+                            "schema.version_created",
+                            "trusted_issuer.added",
+                            "trusted_issuer.updated",
+                            "trusted_issuer.removed",
+                            "framework.created",
+                            "relying_party.added",
+                            "relying_party.removed",
+                            "key.rotated",
+                            "member.added",
+                            "member.updated"
+                          ]
+                        },
+                        "example": [
+                          "credential.issued",
+                          "presentation.verified"
+                        ]
+                      },
+                      "enabled": {
+                        "type": "boolean",
+                        "description": "You receive `true` when the endpoint is active and receiving deliveries.",
+                        "example": true
+                      },
+                      "created_at": {
+                        "type": "string",
+                        "description": "You receive the timestamp when the endpoint was created.",
+                        "example": "2026-07-02T23:51:58.746686+00:00",
+                        "format": "date-time"
+                      },
+                      "updated_at": {
+                        "type": "string",
+                        "description": "You receive the timestamp when the endpoint was last updated.",
+                        "example": "2026-07-02T23:51:58.746686+00:00",
+                        "format": "date-time"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "postWebhooks",
+        "tags": [
+          "Webhooks"
+        ],
+        "summary": "Create a webhook endpoint",
+        "description": "Register a webhook endpoint. Didit ID signs every delivery with the returned secret using HMAC-SHA256 and sends the `X-Didit-Signature` and `X-Didit-Timestamp` headers (see the signature-verification note below). Save the returned `secret` \u2014 it is only shown once. Provide `subscribed_events` to filter, or omit it to receive every event type.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "label": {
+                    "type": "string",
+                    "description": "You set a human-readable label for the endpoint.",
+                    "example": "Production events"
+                  },
+                  "url": {
+                    "type": "string",
+                    "description": "You set the destination URL (http or https) that receives POST deliveries.",
+                    "example": "https://api.acme.example/webhooks/didit",
+                    "format": "uri"
+                  },
+                  "subscribed_events": {
+                    "type": "array",
+                    "description": "You optionally set the event types to deliver. Omit or send an empty array to receive every event type.",
+                    "items": {
+                      "type": "string",
+                      "description": "One subscribed event type.",
+                      "example": "credential.issued",
+                      "enum": [
+                        "offer.created",
+                        "offer.redeemed",
+                        "credential.issued",
+                        "credential.claimed",
+                        "credential.revoked",
+                        "credential.suspended",
+                        "credential.reactivated",
+                        "presentation.created",
+                        "presentation.verified",
+                        "presentation.failed",
+                        "schema.created",
+                        "schema.version_created",
+                        "trusted_issuer.added",
+                        "trusted_issuer.updated",
+                        "trusted_issuer.removed",
+                        "framework.created",
+                        "relying_party.added",
+                        "relying_party.removed",
+                        "key.rotated",
+                        "member.added",
+                        "member.updated"
+                      ]
+                    },
+                    "example": [
+                      "credential.issued",
+                      "presentation.verified"
+                    ]
+                  },
+                  "enabled": {
+                    "type": "boolean",
+                    "description": "You optionally set whether the endpoint is active. Defaults to `true`.",
+                    "example": true
+                  }
+                },
+                "required": [
+                  "label",
+                  "url"
+                ]
+              },
+              "example": {
+                "label": "Production events",
+                "url": "https://api.acme.example/webhooks/didit",
+                "subscribed_events": [
+                  "credential.issued",
+                  "presentation.verified"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The webhook endpoint was created. The full signing secret is returned once.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "description": "You receive the UUID for this webhook endpoint.",
+                      "example": "b8f0f4a2-2b1e-4b3a-9d0e-4a1c2d3e4f50",
+                      "format": "uuid"
+                    },
+                    "label": {
+                      "type": "string",
+                      "description": "You receive the endpoint label.",
+                      "example": "Production events"
+                    },
+                    "url": {
+                      "type": "string",
+                      "description": "You receive the destination URL that receives POST deliveries.",
+                      "example": "https://api.acme.example/webhooks/didit",
+                      "format": "uri"
+                    },
+                    "secret": {
+                      "type": "string",
+                      "description": "You receive the full signing secret. Store it now \u2014 subsequent reads mask it.",
+                      "example": "kQ8v...s9Zx"
+                    },
+                    "subscribed_events": {
+                      "type": "array",
+                      "description": "You receive the event types this endpoint is subscribed to. An empty array means all event types are delivered.",
+                      "items": {
+                        "type": "string",
+                        "description": "You receive one subscribed event type.",
+                        "example": "credential.issued",
+                        "enum": [
+                          "offer.created",
+                          "offer.redeemed",
+                          "credential.issued",
+                          "credential.claimed",
+                          "credential.revoked",
+                          "credential.suspended",
+                          "credential.reactivated",
+                          "presentation.created",
+                          "presentation.verified",
+                          "presentation.failed",
+                          "schema.created",
+                          "schema.version_created",
+                          "trusted_issuer.added",
+                          "trusted_issuer.updated",
+                          "trusted_issuer.removed",
+                          "framework.created",
+                          "relying_party.added",
+                          "relying_party.removed",
+                          "key.rotated",
+                          "member.added",
+                          "member.updated"
+                        ]
+                      },
+                      "example": [
+                        "credential.issued",
+                        "presentation.verified"
+                      ]
+                    },
+                    "enabled": {
+                      "type": "boolean",
+                      "description": "You receive `true` when the endpoint is active and receiving deliveries.",
+                      "example": true
+                    },
+                    "created_at": {
+                      "type": "string",
+                      "description": "You receive the timestamp when the endpoint was created.",
+                      "example": "2026-07-02T23:51:58.746686+00:00",
+                      "format": "date-time"
+                    },
+                    "updated_at": {
+                      "type": "string",
+                      "description": "You receive the timestamp when the endpoint was last updated.",
+                      "example": "2026-07-02T23:51:58.746686+00:00",
+                      "format": "date-time"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/webhooks/deliveries": {
+      "get": {
+        "operationId": "getWebhookDeliveries",
+        "tags": [
+          "Webhooks"
+        ],
+        "summary": "List webhook deliveries",
+        "description": "List the most recent webhook delivery attempts (up to 100) for the tenant, newest first. Pass the optional `endpoint` query parameter to filter to a single endpoint.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "endpoint",
+            "in": "query",
+            "required": false,
+            "description": "Optional webhook endpoint UUID to filter deliveries by.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A bare JSON array of webhook delivery objects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "description": "You receive the UUID for this delivery attempt.",
+                        "example": "c9a1b2c3-d4e5-6f70-8192-a3b4c5d6e7f8",
+                        "format": "uuid"
+                      },
+                      "endpoint_id": {
+                        "type": "string",
+                        "description": "You receive the UUID of the endpoint this delivery targeted.",
+                        "example": "b8f0f4a2-2b1e-4b3a-9d0e-4a1c2d3e4f50",
+                        "format": "uuid"
+                      },
+                      "endpoint_label": {
+                        "type": "string",
+                        "description": "You receive the label of the endpoint this delivery targeted.",
+                        "example": "Production events"
+                      },
+                      "event_type": {
+                        "type": "string",
+                        "description": "You receive the event type that was delivered.",
+                        "example": "credential.issued"
+                      },
+                      "event_id": {
+                        "type": "string",
+                        "description": "You receive the unique event identifier carried in the payload.",
+                        "example": "evt_9f3c1a20b7"
+                      },
+                      "request_url": {
+                        "type": "string",
+                        "description": "You receive the URL the delivery was POSTed to.",
+                        "example": "https://api.acme.example/webhooks/didit",
+                        "format": "uri"
+                      },
+                      "response_status": {
+                        "type": [
+                          "integer",
+                          "null"
+                        ],
+                        "description": "You receive the HTTP status code returned by the endpoint, or null when the request never completed.",
+                        "example": 200
+                      },
+                      "response_time_ms": {
+                        "type": [
+                          "integer",
+                          "null"
+                        ],
+                        "description": "You receive the round-trip time in milliseconds, or null when the request never completed.",
+                        "example": 142
+                      },
+                      "status": {
+                        "type": "string",
+                        "description": "You receive the delivery status (for example `delivered`, `failed`, or `pending`).",
+                        "example": "delivered"
+                      },
+                      "retries": {
+                        "type": "integer",
+                        "description": "You receive the number of retry attempts made for this delivery.",
+                        "example": 0
+                      },
+                      "last_retry_at": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "description": "You receive the timestamp of the most recent retry, or null when there was none.",
+                        "example": null,
+                        "format": "date-time"
+                      },
+                      "created_at": {
+                        "type": "string",
+                        "description": "You receive the timestamp when the delivery was enqueued.",
+                        "example": "2026-07-02T23:51:58.746686+00:00",
+                        "format": "date-time"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/webhooks/{uuid}": {
+      "patch": {
+        "operationId": "patchWebhooksUuid",
+        "tags": [
+          "Webhooks"
+        ],
+        "summary": "Update a webhook endpoint",
+        "description": "Update a webhook endpoint's `label`, `url`, `subscribed_events`, or `enabled` flag. Send `rotate_secret: true` to generate a new signing secret \u2014 the new secret is returned in full in that response only. Send only the fields you want to change.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "uuid",
+            "in": "path",
+            "required": true,
+            "description": "UUID of the webhook endpoint to update.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "label": {
+                    "type": "string",
+                    "description": "You optionally set the endpoint label.",
+                    "example": "Production events"
+                  },
+                  "url": {
+                    "type": "string",
+                    "description": "You optionally set the destination URL.",
+                    "example": "https://api.acme.example/webhooks/didit",
+                    "format": "uri"
+                  },
+                  "subscribed_events": {
+                    "type": "array",
+                    "description": "You optionally replace the subscribed event types.",
+                    "items": {
+                      "type": "string",
+                      "description": "One subscribed event type.",
+                      "example": "credential.issued",
+                      "enum": [
+                        "offer.created",
+                        "offer.redeemed",
+                        "credential.issued",
+                        "credential.claimed",
+                        "credential.revoked",
+                        "credential.suspended",
+                        "credential.reactivated",
+                        "presentation.created",
+                        "presentation.verified",
+                        "presentation.failed",
+                        "schema.created",
+                        "schema.version_created",
+                        "trusted_issuer.added",
+                        "trusted_issuer.updated",
+                        "trusted_issuer.removed",
+                        "framework.created",
+                        "relying_party.added",
+                        "relying_party.removed",
+                        "key.rotated",
+                        "member.added",
+                        "member.updated"
+                      ]
+                    },
+                    "example": [
+                      "credential.revoked"
+                    ]
+                  },
+                  "enabled": {
+                    "type": "boolean",
+                    "description": "You optionally enable or disable the endpoint.",
+                    "example": true
+                  },
+                  "rotate_secret": {
+                    "type": "boolean",
+                    "description": "You optionally rotate the signing secret. When `true`, the response returns the new secret in full.",
+                    "example": false
+                  }
+                }
+              },
+              "example": {
+                "enabled": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The webhook endpoint was updated. The `secret` is returned in full only when `rotate_secret` was `true`, otherwise it is masked.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "description": "You receive the UUID for this webhook endpoint.",
+                      "example": "b8f0f4a2-2b1e-4b3a-9d0e-4a1c2d3e4f50",
+                      "format": "uuid"
+                    },
+                    "label": {
+                      "type": "string",
+                      "description": "You receive the endpoint label.",
+                      "example": "Production events"
+                    },
+                    "url": {
+                      "type": "string",
+                      "description": "You receive the destination URL that receives POST deliveries.",
+                      "example": "https://api.acme.example/webhooks/didit",
+                      "format": "uri"
+                    },
+                    "secret": {
+                      "type": "string",
+                      "description": "You receive the masked signing secret (only the last 4 characters are shown).",
+                      "example": "********s9Zx"
+                    },
+                    "subscribed_events": {
+                      "type": "array",
+                      "description": "You receive the event types this endpoint is subscribed to. An empty array means all event types are delivered.",
+                      "items": {
+                        "type": "string",
+                        "description": "You receive one subscribed event type.",
+                        "example": "credential.issued",
+                        "enum": [
+                          "offer.created",
+                          "offer.redeemed",
+                          "credential.issued",
+                          "credential.claimed",
+                          "credential.revoked",
+                          "credential.suspended",
+                          "credential.reactivated",
+                          "presentation.created",
+                          "presentation.verified",
+                          "presentation.failed",
+                          "schema.created",
+                          "schema.version_created",
+                          "trusted_issuer.added",
+                          "trusted_issuer.updated",
+                          "trusted_issuer.removed",
+                          "framework.created",
+                          "relying_party.added",
+                          "relying_party.removed",
+                          "key.rotated",
+                          "member.added",
+                          "member.updated"
+                        ]
+                      },
+                      "example": [
+                        "credential.issued",
+                        "presentation.verified"
+                      ]
+                    },
+                    "enabled": {
+                      "type": "boolean",
+                      "description": "You receive `true` when the endpoint is active and receiving deliveries.",
+                      "example": true
+                    },
+                    "created_at": {
+                      "type": "string",
+                      "description": "You receive the timestamp when the endpoint was created.",
+                      "example": "2026-07-02T23:51:58.746686+00:00",
+                      "format": "date-time"
+                    },
+                    "updated_at": {
+                      "type": "string",
+                      "description": "You receive the timestamp when the endpoint was last updated.",
+                      "example": "2026-07-02T23:51:58.746686+00:00",
+                      "format": "date-time"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteWebhooksUuid",
+        "tags": [
+          "Webhooks"
+        ],
+        "summary": "Delete a webhook endpoint",
+        "description": "Delete a webhook endpoint. Didit ID stops delivering events to it immediately. A successful deletion returns no response body.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "uuid",
+            "in": "path",
+            "required": true,
+            "description": "UUID of the webhook endpoint to delete.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "The webhook endpoint was deleted. No response body is returned."
+          }
+        }
+      }
+    },
+    "/v1/webhooks/{uuid}/test": {
+      "post": {
+        "operationId": "postWebhooksUuidTest",
+        "tags": [
+          "Webhooks"
+        ],
+        "summary": "Send a test event",
+        "description": "Enqueue a signed `webhook.test` event to the endpoint so you can confirm your receiver verifies the signature and returns 2xx. Returns the delivery record for the test event.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "uuid",
+            "in": "path",
+            "required": true,
+            "description": "UUID of the webhook endpoint to test.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "The test event was enqueued for delivery.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "description": "You receive the UUID for this delivery attempt.",
+                      "example": "c9a1b2c3-d4e5-6f70-8192-a3b4c5d6e7f8",
+                      "format": "uuid"
+                    },
+                    "endpoint_id": {
+                      "type": "string",
+                      "description": "You receive the UUID of the endpoint this delivery targeted.",
+                      "example": "b8f0f4a2-2b1e-4b3a-9d0e-4a1c2d3e4f50",
+                      "format": "uuid"
+                    },
+                    "endpoint_label": {
+                      "type": "string",
+                      "description": "You receive the label of the endpoint this delivery targeted.",
+                      "example": "Production events"
+                    },
+                    "event_type": {
+                      "type": "string",
+                      "description": "You receive the event type that was delivered.",
+                      "example": "credential.issued"
+                    },
+                    "event_id": {
+                      "type": "string",
+                      "description": "You receive the unique event identifier carried in the payload.",
+                      "example": "evt_9f3c1a20b7"
+                    },
+                    "request_url": {
+                      "type": "string",
+                      "description": "You receive the URL the delivery was POSTed to.",
+                      "example": "https://api.acme.example/webhooks/didit",
+                      "format": "uri"
+                    },
+                    "response_status": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "description": "You receive the HTTP status code returned by the endpoint, or null when the request never completed.",
+                      "example": 200
+                    },
+                    "response_time_ms": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "description": "You receive the round-trip time in milliseconds, or null when the request never completed.",
+                      "example": 142
+                    },
+                    "status": {
+                      "type": "string",
+                      "description": "You receive the delivery status (for example `delivered`, `failed`, or `pending`).",
+                      "example": "delivered"
+                    },
+                    "retries": {
+                      "type": "integer",
+                      "description": "You receive the number of retry attempts made for this delivery.",
+                      "example": 0
+                    },
+                    "last_retry_at": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "description": "You receive the timestamp of the most recent retry, or null when there was none.",
+                      "example": null,
+                      "format": "date-time"
+                    },
+                    "created_at": {
+                      "type": "string",
+                      "description": "You receive the timestamp when the delivery was enqueued.",
+                      "example": "2026-07-02T23:51:58.746686+00:00",
+                      "format": "date-time"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/webhook-events": {
+      "get": {
+        "operationId": "getWebhookEvents",
+        "tags": [
+          "Webhooks"
+        ],
+        "summary": "List available webhook event types",
+        "description": "Return the full list of event type strings you can subscribe a webhook endpoint to. This endpoint is public and requires no authentication.",
+        "responses": {
+          "200": {
+            "description": "The available webhook event types.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "events": {
+                      "type": "array",
+                      "description": "You receive every event type string available for subscription.",
+                      "items": {
+                        "type": "string",
+                        "description": "One available event type.",
+                        "example": "credential.issued",
+                        "enum": [
+                          "offer.created",
+                          "offer.redeemed",
+                          "credential.issued",
+                          "credential.claimed",
+                          "credential.revoked",
+                          "credential.suspended",
+                          "credential.reactivated",
+                          "presentation.created",
+                          "presentation.verified",
+                          "presentation.failed",
+                          "schema.created",
+                          "schema.version_created",
+                          "trusted_issuer.added",
+                          "trusted_issuer.updated",
+                          "trusted_issuer.removed",
+                          "framework.created",
+                          "relying_party.added",
+                          "relying_party.removed",
+                          "key.rotated",
+                          "member.added",
+                          "member.updated"
+                        ]
+                      },
+                      "example": [
+                        "offer.created",
+                        "offer.redeemed",
+                        "credential.issued",
+                        "credential.claimed",
+                        "credential.revoked",
+                        "credential.suspended",
+                        "credential.reactivated",
+                        "presentation.created",
+                        "presentation.verified",
+                        "presentation.failed",
+                        "schema.created",
+                        "schema.version_created",
+                        "trusted_issuer.added",
+                        "trusted_issuer.updated",
+                        "trusted_issuer.removed",
+                        "framework.created",
+                        "relying_party.added",
+                        "relying_party.removed",
+                        "key.rotated",
+                        "member.added",
+                        "member.updated"
+                      ]
+                    }
+                  }
+                },
+                "example": {
+                  "events": [
+                    "offer.created",
+                    "offer.redeemed",
+                    "credential.issued",
+                    "credential.claimed",
+                    "credential.revoked",
+                    "credential.suspended",
+                    "credential.reactivated",
+                    "presentation.created",
+                    "presentation.verified",
+                    "presentation.failed",
+                    "schema.created",
+                    "schema.version_created",
+                    "trusted_issuer.added",
+                    "trusted_issuer.updated",
+                    "trusted_issuer.removed",
+                    "framework.created",
+                    "relying_party.added",
+                    "relying_party.removed",
+                    "key.rotated",
+                    "member.added",
+                    "member.updated"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/api-keys": {
+      "get": {
+        "operationId": "getApiKeys",
+        "tags": [
+          "API Keys"
+        ],
+        "summary": "List API keys",
+        "description": "List the API keys for the tenant. Tokens are masked in this response \u2014 the full token is only returned when you create or rotate a key. Callers without API-key management permission see only their own key. The response is a bare JSON array ordered by most recent creation time.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A bare JSON array of API key objects (tokens masked).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "uuid": {
+                        "type": "string",
+                        "description": "You receive the UUID for this API key.",
+                        "example": "d1e2f3a4-b5c6-7d80-9e1f-2a3b4c5d6e7f",
+                        "format": "uuid"
+                      },
+                      "name": {
+                        "type": "string",
+                        "description": "You receive the API key name.",
+                        "example": "default"
+                      },
+                      "environment": {
+                        "type": "string",
+                        "description": "You receive the environment for this key: `sandbox` or `prod`.",
+                        "example": "sandbox"
+                      },
+                      "role": {
+                        "type": "string",
+                        "description": "You receive the role granted to this key.",
+                        "example": "owner"
+                      },
+                      "created_at": {
+                        "type": "string",
+                        "description": "You receive the timestamp when the key was created.",
+                        "example": "2026-07-02T23:51:58.746686+00:00",
+                        "format": "date-time"
+                      },
+                      "member_email": {
+                        "type": "string",
+                        "description": "You receive the member email the key belongs to, or an empty string for a tenant-level key.",
+                        "example": "dev@acme.example"
+                      },
+                      "token_last4": {
+                        "type": "string",
+                        "description": "You receive the last 4 characters of the token.",
+                        "example": "s9Zx"
+                      },
+                      "masked": {
+                        "type": "string",
+                        "description": "You receive the masked token for display.",
+                        "example": "sk_\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022s9Zx"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "postApiKeys",
+        "tags": [
+          "API Keys"
+        ],
+        "summary": "Create an API key",
+        "description": "Create a named API key for an environment. The full token is returned once in this response \u2014 store it immediately. A requested `role` is clamped so it never exceeds the caller's own role.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "You optionally set a name for the key. Defaults to `default`.",
+                    "example": "CI deploy key"
+                  },
+                  "environment": {
+                    "type": "string",
+                    "description": "You optionally set the environment: `sandbox` or `prod`. Defaults to `sandbox`.",
+                    "example": "sandbox"
+                  },
+                  "role": {
+                    "type": "string",
+                    "description": "You optionally set the role: `owner`, `admin`, `issuer`, `verifier`, `issuer-verifier`, or `reader`. Clamped to at most the caller's role.",
+                    "example": "issuer"
+                  }
+                }
+              },
+              "example": {
+                "name": "CI deploy key",
+                "environment": "sandbox",
+                "role": "issuer"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The API key was created. The full token is returned once.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "uuid": {
+                      "type": "string",
+                      "description": "You receive the UUID for this API key.",
+                      "example": "d1e2f3a4-b5c6-7d80-9e1f-2a3b4c5d6e7f",
+                      "format": "uuid"
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "You receive the API key name.",
+                      "example": "default"
+                    },
+                    "environment": {
+                      "type": "string",
+                      "description": "You receive the environment for this key: `sandbox` or `prod`.",
+                      "example": "sandbox"
+                    },
+                    "role": {
+                      "type": "string",
+                      "description": "You receive the role granted to this key.",
+                      "example": "owner"
+                    },
+                    "created_at": {
+                      "type": "string",
+                      "description": "You receive the timestamp when the key was created.",
+                      "example": "2026-07-02T23:51:58.746686+00:00",
+                      "format": "date-time"
+                    },
+                    "token": {
+                      "type": "string",
+                      "description": "You receive the full API key token. Store it now \u2014 it is only returned once.",
+                      "example": "sk_live_3f9a1c...s9Zx"
+                    },
+                    "note": {
+                      "type": "string",
+                      "description": "You receive a reminder that the token is only shown once.",
+                      "example": "Save this API key now. It will not be shown again."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/api-keys/{uuid}/rotate": {
+      "post": {
+        "operationId": "postApiKeysUuidRotate",
+        "tags": [
+          "API Keys"
+        ],
+        "summary": "Rotate an API key",
+        "description": "Rotate an API key's token. The old token is invalidated and the new full token is returned once \u2014 store it immediately. You may rotate your own key; rotating another member's key requires API-key management permission.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "uuid",
+            "in": "path",
+            "required": true,
+            "description": "UUID of the API key to rotate.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The API key was rotated. The new full token is returned once.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "uuid": {
+                      "type": "string",
+                      "description": "You receive the UUID for this API key.",
+                      "example": "d1e2f3a4-b5c6-7d80-9e1f-2a3b4c5d6e7f",
+                      "format": "uuid"
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "You receive the API key name.",
+                      "example": "default"
+                    },
+                    "environment": {
+                      "type": "string",
+                      "description": "You receive the environment for this key: `sandbox` or `prod`.",
+                      "example": "sandbox"
+                    },
+                    "role": {
+                      "type": "string",
+                      "description": "You receive the role granted to this key.",
+                      "example": "owner"
+                    },
+                    "created_at": {
+                      "type": "string",
+                      "description": "You receive the timestamp when the key was created.",
+                      "example": "2026-07-02T23:51:58.746686+00:00",
+                      "format": "date-time"
+                    },
+                    "token": {
+                      "type": "string",
+                      "description": "You receive the full API key token. Store it now \u2014 it is only returned once.",
+                      "example": "sk_live_3f9a1c...s9Zx"
+                    },
+                    "note": {
+                      "type": "string",
+                      "description": "You receive a reminder that the token is only shown once.",
+                      "example": "Save this API key now. It will not be shown again."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/api-keys/{uuid}": {
+      "delete": {
+        "operationId": "deleteApiKeysUuid",
+        "tags": [
+          "API Keys"
+        ],
+        "summary": "Delete an API key",
+        "description": "Delete an API key. You cannot delete the last remaining key for the tenant, nor the key currently authenticating the request \u2014 both return 409. A successful deletion returns no response body.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "uuid",
+            "in": "path",
+            "required": true,
+            "description": "UUID of the API key to delete.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "The API key was deleted. No response body is returned."
+          },
+          "409": {
+            "description": "Conflict \u2014 you tried to delete the last remaining key or the key authenticating this request.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "detail": {
+                      "type": "string",
+                      "description": "You receive the reason the key could not be deleted.",
+                      "example": "Cannot delete the last remaining API key for this tenant."
+                    }
+                  }
+                },
+                "example": {
+                  "detail": "Cannot delete the last remaining API key for this tenant."
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -10516,6 +12351,12 @@
     },
     {
       "name": "OpenID4VCI Protocol"
+    },
+    {
+      "name": "Webhooks"
+    },
+    {
+      "name": "API Keys"
     }
   ]
 }

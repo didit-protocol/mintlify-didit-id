@@ -1,0 +1,58 @@
+---
+title: "Create a webhook endpoint"
+sidebarTitle: "Create endpoint"
+seo:
+  title: "Create a webhook endpoint — Didit ID API"
+  description: "POST /v1/webhooks — Create a webhook endpoint. Didit ID verifiable-credentials API (OpenID4VCI / OpenID4VP, SD-JWT VC)."
+openapi: "POST /v1/webhooks"
+---
+
+## Verifying the signature
+
+Every delivery is signed with the endpoint `secret` returned when you create (or rotate) the
+endpoint. Didit ID sends two headers with each POST:
+
+| Header | Value |
+| --- | --- |
+| `X-Didit-Signature` | Lowercase hex HMAC-SHA256 of `"{timestamp}.{raw_body}"`, keyed with your endpoint secret. |
+| `X-Didit-Timestamp` | Unix timestamp (seconds) that was signed. |
+
+To verify, recompute the HMAC over the **raw request body bytes** (do not re-serialize the JSON),
+compare it against `X-Didit-Signature` with a constant-time comparison, and reject any request
+whose timestamp is outside a 5-minute window (replay protection).
+
+```python
+import hashlib
+import hmac
+import time
+
+def verify(secret: str, raw_body: bytes, signature: str, timestamp: str, tolerance: int = 300) -> bool:
+    try:
+        ts = int(timestamp)
+    except (TypeError, ValueError):
+        return False
+    if abs(int(time.time()) - ts) > tolerance:
+        return False
+    signed = f"{ts}.".encode("utf-8") + raw_body
+    expected = hmac.new(secret.encode("utf-8"), signed, hashlib.sha256).hexdigest()
+    return hmac.compare_digest(signature or "", expected)
+```
+
+```javascript
+import crypto from "node:crypto";
+
+function verify(secret, rawBody, signature, timestamp, tolerance = 300) {
+  const ts = Number.parseInt(timestamp, 10);
+  if (Number.isNaN(ts) || Math.abs(Math.floor(Date.now() / 1000) - ts) > tolerance) return false;
+  const signed = Buffer.concat([Buffer.from(`${ts}.`), Buffer.from(rawBody)]);
+  const expected = crypto.createHmac("sha256", secret).update(signed).digest("hex");
+  const a = Buffer.from(signature || "", "utf8");
+  const b = Buffer.from(expected, "utf8");
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
+}
+```
+
+<Tip>
+Call [`POST /v1/webhooks/{uuid}/test`](/api-reference/webhooks/webhooks-uuid-test-post) to send a
+signed `webhook.test` event and confirm your receiver validates the signature and returns `2xx`.
+</Tip>
