@@ -1,46 +1,76 @@
 ---
 title: "Build a relying party"
-description: "Build a verifier the way the Didit ID relying-party demo does — request a presentation, show a QR and a same-device link, poll for the verdict, then read the disclosed claims with your API key."
+description: "Build a verifier that requests a wallet presentation, applies trust policy, and reads verified disclosed claims."
 ---
 
-A relying party (verifier) asks a holder to prove something, then acts on the result. This guide builds one the way the `rp-demo` reference app does: your backend creates a presentation request, the browser shows a QR code and a same-device link into the [holder wallet](/wallet/index), you poll for the verdict, and — once verified — you read the disclosed claims from the tenant-authenticated verification log. The examples run an age gate against an `AgeOver18` credential: the verifier learns only `over_18`, never the birth date.
+A relying party is a verifier application. It asks a holder to prove something, then acts on Didit ID's `verdict`.
+
+This guide builds an age gate for an `AgeOver18` credential. The verifier asks for `over_18`; the wallet presents only that claim; Didit ID checks cryptography, lifecycle state, and the relying party's trust policy before returning the result.
 
 <CardGroup cols={3}>
-  <Card title="Create a request" icon="file-plus" href="/api-reference/verification/presentations-request-post">
-    `POST /v1/presentations/request` — build the DCQL query.
+  <Card title="Try VeriBank" icon="play" href="https://veribank-idv0.staging.didit.me">
+    Pick a live relying-party scenario and present a wallet credential with selective disclosure.
   </Card>
-  <Card title="Poll status" icon="rotate" href="/api-reference/verification/presentations-uuid-get">
-    `GET /v1/presentations/{uuid}` — status, verdict, checks (public).
+  <Card title="Create a request" icon="file-plus" href="/api-reference/verification/presentations-request-post">
+    `POST /v1/presentations/request` builds the DCQL query.
   </Card>
   <Card title="Read claims" icon="lock" href="/api-reference/verification/verifications-uuid-get">
-    `GET /v1/verifications/{uuid}` — disclosed claims (tenant API key).
+    `GET /v1/verifications/{uuid}` returns verified disclosed claims to your backend.
   </Card>
 </CardGroup>
 
 <Warning>
-  `POST /v1/presentations/request` and `GET /v1/verifications/{uuid}` are management endpoints — call them from your backend with `Authorization: Bearer $DIDIT_API_KEY`. `GET /v1/presentations/{uuid}` is public so the browser can poll it, and it deliberately returns status, verdict, and checks **without** the claim values.
+  `POST /v1/presentations/request` and `GET /v1/verifications/{uuid}` are management endpoints. Call them from your backend with `Authorization: Bearer $DIDIT_API_KEY`. `GET /v1/presentations/{uuid}` is public so the browser can poll status without seeing claim values.
 </Warning>
 
-## The flow
+## Relying-party trust policy
+
+Each relying party can inherit the account trust policy or define its own accepted frameworks and issuers. Didit ID applies that policy automatically when the wallet submits the `vp_token`.
+
+Use per-relying-party policy when the same account operates multiple verifier experiences. For example, one account can model several brands, airlines, campuses, or banking journeys as separate relying parties, each with its own trust policy.
 
 <Steps>
-  <Step title="Create a presentation request">
-    Your backend calls `POST /v1/presentations/request` with the credential type, the requested claims, and the relying-party audience. Didit ID returns a presentation `uuid` and a `nonce`.
+  <Step title="Create or select the relying party">
+    Register the verifier with [`POST /relying-parties`](/api-reference/trust/relying-parties-post), or select an existing relying party in the console.
   </Step>
-  <Step title="Hand off to the wallet">
-    Render a QR code and a same-device link to the wallet at `WALLET/present?request=<uuid>&return_to=<url>`. The holder scans on mobile or clicks on the same device.
+  <Step title="Choose the policy mode">
+    Let the relying party inherit account trust, or define the frameworks and issuers it accepts.
   </Step>
-  <Step title="Poll for the verdict">
-    Poll the public `GET /v1/presentations/{uuid}` until `status` becomes terminal. The response includes `verdict` and the `checks` map — but not the disclosed values.
+  <Step title="Add exceptions">
+    Block specific issuers inside trusted frameworks when a verifier needs a narrower policy.
   </Step>
-  <Step title="Read the disclosed claims">
-    Once verified, your backend calls `GET /v1/verifications/{uuid}` with the tenant API key to read `disclosed_claims`, then applies your business logic.
+  <Step title="Verify normally">
+    Create presentation requests as usual. Didit ID enforces the relying-party policy during verification.
   </Step>
 </Steps>
 
-## Step 1 — Create the request
+<Info>
+  New accounts trust the Didit Network framework by default so the sandbox demo works immediately. Turn it off when you want explicit issuer approval.
+</Info>
 
-Call `POST /v1/presentations/request` from your backend. Didit ID creates the presentation record, generates a nonce, and builds the [DCQL](/concepts/openid4vp) query.
+## The verification flow
+
+<Steps>
+  <Step title="Create a presentation request">
+    Your backend calls `POST /v1/presentations/request` with the credential type, requested claims, and relying-party audience. The audience identifies the verifier context for request binding and policy.
+  </Step>
+  <Step title="Hand off to the wallet">
+    Render a QR code and a same-device link to the wallet at `https://wallet-idv0.staging.didit.me/present?request=<uuid>&return_to=<url>`. The holder scans on mobile or opens the link on the same device.
+  </Step>
+  <Step title="Holder approves disclosure">
+    The wallet shows the relying party, credential type, issuer, and requested claims. For the age gate, the holder approves `over_18` without revealing a birth date.
+  </Step>
+  <Step title="Poll for the verdict">
+    Poll the public `GET /v1/presentations/{uuid}` until the request reaches a terminal status. The response includes `verdict` and `checks`, but not claim values.
+  </Step>
+  <Step title="Read the disclosed claims">
+    Once verified, your backend calls `GET /v1/verifications/{uuid}` with the tenant API key to read `disclosed_claims`.
+  </Step>
+</Steps>
+
+## Step 1: create the request
+
+Call `POST /v1/presentations/request` from your backend. Didit ID creates the presentation record, generates a nonce, builds the [DCQL](/concepts/openid4vp) query, and records the relying-party context.
 
 <ParamField body="requested_vct" type="string" required>
   The credential type. The age gate uses `AgeOver18`.
@@ -55,7 +85,7 @@ Call `POST /v1/presentations/request` from your backend. Didit ID creates the pr
 </ParamField>
 
 <ParamField body="trusted_iss" type="string">
-  Optional issuer filter. When set, the submitted credential must match that issuer and still pass your tenant trust registry.
+  Optional issuer filter. When set, the submitted credential must match that issuer and still pass the relying party's trust policy.
 </ParamField>
 
 <CodeGroup>
@@ -127,12 +157,11 @@ presentation_id = presentation["uuid"]
 }
 ```
 
-## Step 2 — Hand off to the wallet
+## Step 2: hand off to the wallet
 
 Give the browser two ways to reach the wallet: a QR code for a mobile handoff and a same-device link. Both point at the wallet's present route with the presentation `uuid` and a `return_to` URL the wallet redirects back to.
 
 ```js
-// The wallet's present route — configuration, not a Didit ID API endpoint.
 const WALLET = "https://wallet-idv0.staging.didit.me";
 
 function walletPresentUrl({ presentationId, returnTo }) {
@@ -142,7 +171,6 @@ function walletPresentUrl({ presentationId, returnTo }) {
   return url.toString();
 }
 
-// Render this string as a QR code (mobile) and as an <a href> (same device).
 const handoff = walletPresentUrl({
   presentationId,
   returnTo: "https://your-app.example/age-gate/callback",
@@ -150,12 +178,12 @@ const handoff = walletPresentUrl({
 ```
 
 <Note>
-  On browsers that support the W3C Digital Credentials API, you can invoke the wallet inline with `navigator.credentials.get({ digital })` instead of a QR handoff. See the [holder wallet guide](/guides/holder-wallet). The QR + same-device link is the universal fallback and what the `rp-demo` shows first.
+  On browsers that support the W3C Digital Credentials API, you can invoke a compatible wallet inline with `navigator.credentials.get({ digital })`. The QR and same-device link pattern is the universal fallback and matches the live VeriBank demo.
 </Note>
 
-## Step 3 — Poll for the verdict
+## Step 3: poll for the verdict
 
-Poll the public `GET /v1/presentations/{uuid}` until the presentation reaches a terminal status. This endpoint is safe to call from the browser: it returns `status`, `verdict`, and the `checks` map, but **not** the disclosed claim values.
+Poll the public `GET /v1/presentations/{uuid}` until the presentation reaches a terminal status. This endpoint is safe to call from the browser because it returns `status`, `verdict`, and `checks`, but not disclosed claim values.
 
 <CodeGroup>
 ```bash cURL
@@ -171,7 +199,7 @@ async function pollVerdict(presentationId, { intervalMs = 1500, timeoutMs = 1200
     );
     const state = await response.json();
     if (state.status && state.status !== "pending") {
-      return state; // { status, verdict, checks, ... }
+      return state;
     }
     await new Promise((resolve) => setTimeout(resolve, intervalMs));
   }
@@ -192,7 +220,7 @@ def poll_verdict(presentation_id, interval=1.5, timeout=120):
         )
         state = response.json()
         if state.get("status") and state["status"] != "pending":
-            return state  # {"status", "verdict", "checks", ...}
+            return state
         time.sleep(interval)
     raise TimeoutError("Presentation timed out")
 
@@ -200,9 +228,9 @@ state = poll_verdict(presentation_id)
 ```
 </CodeGroup>
 
-Treat `verdict` as the decision. Use the `checks` map to explain a failure: `signature`, `key_binding`, `aud`, `nonce`, `alg_allowlist`, `not_expired`, and `not_revoked`. See [interpret the checks](/guides/verification#interpret-the-checks).
+Treat `verdict` as the decision. Use the `checks` map to explain a failure: `signature`, `key_binding`, `aud`, `nonce`, `alg_allowlist`, `not_expired`, and `not_revoked`. Issuer trust also contributes to the final verdict.
 
-## Step 4 — Read the disclosed claims
+## Step 4: read the disclosed claims
 
 The public poll endpoint never returns claim values. Once the verdict is `verified`, read the disclosed claims from the tenant-authenticated verification log with `GET /v1/verifications/{uuid}`. Use the same `uuid`.
 
@@ -222,7 +250,7 @@ async function readDisclosedClaims(presentationId) {
       },
     }
   );
-  return response.json(); // { verdict, disclosed_claims, checks }
+  return response.json();
 }
 
 const verification = await readDisclosedClaims(presentationId);
@@ -237,7 +265,7 @@ def read_disclosed_claims(presentation_id):
         f"https://idv0.staging.didit.me/v1/verifications/{presentation_id}",
         headers={"Authorization": f"Bearer {os.environ['DIDIT_API_KEY']}"},
     )
-    return response.json()  # {"verdict", "disclosed_claims", "checks"}
+    return response.json()
 
 verification = read_disclosed_claims(presentation_id)
 if verification["verdict"] == "verified" and verification["disclosed_claims"].get("over_18"):
@@ -266,13 +294,11 @@ if verification["verdict"] == "verified" and verification["disclosed_claims"].ge
   Read [`GET /v1/verifications`](/api-reference/verification/verifications-get) for the full tenant verification log when you audit past checks.
 </Tip>
 
-## Register your origin (optional)
-
-When you present over the W3C Digital Credentials API, register your web origin in the [trust registry](/guides/trust-registry) with `POST /v1/relying-parties` so the wallet can origin-check the request. The QR + poll flow above does not require registration.
-
 ## Test without a wallet
 
-While you build the verifier, drive the whole loop server-side with `POST /v1/presentations/{uuid}/demo-present`, which runs a real issue → present → verify path for the request. See [run a self-contained demo verification](/guides/verification#run-a-self-contained-demo-verification).
+While you build the verifier, drive the whole loop server-side with `POST /v1/presentations/{uuid}/demo-present`, which runs a real issue, present, and verify path for the request. See [run a self-contained demo verification](/guides/verification#run-a-self-contained-demo-verification).
+
+For the full browser experience, use the [VeriBank live demo](https://veribank-idv0.staging.didit.me).
 
 ## Next steps
 
@@ -280,7 +306,7 @@ While you build the verifier, drive the whole loop server-side with `POST /v1/pr
   <Card title="Verify presentations" icon="shield-check" href="/guides/verification">
     The full OpenID4VP verifier reference, including the `vp_token` submission path.
   </Card>
-  <Card title="Run the full demo" icon="play" href="/demo">
-    Spin up the service, console, wallet, and rp-demo and walk one credential end to end.
+  <Card title="Configure trust" icon="list-check" href="/guides/trust-registry">
+    Set account trust, framework trust, issuer overrides, and relying-party policies.
   </Card>
 </CardGroup>

@@ -1,46 +1,58 @@
 ---
 title: "Holder wallet"
-description: "The Didit holder wallet — a browser-based, passkey-backed wallet that claims, stores, and presents SD-JWT VC credentials with selective disclosure."
+description: "Use the Didit holder wallet to claim and present SD-JWT VC credentials with passkeys and selective disclosure."
 ---
 
-The Didit holder wallet is the holder-facing half of Didit ID. It runs in the browser, backs the account with a passkey, generates a WebCrypto holder key per credential, stores everything in IndexedDB, and speaks [OpenID4VCI](/concepts/openid4vci) to claim credentials and [OpenID4VP](/concepts/openid4vp) to present them. It never sees a tenant API key — it only calls the public holder and verifier protocol endpoints.
+The Didit holder wallet is the holder app for Didit ID. Holders use it to claim credentials, keep them protected with passkeys, and present only the claims a verifier requests.
 
-Use it as the reference wallet for the whole flow: an issuer emails a claim link, the holder opens it in the wallet, claims the [SD-JWT VC](/concepts/sd-jwt-vc), and later presents only the claims a verifier asks for.
+The wallet speaks [OpenID4VCI](/concepts/openid4vci) to claim credentials and [OpenID4VP](/concepts/openid4vp) to present them. It never needs a tenant API key. It calls public holder and verifier protocol endpoints.
 
-## What the wallet is
+<CardGroup cols={3}>
+  <Card title="Open the wallet" icon="wallet" href="https://wallet-idv0.staging.didit.me">
+    Claim and present credentials in the live sandbox.
+  </Card>
+  <Card title="Run the demo" icon="play" href="/demo">
+    Issue a credential from the console and verify it with VeriBank.
+  </Card>
+  <Card title="Build your own wallet" icon="code" href="/guides/holder-wallet">
+    Implement the same standards-based holder flows in your own app.
+  </Card>
+</CardGroup>
 
-- **Browser-based.** A Next.js app served at `https://wallet-idv0.staging.didit.me` in local dev. No native install, no server-side holder state.
-- **Passkey account.** Sign-in uses a passkey (WebAuthn). The passkey authenticates the account — it is not the credential holder key.
-- **WebCrypto holder keys.** Each credential is bound to its own non-extractable ECDSA P-256 (ES256) signing key generated with WebCrypto. The public key goes into the credential's `cnf.jwk`; the private key never leaves the browser.
-- **IndexedDB storage.** Credentials, per-credential keys, activity, and cached status lists live in a local IndexedDB vault, scoped per account.
-- **Standards-native.** SD-JWT VC issuance and presentation, OpenID4VCI for claiming, OpenID4VP with DCQL for presenting, and IETF Token Status List for revocation checks.
+## What the wallet does
+
+- **Claims credentials.** Open an email claim link, review the offer, enter the transaction code when required, and receive an SD-JWT VC through OpenID4VCI.
+- **Protects credentials with passkeys.** Sign in and approve wallet actions with a passkey-capable browser.
+- **Supports selective disclosure.** Review the relying party and requested claims before presenting.
+- **Presents credentials.** Submit an OpenID4VP `vp_token` to the verifier flow and return only approved disclosures.
+- **Stays protocol-native.** Use SD-JWT VC, OpenID4VCI, OpenID4VP with DCQL, and Token Status List checks.
 
 ## When to use it
 
 <CardGroup cols={2}>
   <Card title="Use the Didit wallet" icon="circle-check">
-    You want holders to claim and present credentials today without shipping your own wallet. You are running the demo, prototyping, or handing users a browser wallet for reusable credentials.
+    You want holders to claim and present credentials today without shipping your own wallet.
   </Card>
   <Card title="Build your own" icon="hammer">
-    You need a native app, cloud backup and multi-device sync, device attestation, or deep integration into an existing product. Follow the [holder-wallet guide](/guides/holder-wallet) to implement the same protocol flows yourself.
+    You need a native app or deep integration into an existing product. Follow the [holder-wallet guide](/guides/holder-wallet).
   </Card>
 </CardGroup>
 
-The wallet and a custom implementation talk to the exact same public endpoints, so you can start on the Didit wallet and move to your own later without changing the issuer or verifier side.
+The Didit wallet and a custom wallet talk to the same public protocol endpoints, so you can start with the hosted wallet and move to your own implementation later.
 
 ## Explore
 
 <CardGroup cols={2}>
-  <Card title="Quickstart" icon="rocket" href="/wallet/quickstart">
-    Run the wallet locally, create a passkey account, claim a credential from a link, and present it.
+  <Card title="Wallet quickstart" icon="rocket" href="/wallet/quickstart">
+    Claim a credential from an email link and present it to VeriBank.
   </Card>
-  <Card title="Architecture" icon="sitemap" href="/wallet/architecture">
-    The holder key model, the IndexedDB vault schema, SD-JWT handling, and the claim and present pipelines.
+  <Card title="Wallet architecture" icon="sitemap" href="/wallet/architecture">
+    See the product-level claim and present flows.
   </Card>
-  <Card title="Security" icon="shield-halved" href="/wallet/security">
-    The two key domains, what leaves the browser and when, selective disclosure, and the threat model.
+  <Card title="Wallet security" icon="shield-halved" href="/wallet/security">
+    Understand passkeys, consent, and selective disclosure.
   </Card>
-  <Card title="Build your own wallet" icon="code" href="/guides/holder-wallet">
-    Implement the OpenID4VCI and OpenID4VP flows in your own app against the same public endpoints.
+  <Card title="Holder wallet guide" icon="code" href="/guides/holder-wallet">
+    Build a compatible wallet with OpenID4VCI and OpenID4VP.
   </Card>
 </CardGroup>

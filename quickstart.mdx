@@ -5,11 +5,43 @@ description: "Issue and verify your first Didit ID credential in five minutes."
 
 Issue a demo `EmployeeBadge` SD-JWT VC, accept it with the demo holder endpoint, and verify a selective-disclosure presentation with Didit ID.
 
-This quickstart uses the local API at `https://idv0.staging.didit.me/v1`. Management endpoints use `Authorization: Bearer $DIDIT_API_KEY`. Holder and verifier protocol endpoints are public.
+This quickstart uses the sandbox API at `https://idv0.staging.didit.me/v1`. Management endpoints use `Authorization: Bearer $DIDIT_API_KEY`. Holder and verifier protocol endpoints are public.
 
 <Note>
   The examples use `curl` and `jq`. Set `DIDIT_API_KEY` to a tenant API key from the Didit Console.
 </Note>
+
+## Try the live sandbox first
+
+<CardGroup cols={3}>
+  <Card title="Console" icon="gauge" href="https://console-idv0.staging.didit.me">
+    Create an account, issue a credential, and manage trust policy.
+  </Card>
+  <Card title="Wallet" icon="wallet" href="https://wallet-idv0.staging.didit.me">
+    Claim the credential into a passkey-secured holder wallet.
+  </Card>
+  <Card title="VeriBank demo" icon="play" href="https://veribank-idv0.staging.didit.me">
+    Present the credential to a live relying party.
+  </Card>
+</CardGroup>
+
+<Steps>
+  <Step title="Create an account in the console">
+    Open the [console](https://console-idv0.staging.didit.me) and create a sandbox account.
+  </Step>
+  <Step title="Issue a credential to your email">
+    Create a credential offer and send it to an email address you can open.
+  </Step>
+  <Step title="Open it in the wallet">
+    Follow the claim link, sign in with a passkey, and claim the SD-JWT VC.
+  </Step>
+  <Step title="Go to the demo relying party">
+    Open [VeriBank](https://veribank-idv0.staging.didit.me) and pick a verification scenario.
+  </Step>
+  <Step title="Present and verify">
+    Approve the requested claims in the wallet. The verifier receives only the disclosed claims and a final verdict.
+  </Step>
+</Steps>
 
 <Steps>
   <Step title="Get a tenant API key">

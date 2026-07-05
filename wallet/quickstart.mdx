@@ -1,105 +1,72 @@
 ---
 title: "Wallet quickstart"
-description: "Run the holder wallet locally, create a passkey account, claim a credential from an email link, and present it to a verifier with selective disclosure."
+description: "Claim a credential into the Didit wallet and present it to a verifier with selective disclosure."
 ---
 
-Take a credential from an emailed claim link to a verified presentation in a few minutes: run the wallet on your machine, create an account with a passkey, claim the credential, then answer a verifier's request while disclosing only what it asks for.
+Use the hosted wallet to claim a credential from an email link, then present it to the VeriBank relying-party demo. You need a passkey-capable browser and an email address you can read.
 
-<Note>
-  This quickstart assumes the credentials service is running at `https://idv0.staging.didit.me` and an issuer has created an emailed offer (see [issue via email](/guides/issue-via-email)). To bring up the whole stack at once, follow [run the full demo](/demo).
-</Note>
+<CardGroup cols={3}>
+  <Card title="Console" icon="gauge" href="https://console-idv0.staging.didit.me">
+    Issue a credential offer to your email.
+  </Card>
+  <Card title="Wallet" icon="wallet" href="https://wallet-idv0.staging.didit.me">
+    Claim the credential and approve presentations.
+  </Card>
+  <Card title="VeriBank" icon="play" href="https://veribank-idv0.staging.didit.me">
+    Verify selected claims with a relying-party scenario.
+  </Card>
+</CardGroup>
 
 <Steps>
-  <Step title="Run the wallet locally">
-    Start the wallet on port `3012`, pointed at the local service. The two public base URLs it needs:
-
-    ```bash
-    # in the didit-credentials-wallet repo
-    export NEXT_PUBLIC_API_BASE="https://idv0.staging.didit.me/v1"
-    export NEXT_PUBLIC_AUTH_BASE="https://idv0.staging.didit.me"
-
-    pnpm install
-    pnpm dev   # serves https://wallet-idv0.staging.didit.me
-    ```
-
-    `NEXT_PUBLIC_API_BASE` is where the wallet calls the OpenID4VCI and OpenID4VP protocol endpoints. `NEXT_PUBLIC_AUTH_BASE` is where it runs the passkey account ceremonies. Neither uses a tenant API key.
+  <Step title="Issue a credential from the console">
+    Open the [console](https://console-idv0.staging.didit.me), create or select a credential template, and send a credential offer to your email. Keep the transaction code if the offer requires one.
   </Step>
 
-  <Step title="Create an account with a passkey">
-    Open `https://wallet-idv0.staging.didit.me` and create an account. The wallet runs a WebAuthn registration ceremony — approve the passkey prompt (Touch ID, Windows Hello, or a security key). The passkey signs you into the account; it is separate from the per-credential holder keys the wallet generates later. See [wallet security](/wallet/security) for why the two are distinct.
+  <Step title="Open the claim link">
+    Open the claim email and follow the wallet link. The wallet opens at [wallet-idv0.staging.didit.me](https://wallet-idv0.staging.didit.me).
   </Step>
 
-  <Step title="Receive a claim email (or paste the link)">
-    An issuer that created an emailed offer sends a claim link of the form:
-
-    ```
-    https://wallet-idv0.staging.didit.me/claim?offer=<offer_id>
-    ```
-
-    Open the link, or paste it into the wallet's claim screen. The wallet also accepts a raw offer code or a scanned QR. In local dev without Postmark, grab the link from the service's dev inbox:
-
-    ```bash
-    curl "http://localhost:8011/v1/dev/last-email?to=<your-email>" | jq -r '.claim_url'
-    ```
+  <Step title="Sign in with a passkey">
+    Create or open your wallet account with a passkey-capable browser. The passkey protects access to your wallet and credentials.
   </Step>
 
   <Step title="Claim the credential">
-    The wallet previews the offer and, when the offer requires one, prompts for the transaction code (PIN) the issuer shared with you. On confirm, it runs the OpenID4VCI exchange end to end:
-
-    1. Resolve the offer document and read the pre-authorized code.
-    2. Redeem the code (and the PIN) at `POST /v1/oauth/token`.
-    3. Generate a fresh non-extractable ES256 holder key.
-    4. Mint a single-use `c_nonce` at `POST /v1/nonce` and sign an `openid4vci-proof+jwt`.
-    5. Receive the SD-JWT VC from `POST /v1/credential`.
-    6. Verify the credential's `cnf.jwk` matches the key it just generated, then store both in the vault.
-
-    <Warning>
-      Enter the transaction code carefully. The offer locks after five failed attempts, and you have to ask the issuer for a new one.
-    </Warning>
+    Review the issuer, credential type, and requested transaction code. When you approve, the wallet runs the OpenID4VCI exchange and stores the SD-JWT VC.
   </Step>
 
-  <Step title="Open the relying-party demo">
-    Open the relying-party demo at `https://veribank-idv0.staging.didit.me`. It creates a presentation request (for example, asking for the badge `role`) and shows a QR code plus a same-device link into the wallet at `https://wallet-idv0.staging.didit.me/present?request=<uuid>`.
+  <Step title="Open VeriBank">
+    Open [VeriBank](https://veribank-idv0.staging.didit.me), choose a scenario, and follow the QR or same-device link back to the wallet.
   </Step>
 
   <Step title="Present with selective disclosure">
-    Open the present link. The wallet fetches the request, matches it against your stored credentials, and shows a consent screen with exactly the claims the verifier asked for. Approve, and the wallet:
-
-    1. Selects only the requested disclosures (issuance order preserved).
-    2. Builds a key-bound presentation — the KB-JWT commits to the presented part with the verifier's `aud` and `nonce`.
-    3. Submits the `vp_token` to `POST /v1/presentations/{uuid}/response`.
-
-    The demo polls for the verdict. The verifier learns only the disclosed claim, and nothing else in the credential.
+    Review the relying party and requested claims. Approve the presentation. The wallet submits an OpenID4VP `vp_token` with only the approved disclosures.
   </Step>
 </Steps>
 
 ## Troubleshooting
 
 <AccordionGroup>
-  <Accordion title="The passkey prompt never appears or fails">
-    Passkeys need a WebAuthn-capable browser and a platform authenticator (Touch ID, Windows Hello) or a security key. Use Chrome, Safari, or Edge on a supported device. On `localhost`, WebAuthn works over `http`; on any other host it requires `https`. If you dismissed the prompt, the wallet treats it as a cancel, not an error — retry the account step.
+  <Accordion title="The passkey prompt does not appear">
+    Use Chrome, Safari, or Edge on a device with a platform authenticator such as Touch ID or Windows Hello, or use a compatible security key.
   </Accordion>
-  <Accordion title="Requests to the service fail with a CORS error">
-    The service allows the wallet origin (`https://wallet-idv0.staging.didit.me`) only in dev settings. Run the service with `DJANGO_SETTINGS_MODULE=core.settings.devserver` (what `make dev-all` uses). If you serve the wallet on a different port or host, add it to the service's `CORS_ALLOWED_ORIGINS`.
+  <Accordion title="The transaction code is rejected">
+    The transaction code comes from the issuer. Confirm you entered the exact code for this offer. If the offer locks or expires, ask the issuer to resend it.
   </Accordion>
-  <Accordion title="The transaction code (PIN) is rejected">
-    The PIN comes from the issuer out-of-band — it is never in the claim email. Confirm you are entering the exact code the issuer gave you. After five wrong attempts the offer locks; ask the issuer to resend, which mints a fresh offer window.
+  <Accordion title="The offer says not found or expired">
+    Offers are single-use and time-limited. Ask the issuer to send a fresh claim email.
   </Accordion>
-  <Accordion title="The offer says 'not found' or 'expired'">
-    Offers are single-use and time-limited. An offer that was already claimed, or whose window elapsed, returns 404 on purpose. Ask the issuer to resend the claim email (`POST /v1/credential-offers/{uuid}/resend-email`).
-  </Accordion>
-  <Accordion title="'No matching credential' when presenting">
-    The wallet only offers credentials whose `vct` matches the request and that carry every requested claim. Claim a credential of the requested type first, then retry the presentation.
+  <Accordion title="The wallet has no matching credential">
+    The wallet only presents credentials whose `vct` and claim set match the verifier request. Claim the requested credential type first, then retry.
   </Accordion>
 </AccordionGroup>
 
 ## Next steps
 
 <CardGroup cols={2}>
-  <Card title="Architecture" icon="sitemap" href="/wallet/architecture">
-    How the wallet stores keys and runs the claim and present pipelines.
+  <Card title="Wallet security" icon="shield-halved" href="/wallet/security">
+    Learn how passkeys, consent, and selective disclosure protect holders.
   </Card>
-  <Card title="Security" icon="shield-halved" href="/wallet/security">
-    The key model, selective disclosure, and the threat model.
+  <Card title="Build a relying party" icon="shield-check" href="/guides/relying-party">
+    Request a presentation and read verified disclosed claims.
   </Card>
 </CardGroup>

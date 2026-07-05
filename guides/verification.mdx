@@ -3,9 +3,9 @@ title: "Verify presentations"
 description: "Request wallet presentations and verify disclosed SD-JWT VC claims with OpenID4VP."
 ---
 
-Verify a credential by creating a presentation request, sending it to a holder wallet, and submitting the returned `vp_token` to Didit ID. The response gives you a final `verdict`, the disclosed claims, and the checks that determined the result. The examples below run an age gate: the verifier confirms a user is over 18 from an `AgeOver18` credential without ever learning their birth year.
+Verify a credential by creating a presentation request, sending it to a holder wallet, and submitting the returned `vp_token` to Didit ID. The response gives you a final `verdict`, the disclosed claims, and the checks that determined the result. The examples below run an age gate: the verifier confirms a user is over 18 from an `AgeOver18` credential without ever learning their birth date.
 
-Didit ID uses OpenID4VP 1.0 with DCQL for presentation requests. Submitted presentations are SD-JWT VC presentations with holder key binding through a KB-JWT.
+Didit ID uses OpenID4VP 1.0 with DCQL for presentation requests. Submitted presentations are SD-JWT VC presentations with holder key binding through a KB-JWT. Verification also honors the applicable trust policy automatically: the relying party can inherit account trust or define its own accepted frameworks and issuers.
 
 <CardGroup cols={2}>
   <Card title="Holder wallet" icon="wallet" href="/guides/holder-wallet">
@@ -13,6 +13,9 @@ Didit ID uses OpenID4VP 1.0 with DCQL for presentation requests. Submitted prese
   </Card>
   <Card title="Trust frameworks" icon="network" href="/concepts/trust-frameworks">
     Configure the trusted issuers and relying parties that affect the final verdict.
+  </Card>
+  <Card title="Try VeriBank" icon="play" href="https://veribank-idv0.staging.didit.me">
+    Present a wallet credential to a live relying-party demo.
   </Card>
   <Card title="Create a request" icon="file-plus" href="/api-reference/verification/presentations-request-post">
     See the generated reference for `POST /presentations/request`.
@@ -44,13 +47,16 @@ Wallet-facing protocol endpoints are public and do not use the tenant API key:
 
 <Steps>
   <Step title="Create a presentation request">
-    Your backend calls `POST /presentations/request` with the credential type, requested claims, relying-party audience, and optional trusted issuer.
+    Your backend calls `POST /presentations/request` with the credential type, requested claims, relying-party audience, and optional trusted issuer filter. The relying-party audience maps the request to the verifier context.
   </Step>
   <Step title="Deliver the request to the wallet">
     Send the OpenID4VP request to the holder wallet. Browser integrations can use the W3C Digital Credentials API with `openid4vp-v1-signed`.
   </Step>
   <Step title="Receive the vp_token">
     The wallet signs a key-bound presentation and submits the resulting `vp_token` to `POST /presentations/{uuid}/response`.
+  </Step>
+  <Step title="Apply trust policy">
+    Didit ID applies the relying party's trust policy automatically. If the relying party inherits account trust, the account policy is used.
   </Step>
   <Step title="Use the verdict">
     Didit ID returns `verdict`, `disclosed_claims`, and `checks`. Use `verdict` as the decision and store the response with your business event.
@@ -77,7 +83,7 @@ Call `POST /presentations/request` from your backend. Didit ID creates a present
 </ParamField>
 
 <ParamField path="trusted_iss" type="string">
-  Optional issuer filter. If you send it, the submitted credential must match that issuer and still pass your tenant trust registry policy.
+  Optional issuer filter. If you send it, the submitted credential must match that issuer and still pass the relying party's trust policy.
 </ParamField>
 
 <CodeGroup>
@@ -150,6 +156,22 @@ The response contains the presentation identifier, transaction identifier, DCQL 
   "status": "pending"
 }
 ```
+
+## Selective disclosure example
+
+Selective disclosure means the verifier receives only the claims it requests and the holder approves.
+
+In this guide, the `AgeOver18` credential can include both `over_18` and `birth_date`. The verifier requests only `over_18`. The wallet includes the disclosure for `over_18` in the SD-JWT VC presentation and omits `birth_date`. Didit ID verifies the issuer signature over the hidden-claim commitments, checks the holder binding, and returns:
+
+```json
+{
+  "disclosed_claims": {
+    "over_18": true
+  }
+}
+```
+
+The verifier can trust `over_18: true` without learning the holder's birth date or other credential attributes.
 
 ## Deliver the request to a wallet
 
@@ -279,11 +301,11 @@ Use `verdict` as the high-level result. Use `checks` to explain failures, debug 
   The credential is not revoked according to its IETF Token Status List entry.
 </ResponseField>
 
-Issuer trust also contributes to the final `verdict`. A credential can pass the cryptographic checks and still fail if the issuer is outside your tenant trust registry.
+Issuer trust also contributes to the final `verdict`. A credential can pass the cryptographic checks and still fail if the issuer is outside the applicable account or relying-party trust policy.
 
 ## Run a self-contained demo verification
 
-Use `POST /presentations/{uuid}/demo-present` to run a real server-side issue, present, and verify path for a presentation request. This is useful when you want to validate verifier configuration without wiring a browser wallet first.
+Use `POST /presentations/{uuid}/demo-present` to run a real server-side issue, present, and verify path for a presentation request. This is useful when you want to validate verifier configuration without wiring a browser wallet first. To try the full holder experience, use the [VeriBank live demo](https://veribank-idv0.staging.didit.me).
 
 <Steps>
   <Step title="Create the request">
@@ -395,5 +417,5 @@ verifications = response.json()
 </Accordion>
 
 <Accordion title="Does trusted_iss replace the trust registry?">
-  No. `trusted_iss` narrows the request to a specific issuer. The submitted credential must still pass the tenant trust registry check.
+  No. `trusted_iss` narrows the request to a specific issuer. The submitted credential must still pass the applicable account or relying-party trust policy.
 </Accordion>

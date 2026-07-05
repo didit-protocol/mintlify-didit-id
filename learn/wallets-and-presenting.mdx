@@ -3,7 +3,7 @@ title: "Wallets and presenting"
 description: "Learn what a wallet is and how selective disclosure lets you share only needed facts."
 ---
 
-A wallet is an app that holds your credentials. It is similar to Apple Wallet holding a boarding pass or payment card. Instead of storing only images, this wallet stores signed digital proofs.
+A wallet is an app that holds your credentials. It is similar to Apple Wallet holding a boarding pass or payment card. Instead of storing only images, this wallet stores signed digital proofs. The Didit wallet protects holder access with passkeys.
 
 The holder is the person or system that controls the wallet. Presenting means showing a credential to a verifier, which is the app or organization checking the proof. If a hotel asks for proof that you are over 18, your wallet can present that fact.
 
@@ -15,8 +15,8 @@ Selective disclosure means you choose exactly which facts to share. It is like c
   <Step title="Receive a credential">
     The wallet receives a credential from an issuer, which is the organization that creates it. Examples include an employer, a university, a club, or an event organizer.
   </Step>
-  <Step title="Store it with the holder key">
-    The wallet keeps the credential and the private key that proves the wallet controls it. A private key is a secret the wallet uses to sign presentations.
+  <Step title="Keep it protected">
+    The wallet keeps the credential protected for the holder and uses standards-based holder proof when it later presents the credential.
   </Step>
   <Step title="Review the request">
     A verifier asks for specific facts, such as `over_18` or `role`. The wallet should show the holder what will be shared.

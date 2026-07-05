@@ -14,7 +14,7 @@ Issue credentials when you need a holder to receive a verifiable credential that
   </Card>
 </CardGroup>
 
-Didit ID issues SD-JWT VC credentials with the `application/dc+sd-jwt` media type. Issuance follows [OpenID4VCI 1.0](/concepts/openid4vci), and verification later checks signature, holder key binding, audience, nonce, algorithm allowlist, expiry, revocation, and issuer trust.
+Didit ID issues SD-JWT VC credentials with the `application/dc+sd-jwt` media type. Issuance follows [OpenID4VCI 1.0](/concepts/openid4vci), and verification later checks signature, holder key binding, audience, nonce, algorithm allowlist, expiry, revocation, and trust policy.
 
 <Note>
   Management endpoints use `Authorization: Bearer $DIDIT_API_KEY`. OpenID4VCI holder endpoints do not use your tenant API key. Never ship the tenant API key to a wallet or browser.
@@ -30,7 +30,7 @@ You need a credential schema, a credential template, and holder data.
 - In Path A, the wallet creates the holder proof JWT.
 - In Path B, your backend provides the holder public JWK.
 
-Use the local development base URL:
+Use the sandbox API base URL:
 
 ```bash
 export DIDIT_API_KEY="didit_tenant_api_key"
@@ -704,4 +704,4 @@ See [list issued credentials](/api-reference/credentials/credentials-get), [get 
 
 - Build the verifier side with [verification](/guides/verification).
 - Review [Token Status Lists](/concepts/status-list) for revocation behavior.
-- Configure trusted issuers with the [trust registry](/guides/trust-registry).
+- Configure framework trust, issuer overrides, and relying-party policy with the [trust registry](/guides/trust-registry).

@@ -5,7 +5,7 @@ description: "A copy-paste setup prompt for an AI coding agent to wire Didit ID 
 
 This page gives you a ready-to-run setup prompt. Paste it into a coding agent such as Cursor or Claude Code and let the agent wire Didit ID into your backend. The prompt walks the agent through programmatic auth, the tenant bootstrap bridge, and a minimal issue, present, and verify integration against the `/v1` management API.
 
-The development base server is `https://idv0.staging.didit.me`. In production, replace it with your deployed host. Programmatic auth lives under `/auth/v2/programmatic/`, the tenant bridge is `POST /v1/tenant/bootstrap`, and management endpoints live under `/v1`.
+The sandbox API base is `https://idv0.staging.didit.me`. Programmatic auth lives under `/auth/v2/programmatic/`, the tenant bridge is `POST /v1/tenant/bootstrap`, and management endpoints live under `/v1`.
 
 ## How to integrate and run
 
@@ -20,10 +20,10 @@ The development base server is `https://idv0.staging.didit.me`. In production, r
     Call `POST /v1/credential-schemas` to define the credential type (`vct`) and its attributes. Mark selectively disclosable attributes with `sd: true`. Then create a `POST /v1/credential-templates` to get a reusable `template_id`.
   </Step>
   <Step title="Issue a credential">
-    For a wallet flow, create an offer with `POST /v1/credential-offers` and deliver `credential_offer_uri`. For a backend flow, issue directly with `POST /v1/credentials/issue` using the holder public JWK. For local demos, `POST /v1/credential-offers/{uuid}/accept` runs issuance server-side.
+    For a wallet flow, create an offer with `POST /v1/credential-offers` and deliver `credential_offer_uri`. For a backend flow, issue directly with `POST /v1/credentials/issue` using the holder public JWK. For sandbox tests, `POST /v1/credential-offers/{uuid}/accept` runs issuance server-side.
   </Step>
   <Step title="Request a presentation">
-    Call `POST /v1/presentations/request` with `requested_vct`, `requested_claims`, and `aud`. Deliver the request to a wallet, or use `POST /v1/presentations/{uuid}/demo-present` locally.
+    Call `POST /v1/presentations/request` with `requested_vct`, `requested_claims`, and `aud`. Deliver the request to a wallet, or use `POST /v1/presentations/{uuid}/demo-present` for a sandbox test.
   </Step>
   <Step title="Verify">
     Read the `verdict`, `disclosed_claims`, and `checks` from the presentation response, and audit results with `GET /v1/verifications`. Manage issuer signing keys with `GET /v1/keys` and `POST /v1/keys/rotate`.
@@ -44,9 +44,8 @@ OpenID4VP verification, SD-JWT VC) into this codebase. Build a minimal, working
 issue -> present -> verify integration on the backend. Follow this spec exactly.
 
 BASE SERVER
-- Dev:  https://idv0.staging.didit.me
-- Prod: replace https://idv0.staging.didit.me with the deployed host.
-- Programmatic auth: {BASE}/auth/v2/programmatic/*  (public, no auth header, CORS-open)
+- Sandbox: https://idv0.staging.didit.me
+- Programmatic auth: {BASE}/auth/v2/programmatic/*  (public, no auth header)
 - Tenant bridge:     {BASE}/v1/tenant/bootstrap      (Bearer <access_token>)
 - Management API:    {BASE}/v1/*                      (Bearer <tenant api_key>)
 
@@ -96,7 +95,7 @@ Path A, wallet (OpenID4VCI):
     body: { "template_id": "<TEMPLATE_ID>", "claims": { "employee_id": "E-1042", "role": "Engineer" } }
     -> { offer_id, credential_offer_uri, credential_issuer, pre_authorized_code, tx_code }
   Deliver credential_offer_uri to the wallet as a deep link / QR.
-  (Local demo only: POST /v1/credential-offers/{offer_id}/accept  body {} runs
+  (Sandbox test: POST /v1/credential-offers/{offer_id}/accept  body {} runs
    token+nonce+proof+credential server-side and returns the credential.)
 Path B, backend direct issuance:
   POST /v1/credentials/issue
@@ -112,7 +111,7 @@ POST /v1/presentations/request
   -> { uuid, dcql, requested_claims, aud, nonce, status }
 Deliver the request to a wallet (W3C Digital Credentials API, openid4vp-v1-signed);
 the wallet submits its vp_token to POST /v1/presentations/{uuid}/response.
-Local demo only: POST /v1/presentations/{uuid}/demo-present  body {}  runs a real
+Sandbox test: POST /v1/presentations/{uuid}/demo-present  body {}  runs a real
 server-side issue+present+verify for that request.
 
 STEP 6 — VERIFY
@@ -137,7 +136,7 @@ Write a small backend module that:
    tenant api_key as Bearer for every /v1 call and the user access_token ONLY for
    /v1/tenant/bootstrap.
 4. includes a runnable end-to-end demo using the /accept and /demo-present demo
-   endpoints so it works locally without a wallet, and prints the final verdict + checks.
+   endpoints so it works before you wire a wallet, and prints the final verdict + checks.
 Use Content-Type: application/json on every request with a body.
 ````
 

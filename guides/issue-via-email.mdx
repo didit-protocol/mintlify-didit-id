@@ -3,7 +3,7 @@ title: "Issue via email"
 description: "Send a credential offer as an email claim link — the holder opens the link in the wallet, enters the transaction code, and claims the credential."
 ---
 
-Email-delivered issuance turns a credential offer into a link you can send to a person. You create the offer with a `recipient_email` and `send_email: true`, Didit ID emails the holder a claim link, and the link opens the [holder wallet](/wallet/index) at `WALLET_BASE_URL/claim?offer=<offer_id>`. The holder reviews the offer, enters the transaction code (PIN), and claims the credential with the standard [OpenID4VCI](/concepts/openid4vci) exchange.
+Email-delivered issuance turns a credential offer into a link you can send to a person. You create the offer with a `recipient_email` and `send_email: true`, Didit ID emails the holder a claim link, and the link opens the [holder wallet](/wallet/index). The holder reviews the offer, enters the transaction code (PIN), and claims the credential with the standard [OpenID4VCI](/concepts/openid4vci) exchange.
 
 Use this path when you are onboarding real people — issuing an `EmployeeBadge` to a new hire, a `StudentID` to an enrolled student, a `MembershipCard` to a member — and you do not want to hand-deliver a QR code. The examples below issue an `EmployeeBadge` from the `acme-corp` issuer.
 
@@ -13,16 +13,7 @@ Use this path when you are onboarding real people — issuing an `EmployeeBadge`
 
 ## Before you start
 
-You need a schema and a template (see [issue credentials](/guides/issuance)), plus two environment values on the service:
-
-| Variable | Purpose |
-| --- | --- |
-| `WALLET_BASE_URL` | Base URL of the holder wallet. The claim link is `WALLET_BASE_URL/claim?offer=<offer_id>`. Defaults to `https://wallet-idv0.staging.didit.me`. |
-| `DJANGO_EMAIL_HOST_PASSWORD` | The Postmark server token. When set, Didit ID sends the claim email through Postmark. |
-
-<Note>
-  **Local dev without Postmark.** If `DJANGO_EMAIL_HOST_PASSWORD` is empty, email delivery degrades gracefully: the service logs the claim URL and caches it, and `GET /v1/dev/last-email?to=<email>` returns the last claim link for that address. The response sets `email_sent: false` with `email_skipped_reason: "postmark_unset"`. The `/v1/dev/*` endpoints exist only in non-production environments.
-</Note>
+You need a schema and a template (see [issue credentials](/guides/issuance)), plus an email address for the holder. The live sandbox uses the hosted wallet at [wallet-idv0.staging.didit.me](https://wallet-idv0.staging.didit.me).
 
 ## Create an emailed offer
 
@@ -138,7 +129,7 @@ A `201` response confirms the offer and reports whether the email went out.
 </ResponseField>
 
 <ResponseField name="email_sent" type="boolean">
-  `true` when Postmark accepted the email. `false` in local dev when Postmark is not configured — check `email_skipped_reason`.
+  `true` when Didit ID queued the claim email for delivery.
 </ResponseField>
 
 <ResponseField name="tx_code" type="string">
@@ -173,7 +164,7 @@ The transaction code (`tx_code`) is a short PIN the holder enters at `POST /v1/o
 
 <Steps>
   <Step title="The holder receives the email">
-    The email contains the credential name, the issuer, and a single Claim button linking to `WALLET_BASE_URL/claim?offer=<offer_id>`.
+    The email contains the credential name, the issuer, and a single Claim button that opens the holder wallet.
   </Step>
   <Step title="The wallet opens the offer">
     The claim link opens the holder wallet, which previews the offer with the public [`GET /v1/credential-offers/{uuid}`](/api-reference/openid4vci/credential-offers-uuid-get) endpoint. When a transaction code is required, the preview shows claim labels only — never the values — until the holder proves possession of the code.
@@ -187,43 +178,6 @@ The transaction code (`tx_code`) is a short PIN the holder enters at `POST /v1/o
 </Steps>
 
 See the [wallet quickstart](/wallet/quickstart) for the holder side end to end, and [issue credentials](/guides/issuance) for the full OpenID4VCI exchange the wallet runs.
-
-## Read the claim link in local dev
-
-Without Postmark, use the dev inbox endpoint to grab the link the wallet would have received by email. This endpoint only exists in non-production environments.
-
-<CodeGroup>
-```bash cURL
-curl "http://localhost:8011/v1/dev/last-email?to=ada@acme-corp.example" | jq
-```
-
-```js JavaScript
-const response = await fetch(
-  "http://localhost:8011/v1/dev/last-email?to=ada@acme-corp.example"
-);
-
-const lastEmail = await response.json();
-const claimUrl = lastEmail.claim_url;
-```
-
-```python Python
-response = requests.get(
-    "http://localhost:8011/v1/dev/last-email",
-    params={"to": "ada@acme-corp.example"},
-)
-
-last_email = response.json()
-claim_url = last_email["claim_url"]
-```
-</CodeGroup>
-
-```json
-{
-  "to": "ada@acme-corp.example",
-  "subject": "Claim your Employee Badge credential",
-  "claim_url": "https://wallet-idv0.staging.didit.me/claim?offer=0f3c8a12-..."
-}
-```
 
 ## Resend a claim email
 

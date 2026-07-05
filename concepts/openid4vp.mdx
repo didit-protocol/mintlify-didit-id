@@ -3,17 +3,17 @@ title: "OpenID4VP"
 description: "Verify wallet presentations with OpenID4VP 1.0, DCQL, holder key binding, and trust checks."
 ---
 
-OpenID4VP lets you ask a wallet for only the claims you need, then verify the returned `vp_token` before you trust the disclosed data. Didit ID implements OpenID4VP 1.0 with DCQL, SD-JWT VC presentations, holder key binding, Token Status List revocation checks, and trusted-issuer validation.
+OpenID4VP lets you ask a wallet for only the claims you need, then verify the returned `vp_token` before you trust the disclosed data. Didit ID implements OpenID4VP 1.0 with DCQL, SD-JWT VC presentations, holder key binding, Token Status List revocation checks, and trust policy validation.
 
 Use OpenID4VP when your application acts as the verifier or relying party. For issuance, see [OpenID4VCI](/concepts/openid4vci). For the credential format, see [SD-JWT VC](/concepts/sd-jwt-vc).
 
-The examples on this page follow an age-gated site verifying an `AgeOver18` credential: the verifier asks only for the boolean `over_18` claim, and the holder's birth year stays hidden.
+The examples on this page follow an age-gated site verifying an `AgeOver18` credential: the verifier asks only for the boolean `over_18` claim, and the holder's birth date stays hidden.
 
 ## Flow overview
 
 <Steps>
   <Step title="Create a presentation request">
-    Call [Create an OpenID4VP presentation request](/api-reference/verification/presentations-request-post) with the credential type, claim names, audience, and optional trusted issuer.
+    Call [Create an OpenID4VP presentation request](/api-reference/verification/presentations-request-post) with the credential type, claim names, audience, and optional trusted issuer filter.
 
     Didit ID creates a presentation request with a DCQL query and a fresh `nonce`.
   </Step>
@@ -25,7 +25,7 @@ The examples on this page follow an age-gated site verifying an `AgeOver18` cred
   <Step title="Submit the vp_token">
     The wallet returns a `vp_token`. Submit it to [Submit a vp_token for verification](/api-reference/verification/presentations-uuid-response-post).
 
-    Didit ID verifies the presentation and returns a `verdict`, `disclosed_claims`, and a `checks` object.
+    Didit ID verifies the presentation, applies the relying party's trust policy, and returns a `verdict`, `disclosed_claims`, and a `checks` object.
   </Step>
   <Step title="Poll or read the verification log">
     Poll [the presentation request](/api-reference/verification/presentations-uuid-get) while the holder flow is pending.
@@ -83,7 +83,7 @@ const presentationRequest = await response.json();
 </ParamField>
 
 <ParamField path="trusted_iss" type="string">
-  The issuer you expect to trust for this request. When present, Didit ID uses the trust registry during verification.
+  Optional issuer filter for this request. The credential must still pass the account or relying-party trust policy.
 </ParamField>
 
 The response includes a presentation `uuid`, `transaction_id`, generated `dcql`, requested claims, `aud`, `nonce`, and request `status`.
@@ -126,6 +126,30 @@ const vpToken = credential.data.vp_token;
 ```
 
 The wallet uses the DCQL query to select a matching credential. For SD-JWT VC, it returns a selective-disclosure presentation with the requested disclosures and a KB-JWT that proves holder control of the bound key.
+
+## Selective disclosure
+
+Selective disclosure is the reason the verifier can ask for a precise fact instead of a whole credential.
+
+For example, an `AgeOver18` credential may contain:
+
+```json
+{
+  "over_18": true,
+  "birth_date": "1990-01-01",
+  "country": "ES"
+}
+```
+
+If the verifier requests only `over_18`, the wallet includes only the `over_18` disclosure in the `vp_token`. The issuer signature still covers the hidden claim commitments, so Didit ID can verify the disclosed value without returning `birth_date` or `country`.
+
+```json
+{
+  "disclosed_claims": {
+    "over_18": true
+  }
+}
+```
 
 <Tip>
   In a production app, pass the presentation request through your holder handoff channel, then submit the wallet's `vp_token` to Didit ID. Use [Demo present](/api-reference/verification/presentations-uuid-demo-present-post) only for server-side test flows.
@@ -197,7 +221,7 @@ Didit ID returns the verification decision, disclosed claims, and check results.
 </ResponseField>
 
 <ResponseField name="checks" type="object">
-  A structured set of boolean checks for cryptographic validity, holder binding, request binding, expiry, and revocation. Didit ID also applies trusted-issuer policy when configured.
+  A structured set of boolean checks for cryptographic validity, holder binding, request binding, expiry, and revocation. Didit ID also applies the relevant trust policy.
 </ResponseField>
 
 ## Verifier checks
@@ -214,15 +238,17 @@ Didit ID verifies the `vp_token` before it returns disclosed claims. Treat the c
 | `not_expired` | The credential is still within its validity period. |
 | `not_revoked` | The credential is not marked revoked or suspended in its [Token Status List](/concepts/status-list). |
 
-The first five checks, `signature`, `key_binding`, `aud`, `nonce`, and `alg_allowlist`, form the KB-JWT verification set. Didit ID then applies credential expiry, Token Status List revocation, and trusted-issuer policy.
+The first five checks, `signature`, `key_binding`, `aud`, `nonce`, and `alg_allowlist`, form the KB-JWT verification set. Didit ID then applies credential expiry, Token Status List revocation, and trust policy.
 
-## Trusted issuers
+## Trust policy
 
-Use the trust registry when you need to restrict which issuers can satisfy a request. Add issuers with [Add a trusted issuer](/api-reference/trust/trusted-issuers-post), validate them with [Validate a trusted issuer](/api-reference/trust/trusted-issuers-uuid-validate-post), and request a specific issuer through `trusted_iss`.
+Use the trust registry when you need to restrict which issuers can satisfy a request. Trust an entire framework, trust individual issuers, or block issuer exceptions inside trusted frameworks.
 
-Didit ID can evaluate trusted issuers under configured frameworks such as eIDAS 2.0, ISO mDL, Swiss e-ID, and US mDL. See [Trust frameworks](/concepts/trust-frameworks) for the model.
+Each relying party can inherit the account trust policy or define its own accepted frameworks and issuers. Didit ID applies that policy automatically during verification. Use `trusted_iss` only when you also want to narrow a single request to one issuer.
 
-The API response mirrors the documented `checks` fields. Trusted-issuer policy affects the verification outcome, but it is not returned as a separate `trusted_issuer` boolean.
+Add issuers with [Add a trusted issuer](/api-reference/trust/trusted-issuers-post), validate them with [Validate a trusted issuer](/api-reference/trust/trusted-issuers-uuid-validate-post), and configure relying parties with [Relying parties](/api-reference/trust/relying-parties-get). See [Trust frameworks](/concepts/trust-frameworks) for the model.
+
+The API response mirrors the documented `checks` fields. Trust policy affects the verification outcome, but it is not returned as a separate `trusted_issuer` boolean.
 
 <Warning>
   Do not use disclosed claims until verification succeeds. A wallet can send a malformed, expired, replayed, or untrusted presentation; the `checks` object tells you which requirement failed.

@@ -5,11 +5,43 @@ description: "Issue and verify standards-based verifiable credentials with OpenI
 
 Didit ID lets you issue and verify verifiable credentials across tenants. Use it to create credential offers, issue SD-JWT VCs, request wallet presentations, and verify disclosed claims with cryptographic and trust checks.
 
-Didit ID implements OpenID4VCI 1.0 for issuance and OpenID4VP 1.0 for verification with DCQL. Credentials use SD-JWT VC draft-16 with the `application/dc+sd-jwt` media type, holder key binding, and IETF Token Status List revocation.
+Didit ID is the full infrastructure for a self-sovereign identity ecosystem: issuer, holder wallet, and verifier, with one API and a console. It implements OpenID4VCI 1.0 for issuance and OpenID4VP 1.0 for verification with DCQL. Credentials use SD-JWT VC draft-16 with the `application/dc+sd-jwt` media type, holder key binding, selective disclosure, and IETF Token Status List revocation.
+
+## Try the live sandbox
+
+<CardGroup cols={3}>
+  <Card title="Console" icon="gauge" href="https://console-idv0.staging.didit.me">
+    Create an account, issue credentials, manage API keys, and configure trust policy.
+  </Card>
+  <Card title="Wallet" icon="wallet" href="https://wallet-idv0.staging.didit.me">
+    Claim credentials into a passkey-secured holder wallet and approve presentations.
+  </Card>
+  <Card title="VeriBank demo" icon="play" href="https://veribank-idv0.staging.didit.me">
+    Pick a relying-party scenario, present a credential, and see the verified result.
+  </Card>
+</CardGroup>
+
+<Steps>
+  <Step title="Create an account in the console">
+    Open the [console](https://console-idv0.staging.didit.me) and create a sandbox account.
+  </Step>
+  <Step title="Issue a credential to your email">
+    Create a credential offer and send it to an email address you can open.
+  </Step>
+  <Step title="Open it in the wallet">
+    Follow the claim link, sign in with a passkey, and claim the SD-JWT VC.
+  </Step>
+  <Step title="Go to the demo relying party">
+    Open [VeriBank](https://veribank-idv0.staging.didit.me) and pick a verification scenario.
+  </Step>
+  <Step title="Present and verify">
+    Approve the requested claims in the wallet. The verifier receives only the disclosed claims and a final verdict.
+  </Step>
+</Steps>
 
 <CardGroup cols={2}>
   <Card title="Quickstart" icon="rocket" href="/quickstart">
-    Issue and verify your first credential with the local API.
+    Issue and verify your first credential with the sandbox API.
   </Card>
   <Card title="Verifiable credentials" icon="badge-check" href="/concepts/verifiable-credentials">
     Learn how Didit ID models credentials, claims, disclosures, and holder control.
@@ -18,7 +50,7 @@ Didit ID implements OpenID4VCI 1.0 for issuance and OpenID4VP 1.0 for verificati
     Build an OpenID4VCI flow with credential offers, pre-authorized codes, proofs, and SD-JWT VC issuance.
   </Card>
   <Card title="Verify presentations" icon="shield-check" href="/guides/verification">
-    Request wallet presentations with OpenID4VP, DCQL, nonce binding, and trusted issuer checks.
+    Request wallet presentations with OpenID4VP, DCQL, nonce binding, and trust policy checks.
   </Card>
   <Card title="API Reference" icon="book-open" href="/api-reference/openid4vci/credential-offers-post">
     Browse generated endpoint references for issuance, verification, credentials, trust, keys, and status lists.
@@ -29,11 +61,11 @@ Didit ID implements OpenID4VCI 1.0 for issuance and OpenID4VP 1.0 for verificati
 
 - Issue SD-JWT VC credentials through OpenID4VCI credential offers.
 - Verify wallet presentations through OpenID4VP and DCQL.
-- Check signatures, key binding, audience, nonce, algorithm policy, expiry, revocation, and issuer trust.
-- Manage schemas, templates, issued credentials, trusted issuers, relying parties, issuer keys, and status lists.
+- Check signatures, key binding, audience, nonce, algorithm policy, expiry, revocation, and trust policy.
+- Manage schemas, templates, issued credentials, trust frameworks, trusted issuers, relying parties, issuer keys, API keys, webhooks, and status lists.
 
 ## API basics
 
-The development base URL is `https://idv0.staging.didit.me/v1`. Management endpoints use `Authorization: Bearer <tenant API key>`. OpenID4VCI and OpenID4VP protocol endpoints are public.
+The sandbox API base URL is `https://idv0.staging.didit.me/v1`. Management endpoints use `Authorization: Bearer <tenant API key>`. OpenID4VCI and OpenID4VP protocol endpoints are public.
 
-Start with [authentication](/reference/authentication), then follow [issuance](/guides/issuance) or [verification](/guides/verification).
+Start with [authentication](/reference/authentication), then follow [issuance](/guides/issuance) or [verification](/guides/verification). Use [API keys](/api-reference/api-keys/api-keys-get) and [webhooks](/api-reference/webhooks/webhooks-get) when you need production-style integration controls.

@@ -7,7 +7,7 @@ Programmatic access lets a script or an AI agent onboard to Didit ID end to end 
 
 Use this flow when a backend service, a CI job, or a coding agent needs to obtain its own Didit ID credentials and start issuing and verifying without a human clicking through the Console.
 
-The development base server is `https://idv0.staging.didit.me`. In production, use your deployed host in place of `https://idv0.staging.didit.me`. Programmatic auth endpoints live under `/auth/v2/programmatic/`, the tenant bridge lives at `/v1/tenant/bootstrap`, and the management API lives under `/v1`.
+The sandbox API base is `https://idv0.staging.didit.me`. Programmatic auth endpoints live under `/auth/v2/programmatic/`, the tenant bridge lives at `/v1/tenant/bootstrap`, and the management API lives under `/v1`.
 
 <Note>
   `POST /auth/v2/programmatic/verify-email/` is the one-time bootstrap for a new account. It returns your `access_token` and `refresh_token`, and it also provisions and returns your `organization` and `application`. Later, use `POST /auth/v2/programmatic/login/` whenever you need fresh tokens.
@@ -24,7 +24,7 @@ The development base server is `https://idv0.staging.didit.me`. In production, u
 | Bootstrap tenant | `POST /v1/tenant/bootstrap` | `Bearer <access_token>` | Provision the credentials tenant and return the tenant API key |
 | Management API | `/v1/*` | `Bearer <api_key>` | Issue, verify, and manage credentials |
 
-The programmatic auth endpoints are public and CORS-open. They take no `Authorization` header. The tenant bridge takes your user `access_token`. Everything under `/v1` after bootstrap takes the tenant API key.
+The programmatic auth endpoints are public and take no `Authorization` header. The tenant bridge takes your user `access_token`. Everything under `/v1` after bootstrap takes the tenant API key.
 
 ## Walkthrough
 

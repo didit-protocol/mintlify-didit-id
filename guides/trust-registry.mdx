@@ -1,65 +1,74 @@
 ---
 title: "Trust registry"
-description: "Manage trusted issuers, relying parties, and trust frameworks for OpenID4VP verification."
+description: "Manage framework trust, issuer overrides, trusted issuers, and relying-party policies for verification."
 ---
 
-Use the trust registry to decide which issuers and relying parties your tenant accepts. Add trusted issuers before you verify wallet presentations, validate those registry entries, and remove entries that should no longer be trusted.
+Use the trust registry to decide which issuers each verifier accepts. Trust can come from a governed framework, an individual issuer, or a relying-party-specific policy. Didit ID applies that policy automatically during [OpenID4VP verification](/guides/verification).
 
-Trust decisions apply during [OpenID4VP verification](/guides/verification). Didit ID also returns cryptographic and lifecycle checks such as `signature`, `key_binding`, `aud`, `nonce`, `alg_allowlist`, `not_expired`, and `not_revoked`.
+Trust decisions are separate from cryptographic checks. At verification time, Didit ID checks the credential signature, holder key binding, audience, nonce, algorithm allowlist, expiry, revocation, and the applicable trust policy.
+
+<CardGroup cols={2}>
+  <Card title="Try it in the console" icon="gauge" href="https://console-idv0.staging.didit.me">
+    Open trust settings, review Didit Network, add trusted issuers, and configure relying-party policies.
+  </Card>
+  <Card title="Trust API reference" icon="book-open" href="/api-reference/trust/trust-frameworks-get">
+    Browse trust frameworks, trusted issuers, issuer overrides, and relying-party endpoints.
+  </Card>
+</CardGroup>
 
 <Note>
   Trust registry endpoints are management endpoints. Send `Authorization: Bearer $DIDIT_API_KEY` with each request.
 </Note>
 
-## Choose a trust framework
+## Choose the account trust policy
 
-A trust framework is the policy context for a trusted issuer. Didit ID includes frameworks such as eIDAS 2.0, ISO mDL, Swiss e-ID, and US mDL. Use the framework identifier returned by [`GET /trust-frameworks`](/api-reference/trust/trust-frameworks-get). The examples below use `eidas2`.
+The account trust policy is the default policy for relying parties that inherit trust from the account.
 
 <Steps>
-  <Step title="List available frameworks">
-    Fetch the frameworks configured for your tenant.
-
-    <CodeGroup>
-      ```bash cURL
-      curl https://idv0.staging.didit.me/v1/trust-frameworks \
-        -H "Authorization: Bearer $DIDIT_API_KEY"
-      ```
-
-      ```js JavaScript
-      const response = await fetch("https://idv0.staging.didit.me/v1/trust-frameworks", {
-        headers: {
-          Authorization: `Bearer ${process.env.DIDIT_API_KEY}`,
-        },
-      });
-
-      const frameworks = await response.json();
-      ```
-    </CodeGroup>
+  <Step title="Review Didit Network">
+    New accounts trust the **Didit Network** framework by default. It represents issuers on the Didit platform and keeps the live sandbox working immediately.
   </Step>
-
-  <Step title="Pick the framework identifier">
-    Store the framework identifier you want to use when you create trusted issuer entries. Do not hardcode display names such as `eIDAS 2.0`; send the identifier expected by the API.
+  <Step title="Trust or disable frameworks">
+    Trust a whole framework when its governance is enough. Turn framework trust off when you want explicit issuer approval.
+  </Step>
+  <Step title="Add issuer overrides">
+    Block a specific issuer inside a trusted framework when the framework is generally trusted but that issuer should not be accepted.
+  </Step>
+  <Step title="Add individual issuers">
+    Trust individual issuers when you do not want to accept a whole framework.
   </Step>
 </Steps>
 
+List frameworks with [`GET /trust-frameworks`](/api-reference/trust/trust-frameworks-get), inspect one with [`GET /trust-frameworks/{slug}`](/api-reference/trust/trust-frameworks-slug-get), and update account framework trust with [`PUT /trust-frameworks/{slug}/trust`](/api-reference/trust/trust-frameworks-slug-trust-put).
+
+Create per-issuer framework exceptions with [`POST /trust-frameworks/{slug}/issuer-overrides`](/api-reference/trust/trust-frameworks-slug-issuer-overrides-post).
+
 ## Add a trusted issuer
 
-Create a trusted issuer entry with [`POST /trusted-issuers`](/api-reference/trust/trusted-issuers-post). The API example uses an issuer URL, a trust anchor, and a framework identifier.
+Create a trusted issuer entry with [`POST /trusted-issuers`](/api-reference/trust/trusted-issuers-post). Use this when you want to accept one issuer directly.
 
 <ParamField body="name" type="string">
   Human-readable issuer name, such as `State University Registrar`.
 </ParamField>
 
 <ParamField body="iss" type="string">
-  Issuer identifier that appears in credentials and verification policy, such as `https://id.state-university.example`.
+  Issuer identifier that appears in SD-JWT VCs, such as `https://id.state-university.example`. This value is immutable after creation.
 </ParamField>
 
 <ParamField body="trust_anchor" type="string">
-  Trust anchor for the issuer entry. The OpenAPI example uses `did-web`.
+  Trust anchor for the issuer entry. Use a JWKS endpoint, `did:web`, or x509 material depending on the issuer ecosystem.
+</ParamField>
+
+<ParamField body="jwks_uri" type="string">
+  JWKS URI for issuer signing keys when the issuer uses a JWKS trust anchor.
+</ParamField>
+
+<ParamField body="did" type="string">
+  DID for issuers anchored by `did:web`.
 </ParamField>
 
 <ParamField body="framework" type="string">
-  Trust framework identifier. Use a value returned by `GET /trust-frameworks`, such as `eidas2`.
+  Trust framework identifier for the issuer.
 </ParamField>
 
 <CodeGroup>
@@ -71,7 +80,7 @@ Create a trusted issuer entry with [`POST /trusted-issuers`](/api-reference/trus
       "name": "State University Registrar",
       "iss": "https://id.state-university.example",
       "trust_anchor": "did-web",
-      "framework": "eidas2"
+      "framework": "education"
     }'
   ```
 
@@ -86,7 +95,7 @@ Create a trusted issuer entry with [`POST /trusted-issuers`](/api-reference/trus
       name: "State University Registrar",
       iss: "https://id.state-university.example",
       trust_anchor: "did-web",
-      framework: "eidas2",
+      framework: "education",
     }),
   });
 
@@ -94,31 +103,13 @@ Create a trusted issuer entry with [`POST /trusted-issuers`](/api-reference/trus
   ```
 </CodeGroup>
 
-The create response includes the registry entry that you use for validation and removal.
-
-<ResponseField name="id" type="string">
-  Trusted issuer UUID.
-</ResponseField>
-
-<ResponseField name="name" type="string">
-  Trusted issuer display name.
-</ResponseField>
-
-<ResponseField name="iss" type="string">
-  Issuer identifier stored in the trust registry.
-</ResponseField>
-
-<ResponseField name="trust_anchor" type="string">
-  Trust anchor stored for the issuer.
-</ResponseField>
-
-<ResponseField name="status" type="string">
-  Registry status for the issuer entry, such as `active`.
-</ResponseField>
+You can edit the issuer name, trust anchor, JWKS URI, DID, and framework with [`PATCH /trusted-issuers/{uuid}`](/api-reference/trust/trusted-issuers-uuid-patch). The `iss` value is the stable issuer identity and cannot be changed.
 
 ## Validate a trusted issuer
 
-Use [`POST /trusted-issuers/{uuid}/validate`](/api-reference/trust/trusted-issuers-uuid-validate-post) before relying on a new or changed entry. Validation is scoped to the trusted issuer UUID.
+Use [`POST /trusted-issuers/{uuid}/validate`](/api-reference/trust/trusted-issuers-uuid-validate-post) after you add or edit an issuer.
+
+Issuer validation resolves the issuer against its published SD-JWT VC issuer metadata at `/.well-known/jwt-vc-issuer` and its keys. The console shows a validation status so operators can see whether an issuer entry resolves cleanly.
 
 <CodeGroup>
   ```bash cURL
@@ -139,12 +130,22 @@ Use [`POST /trusted-issuers/{uuid}/validate`](/api-reference/trust/trusted-issue
 </CodeGroup>
 
 <Tip>
-  Validate a trusted issuer after you add it and after any out-of-band trust anchor change.
+  Validation helps you configure trust. Verification still checks the credential signature against issuer keys every time a holder presents a credential.
 </Tip>
+
+## Configure relying-party policy
+
+A relying party is a verifier application, brand, product, or journey. Each relying party can inherit the account policy or define its own accepted frameworks and issuers.
+
+Use per-relying-party policy when one account operates many verifiers. For example, you can onboard multiple brands or airlines as separate relying parties, then give each one its own accepted frameworks and blocked issuer exceptions.
+
+Register relying parties with [`POST /relying-parties`](/api-reference/trust/relying-parties-post), list them with [`GET /relying-parties`](/api-reference/trust/relying-parties-get), update policy with [`PATCH /relying-parties/{uuid}`](/api-reference/trust/relying-parties-uuid-patch), and delete them with [`DELETE /relying-parties/{uuid}`](/api-reference/trust/relying-parties-uuid-delete).
 
 ## Use trust during verification
 
-When you create a presentation request, pass `trusted_iss` to constrain the OpenID4VP request to a trusted issuer. Didit ID builds the DCQL request and verifies the returned `vp_token`.
+When your backend creates a presentation request, choose the relying party or audience that represents the verifier. Didit ID applies that relying party's trust policy automatically when the wallet submits the `vp_token`.
+
+You can still pass `trusted_iss` to narrow a request to one issuer. It is an issuer filter, not a replacement for policy. The submitted credential must match `trusted_iss` and pass the applicable account or relying-party trust policy.
 
 <CodeGroup>
   ```bash cURL
@@ -178,42 +179,11 @@ When you create a presentation request, pass `trusted_iss` to constrain the Open
   ```
 </CodeGroup>
 
-See [Verify presentations](/guides/verification) and [`POST /presentations/request`](/api-reference/verification/presentations-request-post) for the full OpenID4VP flow.
-
-## Register a relying party
-
-Register relying parties with [`POST /relying-parties`](/api-reference/trust/relying-parties-post), then list them with [`GET /relying-parties`](/api-reference/trust/relying-parties-get). The current OpenAPI spec defines the registration endpoint without a JSON request body.
-
-<CodeGroup>
-  ```bash cURL
-  curl -X POST https://idv0.staging.didit.me/v1/relying-parties \
-    -H "Authorization: Bearer $DIDIT_API_KEY"
-
-  curl https://idv0.staging.didit.me/v1/relying-parties \
-    -H "Authorization: Bearer $DIDIT_API_KEY"
-  ```
-
-  ```js JavaScript
-  await fetch("https://idv0.staging.didit.me/v1/relying-parties", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${process.env.DIDIT_API_KEY}`,
-    },
-  });
-
-  const response = await fetch("https://idv0.staging.didit.me/v1/relying-parties", {
-    headers: {
-      Authorization: `Bearer ${process.env.DIDIT_API_KEY}`,
-    },
-  });
-
-  const relyingParties = await response.json();
-  ```
-</CodeGroup>
+See [Verify presentations](/guides/verification), [Build a relying party](/guides/relying-party), and [`POST /presentations/request`](/api-reference/verification/presentations-request-post) for the full OpenID4VP flow.
 
 ## Remove trust registry entries
 
-Remove trusted issuers and relying parties by UUID. Removal deletes the registry entry from your tenant.
+Remove trusted issuers and relying parties by UUID. Removal changes future trust decisions for the account or relying party.
 
 <CodeGroup>
   ```bash cURL
@@ -242,5 +212,5 @@ Remove trusted issuers and relying parties by UUID. Removal deletes the registry
 </CodeGroup>
 
 <Warning>
-  Removing a trusted issuer changes future trust decisions for that tenant. Review active verification flows before you delete registry entries.
+  Review active verification flows before you remove framework trust, issuer overrides, trusted issuers, or relying-party policy. The change affects future verification verdicts.
 </Warning>

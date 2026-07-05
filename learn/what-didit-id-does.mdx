@@ -3,9 +3,9 @@ title: "What Didit ID does"
 description: "Map Didit ID product capabilities to plain-language benefits."
 ---
 
-Didit ID is the backend service that helps your application issue, manage, and verify digital credentials. Think of it as the credential desk behind your app. An issuer creates a credential, and a verifier checks it.
+Didit ID is the infrastructure that helps your application issue, hold, manage, and verify digital credentials. Think of it as the credential desk behind your app. An issuer creates a credential, a holder keeps it in a wallet, and a verifier checks it.
 
-Didit ID creates the signed proof, supports wallet handoff, checks presentations, manages which issuers you trust, and rotates signing keys.
+Didit ID creates the signed proof, supports wallet handoff, checks presentations, manages trust policy, sends lifecycle webhooks, manages API keys, and rotates signing keys.
 
 <Note>
   A **signing key** is just the secret an issuer uses to make its digital seal (the wax seal from [What is a verifiable credential?](/learn/what-is-a-verifiable-credential)). Anyone can check the seal, but only the holder of the key can make it.
@@ -17,11 +17,12 @@ Didit ID creates the signed proof, supports wallet handoff, checks presentations
 | --- | --- |
 | Define credential schemas and templates | decide which facts a credential can contain before you issue it. |
 | Issue credentials | give a person or system a signed digital proof, such as a boarding pass, employee badge, or reusable Know Your Customer (KYC) result. |
-| Let people carry credentials in wallets | let people or systems keep proof and show it later without re-checking the same facts. |
+| Let people carry credentials in wallets | let people or systems keep proof in a passkey-secured wallet and show it later without re-checking the same facts. |
 | Verify presentations | check the digital seal, that the wallet was allowed to share it, that it was meant for this checker, a one-time code that blocks a copied reply from being reused, whether it has expired, whether it was cancelled, and whether the issuer is trusted. |
-| Manage trusted issuers | decide which issuers your application will believe for each type of proof. |
+| Manage trust policy | trust frameworks, trust individual issuers, block issuer exceptions, and give each relying party its own policy. |
 | Revoke, suspend, or reactivate credentials | stop a credential from verifying when it should no longer count. |
 | Rotate issuer signing keys | switch to a fresh signing key (the secret used to make the seal) for new credentials, while credentials already issued keep working during a grace period. |
+| Manage API keys and webhooks | control server access and receive lifecycle events for integration workflows. |
 | Keep verification logs | audit what was requested, what was disclosed, and what result Didit ID returned. |
 
 <CardGroup cols={2}>
@@ -35,7 +36,7 @@ Didit ID creates the signed proof, supports wallet handoff, checks presentations
     Request a credential presentation and read the final verification result.
   </Card>
   <Card title="Trust" icon="list-check" href="/guides/trust-registry">
-    Register issuers your organization accepts before you trust credentials from them.
+    Configure framework trust, trusted issuers, issuer overrides, and relying-party policies.
   </Card>
 </CardGroup>
 

@@ -1,71 +1,67 @@
 ---
 title: "Run the full demo"
-description: "Walk one credential through its full life — issue, claim into a passkey wallet, and verify with selective disclosure — on the hosted Didit ID demo, in about 10 minutes."
+description: "Walk one credential through the full Didit ID triangle of trust: issue, claim, present, and verify with selective disclosure."
 ---
 
-This walkthrough drives one credential through its whole life on the **hosted Didit ID demo**: create a schema, issue it by email, claim it into a passkey-backed wallet, and verify it with selective disclosure. Nothing to install — everything runs in your browser against the live environment. Budget about 10 minutes.
+This walkthrough uses the live Didit ID sandbox. You create an account in the console, issue a credential by email, claim it into the passkey-secured wallet, and present it to the VeriBank relying-party demo.
 
-## Prerequisites
+## Try the live sandbox
 
-- **A passkey-capable browser** — Chrome, Safari, or Edge on a device with a platform authenticator (Touch ID, Windows Hello) or a security key.
-- **An email address you can read** — the console and wallet email you a one-time code, and the credential offer arrives by email too. Any domain works.
-
-## The hosted apps
-
-Three browser apps, all backed by one API.
-
-| App | What it is | URL |
-| --- | --- | --- |
-| Console | Issuer + verifier operator app | [`console-idv0.staging.didit.me`](https://console-idv0.staging.didit.me/console) |
-| Holder wallet | Where credentials live (in your browser) | [`wallet-idv0.staging.didit.me`](https://wallet-idv0.staging.didit.me) |
-| VeriBank | Relying-party (verifier) demo | [`veribank-idv0.staging.didit.me`](https://veribank-idv0.staging.didit.me) |
-| API | The service all three call | `https://idv0.staging.didit.me` |
+<CardGroup cols={3}>
+  <Card title="Console" icon="gauge" href="https://console-idv0.staging.didit.me">
+    Create an account, issue credentials, manage API keys, and configure trust.
+  </Card>
+  <Card title="Wallet" icon="wallet" href="https://wallet-idv0.staging.didit.me">
+    Claim and present credentials protected by your passkey.
+  </Card>
+  <Card title="VeriBank" icon="play" href="https://veribank-idv0.staging.didit.me">
+    Pick a relying-party scenario and verify selected claims.
+  </Card>
+</CardGroup>
 
 <Note>
-  Passkeys are bound to the `didit.me` domain, so the console and wallet share the same passkey — sign in to either with the same account.
+  You need a passkey-capable browser and an email address you can read. The sandbox sends account and credential messages to that email.
 </Note>
 
-## Walkthrough
+## End-to-end flow
 
 <Steps>
-  <Step title="Sign up in the console">
-    Open the [console](https://console-idv0.staging.didit.me/console) and create an account with any email. You'll get a one-time code by email — enter it to confirm. On first sign-in the console bootstraps your credentials tenant and its API key. See [programmatic access](/guides/programmatic-access) for the same flow via the API.
+  <Step title="Create an account in the console">
+    Open the [console](https://console-idv0.staging.didit.me) and create a sandbox account. New accounts trust the Didit Network framework by default, so the demo works immediately. You can later turn that framework off and require explicit trust.
   </Step>
-
-  <Step title="Create an EmployeeBadge schema">
-    In the console, create a credential schema with `vct` = `EmployeeBadge` and three selectively disclosable attributes: `employee_id`, `role`, and `department`. This is the equivalent of [`POST /v1/credential-schemas`](/api-reference/credentials/credential-schemas-post).
+  <Step title="Issue a credential to your email">
+    Create a credential offer, choose an email recipient, and send it. The claim link goes to the holder wallet.
   </Step>
-
-  <Step title="Issue the credential by email">
-    Create a credential offer for the badge with your own email as `recipient_email` and `send_email: true`. The console fills in the claim values (for example `employee_id: E-1042`, `role: Engineer`, `department: Platform`). See [issue via email](/guides/issue-via-email). You'll receive a **claim link** by email; keep the transaction code the console shows you.
+  <Step title="Open it in the wallet">
+    Open the claim link in the [wallet](https://wallet-idv0.staging.didit.me), sign in with a passkey, review the offer, and claim the SD-JWT VC.
   </Step>
-
-  <Step title="Create a wallet account with a passkey">
-    Open the [wallet](https://wallet-idv0.staging.didit.me) and create an account. The wallet uses a passkey (WebAuthn) for account sign-in and generates a WebCrypto ES256 holder key per credential. Approve the passkey prompt in your browser.
+  <Step title="Go to the demo relying party">
+    Open [VeriBank](https://veribank-idv0.staging.didit.me) and pick a scenario. The relying party creates an OpenID4VP presentation request.
   </Step>
-
-  <Step title="Claim the credential">
-    Open the claim link from your email in the wallet (or paste it in). Review the offer, enter the transaction code, and claim. The wallet runs the [OpenID4VCI](/concepts/openid4vci) exchange — token, nonce, holder proof — and stores the SD-JWT VC bound to a fresh holder key. See the [wallet quickstart](/wallet/quickstart).
-  </Step>
-
-  <Step title="Verify with selective disclosure">
-    Open [VeriBank](https://veribank-idv0.staging.didit.me) and pick a scenario. It requests a presentation (for example, the badge `role`). Scan the QR with the wallet or use the same-device link, approve the disclosure of only the requested claim, and the demo polls for the verdict. The verifier learns `role` and nothing else. See [build a relying party](/guides/relying-party).
+  <Step title="Present and verify">
+    Approve the requested claims in the wallet. The verifier receives only those disclosed claims and the final `verdict`.
   </Step>
 </Steps>
 
 ## What you just proved
 
-- An issuer defined a credential type and issued it by email — no wallet pre-provisioning.
-- A holder claimed it into a browser wallet with a passkey account and per-credential holder keys.
-- A verifier confirmed one claim without the holder revealing the rest.
+- An issuer created and emailed a standards-based credential offer.
+- A holder claimed the credential into a passkey-secured wallet.
+- A relying party verified the presentation with OpenID4VP, SD-JWT VC selective disclosure, lifecycle checks, and trust policy.
 
-## Next steps
+## Explore the implementation
 
 <CardGroup cols={2}>
-  <Card title="Wallet architecture" icon="sitemap" href="/wallet/architecture">
-    How the wallet stores keys and credentials and runs the claim and present pipelines.
+  <Card title="Issue via email" icon="envelope" href="/guides/issue-via-email">
+    Send credential offers as wallet claim links.
   </Card>
-  <Card title="Integration prompt" icon="robot" href="/integration-prompt">
-    Hand the whole integration to an AI coding agent in one paste.
+  <Card title="Build a relying party" icon="shield-check" href="/guides/relying-party">
+    Request presentations, apply trust policy, and read disclosed claims.
+  </Card>
+  <Card title="Trust registry" icon="list-check" href="/guides/trust-registry">
+    Configure framework trust, issuer overrides, and relying-party policies.
+  </Card>
+  <Card title="API reference" icon="book-open" href="/api-reference">
+    Browse generated references for issuance, verification, trust, webhooks, and API keys.
   </Card>
 </CardGroup>

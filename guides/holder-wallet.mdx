@@ -3,7 +3,7 @@ title: "Holder wallet"
 description: "Build the holder-side flow for accepting offers, approving disclosures, and presenting credentials."
 ---
 
-Build a holder wallet that accepts OpenID4VCI credential offers, shows a consent and selective-disclosure screen, and presents SD-JWT VC credentials through OpenID4VP. The wallet never needs the tenant API key. It uses public holder and verifier protocol endpoints. The examples below follow a member claiming a `MembershipCard` credential from the `summit-club` issuer and later presenting their membership `level`.
+Build a holder wallet that accepts OpenID4VCI credential offers, protects holder access with passkeys, shows a consent and selective-disclosure screen, and presents SD-JWT VC credentials through OpenID4VP. The wallet never needs the tenant API key. It uses public holder and verifier protocol endpoints. The examples below follow a member claiming a `MembershipCard` credential from the `summit-club` issuer and later presenting their membership `level`.
 
 <CardGroup cols={2}>
   <Card title="Verify presentations" icon="shield-check" href="/guides/verification">
@@ -11,6 +11,9 @@ Build a holder wallet that accepts OpenID4VCI credential offers, shows a consent
   </Card>
   <Card title="Issue credentials" icon="send" href="/guides/issuance">
     Build the issuer-side OpenID4VCI flow that creates credential offers.
+  </Card>
+  <Card title="Try the hosted wallet" icon="wallet" href="https://wallet-idv0.staging.didit.me">
+    Claim and present credentials in the live sandbox wallet.
   </Card>
   <Card title="Accept an offer" icon="badge-plus" href="/api-reference/openid4vci/credential-offers-uuid-accept-post">
     See the generated reference for the demo holder accept endpoint.
@@ -27,13 +30,13 @@ Build a holder wallet that accepts OpenID4VCI credential offers, shows a consent
     The issuer sends the holder a `credential_offer_uri` created by `POST /credential-offers`.
   </Step>
   <Step title="Preview and accept">
-    The wallet previews the offer with `GET /credential-offers/{uuid}` or uses the demo accept endpoint, `POST /credential-offers/{uuid}/accept`.
+    The wallet previews the offer with `GET /credential-offers/{uuid}` and asks the holder to sign in or confirm access with a passkey.
   </Step>
   <Step title="Request a credential">
     A production wallet exchanges the pre-authorized code at `POST /oauth/token`, gets a `c_nonce` from `POST /nonce`, and submits a holder proof to `POST /credential`.
   </Step>
   <Step title="Store the SD-JWT VC">
-    Store the returned `credential` string and the holder key that will sign future KB-JWT presentations.
+    Store the returned `credential` string in the holder wallet and keep it protected by the wallet's passkey-secured access model.
   </Step>
   <Step title="Approve presentation requests">
     When a verifier requests claims, show the relying party, issuer, credential type, requested claims, and disclosure choices before signing.
@@ -203,7 +206,7 @@ The credential response includes the compact SD-JWT VC string and its credential
 }
 ```
 
-Store the `credential` value with the holder key that created the proof. The same holder key signs the KB-JWT when the wallet presents the credential.
+Store the `credential` value in the holder wallet and keep it available only after the holder signs in or confirms access with a passkey. The holder proof used at claim time is the same standards-level holder binding the wallet later proves during presentation.
 
 ## Build the consent screen
 
@@ -232,6 +235,10 @@ Before presenting a credential, show the holder exactly what the verifier asks f
 <Warning>
   Do not disclose claims that were not requested. A selective-disclosure presentation should include only approved disclosures plus the KB-JWT needed for holder key binding.
 </Warning>
+
+<Tip>
+  The hosted Didit wallet uses passkeys for holder access. If you build your own wallet, use an equivalent strong account access and approval model before claims or presentations.
+</Tip>
 
 ## Present with the Digital Credentials API
 
@@ -352,7 +359,8 @@ async function pollPresentation({ presentationId }) {
 ## Wallet implementation checklist
 
 - Keep tenant API keys out of the wallet.
-- Store the SD-JWT VC credential string and the holder key together.
+- Protect wallet access and presentation approval with passkeys or an equivalent strong authentication method.
+- Store credentials so they are available only to the authenticated holder.
 - Sign the OpenID4VCI proof with the holder key that will control the credential.
 - Show the verifier, issuer, credential type, requested claims, and session binding before presentation.
 - Disclose only claims the holder approved.
