@@ -15,8 +15,8 @@ Build a holder wallet that accepts OpenID4VCI credential offers, protects holder
   <Card title="Try the hosted wallet" icon="wallet" href="https://wallet-idv0.staging.didit.me">
     Claim and present credentials in the live sandbox wallet.
   </Card>
-  <Card title="Accept an offer" icon="badge-plus" href="/api-reference/openid4vci/credential-offers-uuid-accept-post">
-    See the generated reference for the demo holder accept endpoint.
+  <Card title="Preview an offer" icon="badge-plus" href="/api-reference/openid4vci/credential-offers-uuid-get">
+    See the generated reference for the public offer preview a wallet fetches before claiming.
   </Card>
   <Card title="Submit a presentation" icon="file-check" href="/api-reference/verification/presentations-uuid-response-post">
     See the generated reference for submitting an OpenID4VP `vp_token`.
@@ -66,34 +66,9 @@ Use [`GET /credential-offers/{uuid}`](/api-reference/openid4vci/credential-offer
 curl "https://idv0.staging.didit.me/v1/credential-offers/$OFFER_ID"
 ```
 
-For demos, use [`POST /credential-offers/{uuid}/accept`](/api-reference/openid4vci/credential-offers-uuid-accept-post). This endpoint runs a server-side proof-of-possession path so you can test offer acceptance without implementing local wallet signing first.
+The preview is deliberately PII-safe: while the offer still requires a `tx_code`, `claims` carries names and labels only, and the recipient email is masked as `recipient_hint`. Claim values appear once the wallet has proven the code at `POST /oauth/token`. Unknown, expired, or already-claimed offers return `404`, so treat a `404` here as "ask the issuer for a fresh offer".
 
-<CodeGroup>
-
-```bash cURL
-curl -X POST "https://idv0.staging.didit.me/v1/credential-offers/$OFFER_ID/accept" \
-  -H "Content-Type: application/json" \
-  -d '{}'
-```
-
-```js JavaScript
-const response = await fetch(
-  `https://idv0.staging.didit.me/v1/credential-offers/${offerId}/accept`,
-  {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({}),
-  }
-);
-
-if (!response.ok) {
-  throw new Error("Offer acceptance failed");
-}
-```
-
-</CodeGroup>
+A wallet that scanned a QR code or deep link holds the tenant slug and the pre-authorized code instead of the offer UUID. Resolve those with [`GET /credential-offers/resolve?tenant=<slug>&code=<pre_authorized_code>`](/api-reference/openid4vci/credential-offers-resolve-get), which returns the same preview payload. The OpenID4VCI credential-offer document that `credential_offer_uri` points at is served by [`GET /credential-offers/{uuid}/offer`](/api-reference/openid4vci/credential-offers-uuid-offer-get).
 
 ## Request the credential in a production wallet
 
@@ -163,12 +138,13 @@ const nonce = await nonceResponse.json();
 
 </CodeGroup>
 
-Submit the holder proof to [`POST /credential`](/api-reference/openid4vci/credential-post). The proof JWT should bind the credential request to the holder key and the `c_nonce`.
+Submit the holder proof to [`POST /credential`](/api-reference/openid4vci/credential-post) with the issuance `access_token` as a bearer token. The proof JWT should bind the credential request to the holder key and the `c_nonce`. The access token lives 300 seconds and the `c_nonce` 60 seconds; both are single-use.
 
 <CodeGroup>
 
 ```bash cURL
 curl -X POST "https://idv0.staging.didit.me/v1/credential" \
+  -H "Authorization: Bearer $HOLDER_ACCESS_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
     "proof": {
@@ -182,6 +158,7 @@ curl -X POST "https://idv0.staging.didit.me/v1/credential" \
 const credentialResponse = await fetch("https://idv0.staging.didit.me/v1/credential", {
   method: "POST",
   headers: {
+    Authorization: `Bearer ${token.access_token}`,
     "Content-Type": "application/json",
   },
   body: JSON.stringify({
@@ -367,8 +344,8 @@ async function pollPresentation({ presentationId }) {
 - Bind every presentation to the verifier `aud` and `nonce`.
 - Submit the final `vp_token` to `POST /presentations/{uuid}/response`.
 
-<Accordion title="Is POST /credential-offers/{uuid}/accept production wallet logic?">
-  No. It is a demo holder endpoint with server-side proof of possession. Production wallets should run the OpenID4VCI token, nonce, and credential endpoints with their own holder key.
+<Accordion title="Can Didit ID accept an offer on the holder's behalf?">
+  No. Proof of possession is always produced by the wallet: it holds the private key, signs the OpenID4VCI proof JWT, and calls `POST /oauth/token`, `POST /nonce`, and `POST /credential` itself. To test without writing that code, claim the offer in the hosted sandbox wallet.
 </Accordion>
 
 <Accordion title="Does the wallet need DIDIT_API_KEY?">

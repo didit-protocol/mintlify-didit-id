@@ -1,12 +1,4 @@
 {
-  "DELETE /v1/members/{email}": {
-    "errors": [],
-    "responses": {
-      "204": {}
-    },
-    "source": "captured-live",
-    "summary": "Remove a team member (204)."
-  },
   "DELETE /v1/relying-parties/{uuid}": {
     "errors": [],
     "responses": {
@@ -19,7 +11,7 @@
     "errors": [
       {
         "body": {
-          "detail": "'ISO/IEC 18013-5 mDL' is a governed framework managed by its governance authority \u2014 it cannot be edited or deleted. Create a custom framework instead."
+          "detail": "'ISO/IEC 18013-5 mDL' is a governed framework managed by its governance authority — it cannot be edited or deleted. Create a custom framework instead."
         },
         "note": "deleting a governed framework",
         "status": 403
@@ -1195,40 +1187,6 @@
     "source": "captured-live",
     "summary": "Preview how many live credentials a key rotation would affect."
   },
-  "GET /v1/members": {
-    "errors": [],
-    "responses": {
-      "200": [
-        {
-          "capabilities": [
-            "create:credential-schemas",
-            "create:credential-templates",
-            "create:credentials",
-            "create:presentations",
-            "create:relying-parties",
-            "create:trust-frameworks",
-            "create:trusted-issuers",
-            "delete:credential-schemas",
-            "delete:relying-parties",
-            "delete:trust-frameworks",
-            "delete:trusted-issuers",
-            "write:credential-schemas",
-            "write:credentials",
-            "write:members",
-            "write:signing-keys",
-            "write:trust-frameworks",
-            "write:trusted-issuers"
-          ],
-          "created_at": "2026-07-02T23:51:56.416502+00:00",
-          "email": "docs-capture-z2373a@diditcapture.dev",
-          "name": "docs-capture-z2373a@diditcapture.dev",
-          "role": "owner"
-        }
-      ]
-    },
-    "source": "captured-live",
-    "summary": "List the tenant's team members + roles."
-  },
   "GET /v1/presentations/request": {
     "errors": [],
     "responses": {
@@ -1476,219 +1434,6 @@
     "source": "captured-live",
     "summary": "List the tenant's presentation requests (alias of /presentations/requests)."
   },
-  "GET /v1/presentations/requests": {
-    "errors": [],
-    "responses": {
-      "200": [
-        {
-          "aud": "checkin-rp",
-          "created_at": "2026-07-02T23:51:57.360146Z",
-          "dcql": {
-            "credentials": [
-              {
-                "claims": [
-                  {
-                    "path": [
-                      "tier"
-                    ]
-                  }
-                ],
-                "format": "dc+sd-jwt",
-                "id": "cred1",
-                "meta": {
-                  "vct_values": [
-                    "AirlineLoyalty"
-                  ]
-                }
-              }
-            ]
-          },
-          "nonce": "<redacted>",
-          "purpose": "Verify loyalty tier for lounge access",
-          "requested_claims": [
-            "tier"
-          ],
-          "requested_vct": "AirlineLoyalty",
-          "status": "pending",
-          "transaction_id": "dd82f2c2-4c7b-477d-a1b6-4f0f95fd2af2",
-          "trusted_iss": "",
-          "uuid": "b713a8e2-9a10-4050-b800-6917b5ac50d7"
-        },
-        {
-          "aud": "partner-portal",
-          "created_at": "2026-07-02T23:51:56.411321Z",
-          "dcql": {
-            "credentials": [
-              {
-                "claims": [
-                  {
-                    "path": [
-                      "member_id"
-                    ]
-                  }
-                ],
-                "format": "dc+sd-jwt",
-                "id": "cred1",
-                "meta": {
-                  "vct_values": [
-                    "MembershipCard"
-                  ]
-                }
-              }
-            ]
-          },
-          "nonce": "<redacted>",
-          "purpose": "",
-          "requested_claims": [
-            "member_id"
-          ],
-          "requested_vct": "MembershipCard",
-          "status": "verified",
-          "transaction_id": "f92d71ad-8dfb-41ab-b96a-4b1492187edf",
-          "trusted_iss": "",
-          "uuid": "f036007d-a1ef-4e28-a274-f3622f825e61"
-        },
-        {
-          "aud": "gate-check",
-          "created_at": "2026-07-02T23:51:56.406050Z",
-          "dcql": {
-            "credentials": [
-              {
-                "claims": [
-                  {
-                    "path": [
-                      "over_18"
-                    ]
-                  }
-                ],
-                "format": "dc+sd-jwt",
-                "id": "cred1",
-                "meta": {
-                  "vct_values": [
-                    "AgeOver18"
-                  ]
-                }
-              }
-            ]
-          },
-          "nonce": "<redacted>",
-          "purpose": "",
-          "requested_claims": [
-            "over_18"
-          ],
-          "requested_vct": "AgeOver18",
-          "status": "verified",
-          "transaction_id": "f9c18fa4-62ab-4700-8897-505606efb425",
-          "trusted_iss": "",
-          "uuid": "cc9f1072-ba5c-4f83-916b-d6cedd7c3202"
-        },
-        {
-          "aud": "campus-door",
-          "created_at": "2026-07-02T23:51:56.404588Z",
-          "dcql": {
-            "credentials": [
-              {
-                "claims": [
-                  {
-                    "path": [
-                      "student_id"
-                    ]
-                  }
-                ],
-                "format": "dc+sd-jwt",
-                "id": "cred1",
-                "meta": {
-                  "vct_values": [
-                    "StudentID"
-                  ]
-                }
-              }
-            ]
-          },
-          "nonce": "<redacted>",
-          "purpose": "",
-          "requested_claims": [
-            "student_id"
-          ],
-          "requested_vct": "StudentID",
-          "status": "failed",
-          "transaction_id": "12c35261-6cd9-48d9-9005-dc3039dc99b5",
-          "trusted_iss": "",
-          "uuid": "113ce031-764b-467f-85f3-fd408121f132"
-        },
-        {
-          "aud": "partner-portal",
-          "created_at": "2026-07-02T23:51:56.398292Z",
-          "dcql": {
-            "credentials": [
-              {
-                "claims": [
-                  {
-                    "path": [
-                      "employee_id"
-                    ]
-                  }
-                ],
-                "format": "dc+sd-jwt",
-                "id": "cred1",
-                "meta": {
-                  "vct_values": [
-                    "EmployeeBadge"
-                  ]
-                }
-              }
-            ]
-          },
-          "nonce": "<redacted>",
-          "purpose": "",
-          "requested_claims": [
-            "employee_id"
-          ],
-          "requested_vct": "EmployeeBadge",
-          "status": "verified",
-          "transaction_id": "2538c162-7ec5-44da-96e2-4fa35b5984ec",
-          "trusted_iss": "",
-          "uuid": "17783b2b-4513-46b3-b05c-19ab6d105121"
-        },
-        {
-          "aud": "gate-check",
-          "created_at": "2026-07-02T23:51:56.392462Z",
-          "dcql": {
-            "credentials": [
-              {
-                "claims": [
-                  {
-                    "path": [
-                      "given_name"
-                    ]
-                  }
-                ],
-                "format": "dc+sd-jwt",
-                "id": "cred1",
-                "meta": {
-                  "vct_values": [
-                    "AirlineLoyalty"
-                  ]
-                }
-              }
-            ]
-          },
-          "nonce": "<redacted>",
-          "purpose": "",
-          "requested_claims": [
-            "given_name"
-          ],
-          "requested_vct": "AirlineLoyalty",
-          "status": "verified",
-          "transaction_id": "566153aa-c113-467d-ae34-e217163277ce",
-          "trusted_iss": "",
-          "uuid": "32f5432a-5dc4-416a-bf57-549e648d19ae"
-        }
-      ]
-    },
-    "source": "captured-live",
-    "summary": "List the tenant's presentation requests."
-  },
   "GET /v1/presentations/{uuid}": {
     "errors": [],
     "responses": {
@@ -1824,7 +1569,7 @@
     "errors": [],
     "responses": {
       "200": {
-        "bits_b64": "GIZhGDAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\u2026(truncated)",
+        "bits_b64": "GIZhGDAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA…(truncated)",
         "size": 131072,
         "uri": "http://localhost:8011/v1/status-lists/docs-capture-z2373a/097648d0-379f-494b-ad67-87ee146ace1b"
       }
@@ -2236,46 +1981,11 @@
     "source": "captured-live",
     "summary": "Deprecate or reactivate a schema version (deprecated blocks NEW issuance only)."
   },
-  "PATCH /v1/members/{email}": {
-    "errors": [],
-    "request": {
-      "role": "admin"
-    },
-    "responses": {
-      "200": {
-        "capabilities": [
-          "create:credential-schemas",
-          "create:credential-templates",
-          "create:credentials",
-          "create:presentations",
-          "create:relying-parties",
-          "create:trust-frameworks",
-          "create:trusted-issuers",
-          "delete:credential-schemas",
-          "delete:relying-parties",
-          "delete:trust-frameworks",
-          "delete:trusted-issuers",
-          "write:credential-schemas",
-          "write:credentials",
-          "write:members",
-          "write:signing-keys",
-          "write:trust-frameworks",
-          "write:trusted-issuers"
-        ],
-        "created_at": "2026-07-02T23:51:58.759756+00:00",
-        "email": "teammate-b2v9@diditcapture.dev",
-        "name": "teammate-b2v9@diditcapture.dev",
-        "role": "admin"
-      }
-    },
-    "source": "captured-live",
-    "summary": "Change a member's role."
-  },
   "PATCH /v1/trust-frameworks/{slug}": {
     "errors": [
       {
         "body": {
-          "detail": "'eIDAS 2.0 (EUDI)' is a governed framework managed by its governance authority \u2014 it cannot be edited or deleted. Create a custom framework instead."
+          "detail": "'eIDAS 2.0 (EUDI)' is a governed framework managed by its governance authority — it cannot be edited or deleted. Create a custom framework instead."
         },
         "note": "editing a governed framework",
         "status": 403
@@ -2385,54 +2095,6 @@
     },
     "source": "captured-live",
     "summary": "Create a credential offer (returns the pre-authorized code + QR/deep-link URI)."
-  },
-  "POST /v1/credential-offers/{uuid}/accept": {
-    "errors": [],
-    "request": {},
-    "responses": {
-      "200": {
-        "credential": {
-          "claims": [
-            {
-              "label": "<redacted>",
-              "name": "<redacted>",
-              "selective_disclosure": true,
-              "value": "<redacted>"
-            },
-            {
-              "label": "<redacted>",
-              "name": "<redacted>",
-              "selective_disclosure": true,
-              "value": "<redacted>"
-            }
-          ],
-          "credential_name": "<redacted>",
-          "expires_at": "<redacted>",
-          "format": "<redacted>",
-          "id": "<redacted>",
-          "issued_at": "<redacted>",
-          "issuer": {
-            "did": "<redacted>",
-            "domain": "<redacted>",
-            "id": "<redacted>",
-            "name": "<redacted>"
-          },
-          "sd_jwt": "<redacted>",
-          "status": "<redacted>",
-          "subject": "<redacted>",
-          "vct": "<redacted>"
-        },
-        "holder_jwk": {
-          "crv": "P-256",
-          "kty": "EC",
-          "x": "XhoOXR1CgeFdeSw8M6MF3sfCcGVuLMENv3T9eBU3WFs",
-          "y": "XMADS5elXCUDOkf-sTCbo6mUtegEwk9vq1axIE9R2nI"
-        },
-        "vct": "AirlineLoyalty"
-      }
-    },
-    "source": "captured-live",
-    "summary": "Dev-only shortcut: server-side accept an offer and mint the credential (404 in production)."
   },
   "POST /v1/credential-offers/{uuid}/resend-email": {
     "errors": [],
@@ -2753,24 +2415,6 @@
     "source": "captured-live",
     "summary": "Rotate the issuer signing key with an overlap window (old key still verifies)."
   },
-  "POST /v1/members": {
-    "errors": [],
-    "request": {
-      "email": "teammate-b2v9@diditcapture.dev",
-      "role": "reader"
-    },
-    "responses": {
-      "201": {
-        "capabilities": [],
-        "created_at": "2026-07-02T23:51:58.759756+00:00",
-        "email": "teammate-b2v9@diditcapture.dev",
-        "name": "teammate-b2v9@diditcapture.dev",
-        "role": "reader"
-      }
-    },
-    "source": "captured-live",
-    "summary": "Invite a team member with a role."
-  },
   "POST /v1/nonce": {
     "errors": [],
     "request": {},
@@ -2848,87 +2492,6 @@
     },
     "source": "captured-live",
     "summary": "Create an OpenID4VP presentation request (mints a single-use nonce + DCQL query)."
-  },
-  "POST /v1/presentations/requests": {
-    "errors": [],
-    "request": {
-      "aud": "checkin-rp",
-      "purpose": "Verify loyalty tier for lounge access",
-      "requested_claims": [
-        "tier"
-      ],
-      "requested_vct": "AirlineLoyalty"
-    },
-    "responses": {
-      "201": {
-        "aud": "checkin-rp",
-        "created_at": "2026-07-02T23:51:57.366681Z",
-        "dcql": {
-          "credentials": [
-            {
-              "claims": [
-                {
-                  "path": [
-                    "tier"
-                  ]
-                }
-              ],
-              "format": "dc+sd-jwt",
-              "id": "cred1",
-              "meta": {
-                "vct_values": [
-                  "AirlineLoyalty"
-                ]
-              }
-            }
-          ]
-        },
-        "nonce": "<redacted>",
-        "purpose": "Verify loyalty tier for lounge access",
-        "requested_claims": [
-          "tier"
-        ],
-        "requested_vct": "AirlineLoyalty",
-        "status": "pending",
-        "transaction_id": "287d95fb-798b-47ee-9762-ccafca4aa3b0",
-        "trusted_iss": "",
-        "uuid": "1a2a5c82-3779-424b-a900-2062fdfaf5d2"
-      }
-    },
-    "source": "captured-live",
-    "summary": "Create a presentation request (alias of POST /v1/presentations/request)."
-  },
-  "POST /v1/presentations/{uuid}/demo-present": {
-    "errors": [],
-    "request": {},
-    "responses": {
-      "200": {
-        "checks": {
-          "alg_allowlist": true,
-          "aud": true,
-          "key_binding": true,
-          "nonce": true,
-          "not_expired": true,
-          "not_revoked": true,
-          "signature": true
-        },
-        "created_at": "2026-07-02T23:51:57.463767+00:00",
-        "disclosed_claims": {
-          "tier": "demo-tier"
-        },
-        "error": "",
-        "id": "222e597f-96ff-4c63-a08f-6587c5a6d058",
-        "request_id": "92e1ced4-84e5-4601-8588-4ce4925db178",
-        "requested_claims": [
-          "tier"
-        ],
-        "vct": "AirlineLoyalty",
-        "verdict": "verified",
-        "verifier": "checkin-rp"
-      }
-    },
-    "source": "captured-live",
-    "summary": "Dev-only shortcut: server-side present a sample credential against the request (404 in production)."
   },
   "POST /v1/presentations/{uuid}/response": {
     "errors": [

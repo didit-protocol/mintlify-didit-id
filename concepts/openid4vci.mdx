@@ -17,21 +17,23 @@ Use this page to understand the protocol shape. Use the [issuance guide](/guides
   <Step title="Create a credential offer">
     Your backend creates an offer with `POST /credential-offers`. This is a tenant management call, so include `Authorization: Bearer $DIDIT_API_KEY`.
 
-    The request selects a credential template and provides the claims to issue. The response includes an `offer_id`, a `credential_offer_uri`, the `credential_issuer`, a `pre_authorized_code`, and a `tx_code`.
+    The request selects a credential template and provides the claims to issue. The response includes an `offer_id`, a `credential_offer_uri`, the `credential_issuer`, a `pre_authorized_code`, a `tx_code`, a `claim_url`, and `expires_at`. An offer expires 10 minutes after creation (7 days when it is emailed with `send_email: true`), and its pre-authorized code can be redeemed once.
 
     See [create a credential offer](/api-reference/openid4vci/credential-offers-post).
   </Step>
   <Step title="Deliver the offer to the holder">
-    Send the `credential_offer_uri` to the holder wallet. The wallet can also fetch a holder preview with `GET /credential-offers/{uuid}`.
+    Send the `credential_offer_uri` to the holder wallet. The wallet can also fetch a holder preview with `GET /credential-offers/{uuid}`. While the offer still requires a transaction code, that preview lists claim names and labels only; values appear once the code has been proven at `POST /oauth/token`.
 
-    Didit ID also exposes `POST /credential-offers/{uuid}/accept` for demo flows that accept an offer with server-side proof-of-possession.
+    A wallet that only holds the QR or deep-link values resolves them with `GET /credential-offers/resolve?tenant=<slug>&code=<pre_authorized_code>`; that endpoint is throttled to 60 requests per minute per IP and answers `404` for unknown, expired, or already-claimed offers. The OpenID4VCI offer document behind `credential_offer_uri` is served by `GET /credential-offers/{uuid}/offer`.
 
-    See [get a credential offer](/api-reference/openid4vci/credential-offers-uuid-get) and [accept an offer](/api-reference/openid4vci/credential-offers-uuid-accept-post).
+    See [get a credential offer](/api-reference/openid4vci/credential-offers-uuid-get), [resolve an offer](/api-reference/openid4vci/credential-offers-resolve-get), and [offer document](/api-reference/openid4vci/credential-offers-uuid-offer-get).
   </Step>
   <Step title="Exchange the pre-authorized code">
     The wallet exchanges the `pre_authorized_code` and `tx_code` at `POST /oauth/token`.
 
-    The grant type is `urn:ietf:params:oauth:grant-type:pre-authorized_code`. The response returns an OAuth access token, token type, and expiration.
+    The grant type is `urn:ietf:params:oauth:grant-type:pre-authorized_code`. The response returns an OAuth access token, token type, and expiration. For an offer that was emailed to a recipient, the wallet also sends its own holder session token as `Authorization: Bearer <holder token>` so the service can bind redemption to the addressed account; link and QR offers redeem on the code alone.
+
+    Errors are `400` with an OAuth error body: `unsupported_grant_type`, `invalid_request` (missing code, or a transaction code sent when none is expected), or `invalid_grant` (wrong, expired, or already-redeemed code, wrong transaction code); an emailed offer claimed from another account returns `403 access_denied`.
 
     See [token endpoint](/api-reference/openid4vci/oauth-token-post).
   </Step>
@@ -53,6 +55,8 @@ Use this page to understand the protocol shape. Use the [issuance guide](/guides
     Didit ID returns the issued SD-JWT VC as `credential` and the credential type as `vct`. The credential uses the `application/dc+sd-jwt` media type.
 
     See [credential endpoint](/api-reference/openid4vci/credential-post).
+
+    Errors use the OpenID4VCI error codes: `401 invalid_token` for a missing, expired, or unknown access token; `400 invalid_nonce` (with a fresh `c_nonce` in the body) for a bad or expired nonce; `400 invalid_credential_request` for a malformed body or proof; `400 invalid_proof` for a proof whose signature, `aud`, or algorithm fails.
   </Step>
 </Steps>
 
@@ -60,12 +64,17 @@ Use this page to understand the protocol shape. Use the [issuance guide](/guides
 
 `POST /credential-offers` starts issuance from your tenant backend. It is the only endpoint in this sequence that uses the tenant API key.
 
-<ParamField path="template_id" type="string" required>
-  The credential template to issue from.
+<ParamField path="template_id" type="string">
+  The credential template to issue from. Send either `template_id` or `schema_id`.
 </ParamField>
 
-<ParamField path="claims" type="object" required>
+<ParamField path="schema_id" type="string">
+  Alternative to `template_id`: a credential schema UUID. Didit ID creates a default template for the schema on demand.
+</ParamField>
+
+<ParamField path="claims" type="object">
   The claims to place into the credential. The claim names must match the selected template.
+  The API does not reject a missing `claims` object (it defaults to `{}`), but a credential issued without values is rarely useful, so send every attribute your schema defines.
 </ParamField>
 
 <ResponseField name="offer_id" type="string">
@@ -81,11 +90,11 @@ Use this page to understand the protocol shape. Use the [issuance guide](/guides
 </ResponseField>
 
 <ResponseField name="pre_authorized_code" type="string">
-  The code that the wallet exchanges at `POST /oauth/token`.
+  The code that the wallet exchanges at `POST /oauth/token`. It is single-use: the offer is marked redeemed on the first successful exchange.
 </ResponseField>
 
 <ResponseField name="tx_code" type="string">
-  The transaction code that the wallet submits with the pre-authorized code.
+  The 6-digit transaction code that the wallet submits with the pre-authorized code. Five wrong attempts lock the offer.
 </ResponseField>
 
 <CodeGroup>
@@ -149,7 +158,7 @@ The wallet redeems the offer at `POST /oauth/token` with the pre-authorized code
 </ResponseField>
 
 <ResponseField name="token_type" type="string">
-  The token type. Didit ID returns `bearer`.
+  The token type. Didit ID returns `Bearer`.
 </ResponseField>
 
 <ResponseField name="expires_in" type="integer">
@@ -273,6 +282,7 @@ Proof payload:
 
 ```bash cURL
 curl -s -X POST https://idv0.staging.didit.me/v1/credential \
+  -H "Authorization: Bearer $HOLDER_ACCESS_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
     "proof": {
@@ -286,6 +296,7 @@ curl -s -X POST https://idv0.staging.didit.me/v1/credential \
 const credentialResponse = await fetch("https://idv0.staging.didit.me/v1/credential", {
   method: "POST",
   headers: {
+    Authorization: `Bearer ${token.access_token}`,
     "Content-Type": "application/json",
   },
   body: JSON.stringify({

@@ -21,6 +21,8 @@ TAG_DIR = {
     "OpenID4VP Verification": ("verification", "OpenID4VP Verification"),
     "Trust Registry": ("trust", "Trust Registry"),
     "Issuer Keys": ("keys", "Issuer Keys"),
+    "Webhooks": ("webhooks", "Webhooks"),
+    "API Keys": ("api-keys", "API Keys"),
     "Status Lists": ("status", "Status Lists"),
 }
 TAG_ORDER = list(TAG_DIR.keys())
@@ -40,7 +42,6 @@ SIDEBAR_LABELS: dict[str, str] = {
     "POST /v1/credential-offers": "Create offer",
     "GET /v1/credential-offers/resolve": "Resolve offer",
     "GET /v1/credential-offers/{uuid}": "Get offer",
-    "POST /v1/credential-offers/{uuid}/accept": "Accept offer",
     "GET /v1/credential-offers/{uuid}/offer": "Offer document",
     "POST /v1/credential-offers/{uuid}/resend-email": "Resend offer email",
     "GET /v1/credential-schemas": "List schemas",
@@ -62,22 +63,16 @@ SIDEBAR_LABELS: dict[str, str] = {
     "GET /v1/keys": "List signing keys",
     "GET /v1/keys/impact": "Rotation impact",
     "POST /v1/keys/rotate": "Rotate key",
-    "GET /v1/members": "List members",
-    "POST /v1/members": "Invite member",
-    "PATCH /v1/members/{email}": "Update member",
-    "DELETE /v1/members/{email}": "Remove member",
     "POST /v1/nonce": "Issue c_nonce",
     "POST /v1/oauth/token": "Token endpoint",
-    "GET /v1/presentations/request": "List requests (alias)",
+    "GET /v1/presentations/request": "List requests",
     "POST /v1/presentations/request": "Create request",
-    "GET /v1/presentations/requests": "List requests",
-    "POST /v1/presentations/requests": "Create request (alias)",
     "GET /v1/presentations/{uuid}": "Poll request",
-    "POST /v1/presentations/{uuid}/demo-present": "Demo present + verify",
     "GET /v1/presentations/{uuid}/request": "Request parameters",
     "POST /v1/presentations/{uuid}/response": "Submit vp_token",
     "GET /v1/relying-parties": "List relying parties",
     "POST /v1/relying-parties": "Register relying party",
+    "PATCH /v1/relying-parties/{uuid}": "Update relying party",
     "DELETE /v1/relying-parties/{uuid}": "Remove relying party",
     "GET /v1/status-lists/{slug}/{uuid}": "Get status list",
     "POST /v1/tenant/bootstrap": "Bootstrap tenant",
@@ -86,6 +81,9 @@ SIDEBAR_LABELS: dict[str, str] = {
     "GET /v1/trust-frameworks/{slug}": "Get framework",
     "PATCH /v1/trust-frameworks/{slug}": "Edit framework",
     "DELETE /v1/trust-frameworks/{slug}": "Delete framework",
+    "GET /v1/trust-frameworks/{slug}/trust": "Framework trust status",
+    "PUT /v1/trust-frameworks/{slug}/trust": "Set framework trust",
+    "POST /v1/trust-frameworks/{slug}/issuer-overrides": "Block / unblock issuer",
     "GET /v1/trusted-issuers": "List trusted issuers",
     "POST /v1/trusted-issuers": "Add trusted issuer",
     "PATCH /v1/trusted-issuers/{uuid}": "Enable / disable issuer",
@@ -93,7 +91,65 @@ SIDEBAR_LABELS: dict[str, str] = {
     "POST /v1/trusted-issuers/{uuid}/validate": "Validate issuer",
     "GET /v1/verifications": "List verifications",
     "GET /v1/verifications/{uuid}": "Get verification",
+    "GET /v1/webhooks": "List endpoints",
+    "POST /v1/webhooks": "Create endpoint",
+    "PATCH /v1/webhooks/{uuid}": "Update endpoint",
+    "DELETE /v1/webhooks/{uuid}": "Delete endpoint",
+    "POST /v1/webhooks/{uuid}/test": "Test endpoint",
+    "GET /v1/webhooks/deliveries": "List deliveries",
+    "GET /v1/webhook-events": "Event types",
+    "GET /v1/api-keys": "List API keys",
+    "POST /v1/api-keys": "Create API key",
+    "POST /v1/api-keys/{uuid}/rotate": "Rotate API key",
+    "DELETE /v1/api-keys/{uuid}": "Delete API key",
 }
+
+# Operations in openapi.json that must never get a reference page (kept out of the nav even
+# if they reappear in the spec): dev-only helpers, console-only surfaces, route aliases.
+EXCLUDE: set[str] = {
+    "POST /v1/credential-offers/{uuid}/accept",
+    "POST /v1/presentations/{uuid}/demo-present",
+    "GET /v1/presentations/requests",
+    "POST /v1/presentations/requests",
+    "GET /v1/members",
+    "POST /v1/members",
+    "PATCH /v1/members/{email}",
+    "DELETE /v1/members/{email}",
+}
+
+# Explicit page order inside a group (listed operations come first, in this order; anything
+# else follows sorted by path).
+PAGE_ORDER: dict[str, list[str]] = {
+    "Trust Registry": [
+        "GET /v1/trust-frameworks",
+        "POST /v1/trust-frameworks",
+        "GET /v1/trust-frameworks/{slug}",
+        "PATCH /v1/trust-frameworks/{slug}",
+        "DELETE /v1/trust-frameworks/{slug}",
+        "GET /v1/trust-frameworks/{slug}/trust",
+        "PUT /v1/trust-frameworks/{slug}/trust",
+        "POST /v1/trust-frameworks/{slug}/issuer-overrides",
+    ],
+    "Webhooks": [
+        "GET /v1/webhooks",
+        "POST /v1/webhooks",
+        "PATCH /v1/webhooks/{uuid}",
+        "DELETE /v1/webhooks/{uuid}",
+        "POST /v1/webhooks/{uuid}/test",
+        "GET /v1/webhooks/deliveries",
+        "GET /v1/webhook-events",
+    ],
+    "API Keys": [
+        "POST /v1/tenant/bootstrap",
+        "GET /v1/api-keys",
+        "POST /v1/api-keys",
+        "POST /v1/api-keys/{uuid}/rotate",
+        "DELETE /v1/api-keys/{uuid}",
+    ],
+}
+
+CONSOLE_URL = "https://console-idv0.staging.didit.me/"
+
 
 
 def short_label(method: str, path: str, summary: str) -> str:
@@ -112,6 +168,8 @@ def main() -> None:
     for path, methods in sorted(SPEC["paths"].items()):
         for method, op in methods.items():
             if method not in ("get", "post", "put", "patch", "delete"):
+                continue
+            if f"{method.upper()} {path}" in EXCLUDE:
                 continue
             tag = (op.get("tags") or ["Other"])[0]
             if tag not in TAG_DIR:
@@ -133,8 +191,19 @@ def main() -> None:
                 "---\n"
             )
             (api_dir / folder).mkdir(parents=True, exist_ok=True)
-            (api_dir / folder / f"{page}.mdx").write_text(mdx)
+            target = api_dir / folder / f"{page}.mdx"
+            # Keep hand-written body content (anything after the frontmatter) across rebuilds.
+            if target.exists():
+                existing = target.read_text()
+                parts = existing.split("---\n", 2)
+                if len(parts) == 3 and parts[2].strip():
+                    mdx += parts[2] if parts[2].startswith("\n") else "\n" + parts[2]
+            target.write_text(mdx)
             groups[tag].append(f"api-reference/{folder}/{page}")
+
+    for tag, order in PAGE_ORDER.items():
+        wanted = [f"api-reference/{TAG_DIR[tag][0]}/{slug(k.split(' ', 1)[0].lower(), k.split(' ', 1)[1])}" for k in order]
+        groups[tag] = [p for p in wanted if p in groups[tag]] + [p for p in groups[tag] if p not in wanted]
 
     # ── docs.json ────────────────────────────────────────────────────────────
     api_groups = [{"group": TAG_DIR[t][1], "pages": groups[t]} for t in TAG_ORDER if groups[t]]
@@ -149,7 +218,7 @@ def main() -> None:
         "logo": {"light": "/logo/didit.svg", "dark": "/logo/didit-white.svg", "href": "https://didit.me"},
         "navbar": {
             "links": [{"label": "Support", "href": "https://wa.me/+19544659728", "icon": "comment-dots"}],
-            "primary": {"type": "button", "label": "Console", "href": "https://business.didit.me"},
+            "primary": {"type": "button", "label": "Console", "href": CONSOLE_URL},
         },
         "openapi": ["openapi.json"],
         "contextual": {"options": ["copy", "view", "chatgpt", "claude", "perplexity", "mcp", "cursor", "vscode"]},
@@ -182,11 +251,10 @@ def main() -> None:
             ],
             "global": {"anchors": [
                 {"anchor": "Didit Docs", "href": "https://docs.didit.me", "icon": "book-open-cover"},
-                {"anchor": "Console", "href": "https://business.didit.me", "icon": "gauge"},
+                {"anchor": "Console", "href": CONSOLE_URL, "icon": "gauge"},
             ]},
         },
-        "footer": {"socials": {"x": "https://x.com/getdidit", "github": "https://github.com/didit-protocol",
-                               "linkedin": "https://linkedin.com/company/91001155"}},
+        "footer": {"socials": {"x": "https://x.com/getdidit", "linkedin": "https://linkedin.com/company/91001155"}},
     }
     (ROOT / "docs.json").write_text(json.dumps(docs, indent=2) + "\n")
     n = sum(len(v) for v in groups.values())

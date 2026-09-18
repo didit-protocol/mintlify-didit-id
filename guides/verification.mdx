@@ -36,8 +36,8 @@ Tenant operations use your tenant API key:
 Wallet-facing protocol endpoints are public and do not use the tenant API key:
 
 - [`GET /presentations/{uuid}`](/api-reference/verification/presentations-uuid-get)
+- [`GET /presentations/{uuid}/request`](/api-reference/verification/presentations-uuid-request-get)
 - [`POST /presentations/{uuid}/response`](/api-reference/verification/presentations-uuid-response-post)
-- [`POST /presentations/{uuid}/demo-present`](/api-reference/verification/presentations-uuid-demo-present-post)
 
 <Warning>
   Do not expose `$DIDIT_API_KEY` to browsers or wallets. Create presentation requests and read verification logs from your backend.
@@ -74,8 +74,8 @@ Call `POST /presentations/request` from your backend. Didit ID creates a present
   The credential type to request. The example API uses `AgeOver18`.
 </ParamField>
 
-<ParamField path="requested_claims" type="string[]" required>
-  The claim names the wallet may disclose, such as `over_18`.
+<ParamField path="requested_claims" type="string[]" default="[]">
+  The claim names the wallet may disclose, such as `over_18`. Defaults to an empty list, which asks for the credential without any disclosed claims.
 </ParamField>
 
 <ParamField path="aud" type="string" required>
@@ -247,7 +247,14 @@ result = response.json()
 
 </CodeGroup>
 
-The response returns the final decision and the claims the holder disclosed.
+`vp_token` is either the compact SD-JWT VC presentation string or the OpenID4VP 1.0 DCQL-keyed object (`{"cred1": ["<sd-jwt~kb>"]}`) with exactly one entry whose key matches the request's DCQL credential query id. The wallet may also echo `state`; when present it must equal the request's `transaction_id`.
+
+A `200` response returns the final decision and the claims the holder disclosed. Failures return `422` with the same shape (`verdict: "failed"`, an `error` string, and the checks that ran):
+
+- A second submission for the same request is rejected as a replay: `"PresentationRequest already used (replay)"`.
+- A `state` that does not match the request: `"state mismatch"`.
+- A `vp_token` that fails cryptographic validation: `error` names the failed check, the request stays open, and the genuine holder can still respond.
+- A valid presentation that fails a policy check (for example an untrusted issuer or a revoked credential) also returns `422`, with the failing check set to `false`.
 
 ```json
 {
@@ -303,79 +310,35 @@ Use `verdict` as the high-level result. Use `checks` to explain failures, debug 
 
 Issuer trust also contributes to the final `verdict`. A credential can pass the cryptographic checks and still fail if the issuer is outside the applicable account or relying-party trust policy.
 
-## Run a self-contained demo verification
+## Test with the hosted wallet
 
-Use `POST /presentations/{uuid}/demo-present` to run a real server-side issue, present, and verify path for a presentation request. This is useful when you want to validate verifier configuration without wiring a browser wallet first. To try the full holder experience, use the [VeriBank live demo](https://veribank-idv0.staging.didit.me).
+Before your own wallet integration exists, drive the loop with the hosted sandbox wallet. It presents credentials it has claimed (see [issue credentials](/guides/issuance)) and submits a real key-bound `vp_token`, so the verdict you read is produced by the production verification path.
 
 <Steps>
   <Step title="Create the request">
-    Call `POST /presentations/request` with the claims you want to verify.
+    Call `POST /presentations/request` with the claims you want to verify and keep the returned `uuid`.
   </Step>
-  <Step title="Run demo-present">
-    Call `POST /presentations/{uuid}/demo-present` with an empty JSON body.
+  <Step title="Open the request in the wallet">
+    Open `https://wallet-idv0.staging.didit.me/present?request=<uuid>` in a browser where the wallet holds a matching credential, or render that link as a QR code for a phone. The wallet reads the requester name and requested claims from the public `GET /presentations/{uuid}`, fetches the OpenID4VP parameters (`client_id`, `nonce`, `dcql_query`, `response_uri`, `state`) from `GET /presentations/{uuid}/request`, and posts the `vp_token` to `POST /presentations/{uuid}/response` when the holder approves.
   </Step>
-  <Step title="Check the response">
-    Confirm the response contains `verdict`, `vct`, `verifier`, `disclosed_claims`, and `checks`.
+  <Step title="Read the result">
+    Poll `GET /presentations/{uuid}` until it carries `result`, then read `disclosed_claims` with `GET /verifications/{uuid}`.
   </Step>
 </Steps>
 
-<CodeGroup>
+{/* screenshot: wallet present-consent 390x844 */}
 
-```bash cURL
-curl -X POST "https://idv0.staging.didit.me/v1/presentations/$PRESENTATION_ID/demo-present" \
-  -H "Content-Type: application/json" \
-  -d '{}'
-```
-
-```js JavaScript
-const response = await fetch(
-  `https://idv0.staging.didit.me/v1/presentations/${presentation.uuid}/demo-present`,
-  {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({}),
-  }
-);
-
-const result = await response.json();
-```
-
-```python Python
-# demo-present is public — no Authorization header.
-response = requests.post(
-    f"{api_base}/presentations/{presentation['uuid']}/demo-present",
-    json={},
-)
-
-result = response.json()
-```
-
-</CodeGroup>
-
-```json
-{
-  "verdict": "verified",
-  "vct": "AgeOver18",
-  "verifier": "age-gate-rp",
-  "disclosed_claims": {
-    "over_18": "demo-value"
-  },
-  "checks": {
-    "signature": true,
-    "key_binding": true
-  }
-}
-```
+To see the same flow end to end from a relying party's browser, use the [VeriBank live demo](https://veribank-idv0.staging.didit.me).
 
 ## Poll request status
 
-Wallet or verifier clients can poll `GET /presentations/{uuid}` to read the current presentation request state.
+Wallet or verifier clients can poll the public `GET /presentations/{uuid}` to read the current presentation request state.
 
 ```bash
 curl "https://idv0.staging.didit.me/v1/presentations/$PRESENTATION_ID"
 ```
+
+Once the holder has responded, the response gains a `result` object with `verdict`, the boolean `checks`, `error`, and `created_at`, and `status` moves off `pending`. The poll endpoint never returns disclosed claim values, so it is safe to call from a browser; read the claims from your backend with `GET /verifications/{uuid}`, which accepts the request UUID.
 
 Use polling when the wallet response happens out of band, such as a mobile handoff or fallback deep link.
 

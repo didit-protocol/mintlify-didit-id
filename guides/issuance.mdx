@@ -443,48 +443,15 @@ issuer_jwks = requests.get(
 
 See [issuer metadata](/api-reference/openid4vci/issuers-slug-openid-credential-issuer-get) and [issuer JWKS](/api-reference/openid4vci/issuers-slug-jwt-vc-issuer-get).
 
-### Test without a wallet
+### Test with the hosted wallet
 
-For demos, Didit ID can accept an offer with server-side proof of possession.
+Before you have your own wallet, claim offers with the hosted sandbox wallet. Every offer response includes a `claim_url` that opens the offer at [wallet-idv0.staging.didit.me](https://wallet-idv0.staging.didit.me); with `recipient_email` and `send_email: true`, Didit ID emails that link for you (see [issue via email](/guides/issue-via-email)). The wallet runs the token, nonce, and credential calls above with its own holder key, so what you observe is the production protocol, not a shortcut.
 
-<Warning>
-  Use `POST /credential-offers/{uuid}/accept` for demos only. Production issuance should use a wallet-generated proof JWT.
-</Warning>
+<Note>
+  Offers created without `send_email` expire after 10 minutes; emailed offers last 7 days. Five wrong `tx_code` attempts lock the offer, so create a fresh one if a test goes wrong.
+</Note>
 
-<CodeGroup>
-```bash cURL
-curl -X POST "https://idv0.staging.didit.me/v1/credential-offers/$OFFER_ID/accept" \
-  -H "Content-Type: application/json" \
-  -d '{}'
-```
-
-```js JavaScript
-const response = await fetch(
-  `https://idv0.staging.didit.me/v1/credential-offers/${process.env.OFFER_ID}/accept`,
-  {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({}),
-  }
-);
-
-const demoCredential = await response.json();
-```
-
-```python Python
-# The demo accept endpoint is public — no Authorization header.
-response = requests.post(
-    f"{api_base}/credential-offers/{os.environ['OFFER_ID']}/accept",
-    json={},
-)
-
-demo_credential = response.json()
-```
-</CodeGroup>
-
-See [accept an offer](/api-reference/openid4vci/credential-offers-uuid-accept-post).
+{/* screenshot: wallet claim-offer 390x844 */}
 
 ## Path B: Direct management issuance
 
