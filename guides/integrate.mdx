@@ -20,13 +20,13 @@ The sandbox API base is `https://idv0.staging.didit.me`. Programmatic auth lives
     Call `POST /v1/credential-schemas` to define the credential type (`vct`) and its attributes. Mark selectively disclosable attributes with `sd: true`. Then create a `POST /v1/credential-templates` to get a reusable `template_id`.
   </Step>
   <Step title="Issue a credential">
-    For a wallet flow, create an offer with `POST /v1/credential-offers` and deliver `credential_offer_uri`. For a backend flow, issue directly with `POST /v1/credentials/issue` using the holder public JWK. For sandbox tests, `POST /v1/credential-offers/{uuid}/accept` runs issuance server-side.
+    For a wallet flow, create an offer with `POST /v1/credential-offers` and deliver `credential_offer_uri`. For a backend flow, issue directly with `POST /v1/credentials/issue` using the holder public JWK. For sandbox tests, open the offer's `claim_url` in the hosted wallet.
   </Step>
   <Step title="Request a presentation">
-    Call `POST /v1/presentations/request` with `requested_vct`, `requested_claims`, and `aud`. Deliver the request to a wallet, or use `POST /v1/presentations/{uuid}/demo-present` for a sandbox test.
+    Call `POST /v1/presentations/request` with `requested_vct`, `requested_claims`, and `aud`. Deliver the request to a wallet; for a sandbox test, open `https://wallet-idv0.staging.didit.me/present?request=<uuid>` in the hosted wallet.
   </Step>
   <Step title="Verify">
-    Read the `verdict`, `disclosed_claims`, and `checks` from the presentation response, and audit results with `GET /v1/verifications`. Manage issuer signing keys with `GET /v1/keys` and `POST /v1/keys/rotate`.
+    Poll `GET /v1/presentations/{uuid}` for `result.verdict` and `checks`, read `disclosed_claims` with `GET /v1/verifications/{uuid}`, and audit history with `GET /v1/verifications`. Manage issuer signing keys with `GET /v1/keys` and `POST /v1/keys/rotate`.
   </Step>
 </Steps>
 
@@ -93,10 +93,10 @@ STEP 4 — ISSUE A CREDENTIAL (pick one path)
 Path A, wallet (OpenID4VCI):
   POST /v1/credential-offers
     body: { "template_id": "<TEMPLATE_ID>", "claims": { "employee_id": "E-1042", "role": "Engineer" } }
-    -> { offer_id, credential_offer_uri, credential_issuer, pre_authorized_code, tx_code }
+    -> { offer_id, credential_offer_uri, credential_issuer, pre_authorized_code, tx_code, claim_url }
   Deliver credential_offer_uri to the wallet as a deep link / QR.
-  (Sandbox test: POST /v1/credential-offers/{offer_id}/accept  body {} runs
-   token+nonce+proof+credential server-side and returns the credential.)
+  (Sandbox test: open claim_url in the hosted wallet at https://wallet-idv0.staging.didit.me,
+   sign in with a passkey, enter tx_code, and claim. Offers expire after 10 minutes.)
 Path B, backend direct issuance:
   POST /v1/credentials/issue
     body: { "template_id": "<TEMPLATE_ID>",
@@ -111,13 +111,15 @@ POST /v1/presentations/request
   -> { uuid, dcql, requested_claims, aud, nonce, status }
 Deliver the request to a wallet (W3C Digital Credentials API, openid4vp-v1-signed);
 the wallet submits its vp_token to POST /v1/presentations/{uuid}/response.
-Sandbox test: POST /v1/presentations/{uuid}/demo-present  body {}  runs a real
-server-side issue+present+verify for that request.
+Sandbox test: open https://wallet-idv0.staging.didit.me/present?request={uuid} in the hosted
+wallet (after claiming a credential there) and approve the request.
 
 STEP 6 — VERIFY
-The present/response call returns { verdict, disclosed_claims, checks }.
+Poll GET /v1/presentations/{uuid} (public) until it has result: { verdict, checks, error }.
 - verdict "verified" = accepted.
 - checks include: signature, key_binding, aud, nonce, alg_allowlist, not_expired, not_revoked.
+- disclosed_claims are NOT on the poll endpoint: read them with
+  GET /v1/verifications/{uuid} (tenant api_key; accepts the request uuid).
 Audit trail: GET /v1/verifications  and  GET /v1/verifications/{uuid}.
 
 KEY MANAGEMENT (issuer signing keys)
@@ -130,19 +132,21 @@ Write a small backend module that:
 1. reads DIDIT_ACCESS_TOKEN (from verify-email/login) and DIDIT_API_KEY (from bootstrap)
    from the environment; if DIDIT_API_KEY is missing, call POST /v1/tenant/bootstrap and
    persist the returned api_key.
-2. exposes functions: createSchemaAndTemplate(), issueCredential(claims),
-   requestPresentation(requestedClaims), and verify() that reads verdict + checks.
+2. exposes functions: createSchemaAndTemplate(), createOffer(claims) (returns claim_url + tx_code),
+   requestPresentation(requestedClaims) (returns the wallet link), and pollResult(uuid)
+   that resolves { verdict, checks, disclosed_claims }.
 3. never logs or hard-codes secrets; loads all keys/tokens from env; uses the
    tenant api_key as Bearer for every /v1 call and the user access_token ONLY for
    /v1/tenant/bootstrap.
-4. includes a runnable end-to-end demo using the /accept and /demo-present demo
-   endpoints so it works before you wire a wallet, and prints the final verdict + checks.
+4. includes a runnable end-to-end script that prints the claim_url and the wallet
+   present link, waits for the holder to act in the hosted sandbox wallet, and then
+   prints the final verdict + checks + disclosed_claims.
 Use Content-Type: application/json on every request with a body.
 ````
 
 ## After the agent runs
 
-Verify the integration against the reference docs, then replace the demo endpoints with a real wallet flow before production.
+Verify the integration against the reference docs, then replace the hosted sandbox wallet with your production wallet delivery (Digital Credentials API, QR, or deep link) before going live.
 
 <CardGroup cols={2}>
   <Card title="Programmatic access" icon="key-round" href="/guides/programmatic-access">

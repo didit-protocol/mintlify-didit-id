@@ -31,15 +31,21 @@ This walkthrough uses the live Didit ID sandbox. You create an account in the co
   </Step>
   <Step title="Issue a credential to your email">
     Create a credential offer, choose an email recipient, and send it. The claim link goes to the holder wallet.
+
+    <Frame caption="Send a credential: pick a type, enter the recipient's e-mail, fill the claims, and keep Send claim email on under Delivery options."><img src="/images/screenshots/console-issue-by-email.png" alt="Console Send a credential dialog with the type Medical Prescription, a placeholder recipient e-mail, the claim fields and Delivery options with Send claim email checked" /></Frame>
   </Step>
   <Step title="Open it in the wallet">
     Open the claim link in the [wallet](https://wallet-idv0.staging.didit.me), sign in with a passkey, review the offer, and claim the SD-JWT VC.
+
+    <Frame caption="Add to Wallet: the issuer, the credential type, and each claim marked You choose (selectively disclosable) or Always shared. The transaction code entry and the Add to Wallet button follow below."><img src="/images/screenshots/wallet-claim-offer.png" alt="Wallet Add to Wallet screen showing an employee badge offer from skyhop-airlines with Given Name, Family Name, Employee Id and Department marked You choose and Tier marked Always shared" /></Frame>
   </Step>
   <Step title="Go to the demo relying party">
     Open [VeriBank](https://veribank-idv0.staging.didit.me) and pick a scenario. The relying party creates an OpenID4VP presentation request.
   </Step>
   <Step title="Present and verify">
     Approve the requested claims in the wallet. The verifier receives only those disclosed claims and the final `verdict`.
+
+    {/* screenshot: veribank verified-result 1280x800 */}
   </Step>
 </Steps>
 

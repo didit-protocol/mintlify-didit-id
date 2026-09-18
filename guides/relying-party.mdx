@@ -55,7 +55,7 @@ Use per-relying-party policy when the same account operates multiple verifier ex
     Your backend calls `POST /v1/presentations/request` with the credential type, requested claims, and relying-party audience. The audience identifies the verifier context for request binding and policy.
   </Step>
   <Step title="Hand off to the wallet">
-    Render a QR code and a same-device link to the wallet at `https://wallet-idv0.staging.didit.me/present?request=<uuid>&return_to=<url>`. The holder scans on mobile or opens the link on the same device.
+    Render a QR code and a same-device link to the wallet at `https://wallet-idv0.staging.didit.me/present?request=<uuid>`. The holder scans on mobile or opens the link on the same device.
   </Step>
   <Step title="Holder approves disclosure">
     The wallet shows the relying party, credential type, issuer, and requested claims. For the age gate, the holder approves `over_18` without revealing a birth date.
@@ -159,22 +159,18 @@ presentation_id = presentation["uuid"]
 
 ## Step 2: hand off to the wallet
 
-Give the browser two ways to reach the wallet: a QR code for a mobile handoff and a same-device link. Both point at the wallet's present route with the presentation `uuid` and a `return_to` URL the wallet redirects back to.
+Give the browser two ways to reach the wallet: a QR code for a mobile handoff and a same-device link. Both point at the wallet's present route with the presentation `uuid`. The wallet never redirects on its own; your page learns the outcome by polling (step 3). An optional `return_to` parameter only renders an explicit "return" button, and the hosted wallet honors it for `localhost` origins in development builds only, so do not rely on it in the sandbox.
 
 ```js
 const WALLET = "https://wallet-idv0.staging.didit.me";
 
-function walletPresentUrl({ presentationId, returnTo }) {
+function walletPresentUrl({ presentationId }) {
   const url = new URL(`${WALLET}/present`);
   url.searchParams.set("request", presentationId);
-  url.searchParams.set("return_to", returnTo);
   return url.toString();
 }
 
-const handoff = walletPresentUrl({
-  presentationId,
-  returnTo: "https://your-app.example/age-gate/callback",
-});
+const handoff = walletPresentUrl({ presentationId });
 ```
 
 <Note>
@@ -294,11 +290,13 @@ if verification["verdict"] == "verified" and verification["disclosed_claims"].ge
   Read [`GET /v1/verifications`](/api-reference/verification/verifications-get) for the full tenant verification log when you audit past checks.
 </Tip>
 
-## Test without a wallet
+## Test before your wallet integration exists
 
-While you build the verifier, drive the whole loop server-side with `POST /v1/presentations/{uuid}/demo-present`, which runs a real issue, present, and verify path for the request. See [run a self-contained demo verification](/guides/verification#run-a-self-contained-demo-verification).
+While you build the verifier, use the hosted sandbox wallet as the holder: claim a credential there first, then open the same-device link from step 2 and approve the request. See [test with the hosted wallet](/guides/verification#test-with-the-hosted-wallet).
 
 For the full browser experience, use the [VeriBank live demo](https://veribank-idv0.staging.didit.me).
+
+<Frame caption="VeriBank's home: the Skyhop assistant and its starter prompts before you connect a Didit ID."><img src="/images/screenshots/veribank-scenario-picker.png" alt="Skyhop Assistant page with a Connect your Didit ID banner, an intro message and starter prompt buttons" /></Frame>
 
 ## Next steps
 

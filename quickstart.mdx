@@ -1,9 +1,9 @@
 ---
 title: "Quickstart"
-description: "Issue and verify your first Didit ID credential in five minutes."
+description: "Issue and verify your first Didit ID credential with the sandbox API and the hosted wallet."
 ---
 
-Issue a demo `EmployeeBadge` SD-JWT VC, accept it with the demo holder endpoint, and verify a selective-disclosure presentation with Didit ID.
+Issue a demo `EmployeeBadge` SD-JWT VC from the API, claim it in the hosted wallet, and verify a selective-disclosure presentation with Didit ID.
 
 This quickstart uses the sandbox API at `https://idv0.staging.didit.me/v1`. Management endpoints use `Authorization: Bearer $DIDIT_API_KEY`. Holder and verifier protocol endpoints are public.
 
@@ -28,6 +28,8 @@ This quickstart uses the sandbox API at `https://idv0.staging.didit.me/v1`. Mana
 <Steps>
   <Step title="Create an account in the console">
     Open the [console](https://console-idv0.staging.didit.me) and create a sandbox account.
+
+    <Frame caption="Create your organisation: a work e-mail and a password, with an optional passkey right after. Google and Apple are not available yet."><img src="/images/screenshots/console-sign-up.png" alt="Didit Console sign-up card titled Create your organisation with a work e-mail field and a Continue with email button" /></Frame>
   </Step>
   <Step title="Issue a credential to your email">
     Create a credential offer and send it to an email address you can open.
@@ -45,7 +47,9 @@ This quickstart uses the sandbox API at `https://idv0.staging.didit.me/v1`. Mana
 
 <Steps>
   <Step title="Get a tenant API key">
-    Open the Didit Console, choose your tenant, and copy a tenant API key. Store it in your shell, then make one authenticated request to confirm the key works.
+    Open the [console](https://console-idv0.staging.didit.me), go to **API keys**, and create a tenant API key. Store it in your shell, then make one authenticated request to confirm the key works.
+
+    <Frame caption="Settings > API keys: each key shows its environment, masked token, scopes and last use. Create key issues a new one and shows the full token once."><img src="/images/screenshots/console-api-keys.png" alt="Console Settings page with the API keys section showing one sandbox key named backend-service with a masked token, its scopes and a Create key button" /></Frame>
 
 <CodeGroup>
 ```bash cURL
@@ -150,7 +154,7 @@ print("TEMPLATE_ID", template_id)
   </Step>
 
   <Step title="Create a credential offer">
-    Create an OpenID4VCI credential offer from the template. The response includes the `offer_id`, the `credential_offer_uri`, the `pre_authorized_code`, and the `tx_code`.
+    Create an OpenID4VCI credential offer from the template. The response includes the `offer_id`, the `credential_offer_uri`, the `pre_authorized_code`, the 6-digit `tx_code`, and a `claim_url` that opens the offer in the hosted wallet. Offers created this way expire after 10 minutes.
 
 <CodeGroup>
 ```bash cURL
@@ -176,7 +180,8 @@ echo "$OFFER" | jq '{
   credential_offer_uri,
   credential_issuer,
   pre_authorized_code,
-  tx_code
+  tx_code,
+  claim_url
 }'
 ```
 
@@ -197,7 +202,7 @@ offer_id = offer["offer_id"]
 
 print({k: offer[k] for k in (
     "offer_id", "credential_offer_uri", "credential_issuer",
-    "pre_authorized_code", "tx_code",
+    "pre_authorized_code", "tx_code", "claim_url",
 )})
 ```
 </CodeGroup>
@@ -205,43 +210,29 @@ print({k: offer[k] for k in (
     See the [credential offer API reference](/api-reference/openid4vci/credential-offers-post) for the full response shape.
   </Step>
 
-  <Step title="Accept the offer with the demo holder endpoint">
-    Accept the offer with `POST /credential-offers/{id}/accept`. This endpoint is a demo convenience for local testing. It runs the OpenID4VCI token, nonce, proof, and credential flow server-side with a fresh holder key.
+  <Step title="Claim the offer in the hosted wallet">
+    Open the `claim_url` from the offer response in a browser. The hosted wallet at [wallet-idv0.staging.didit.me](https://wallet-idv0.staging.didit.me) previews the offer, asks you to sign in with a passkey, and prompts for the `tx_code`. When you approve, the wallet runs the OpenID4VCI exchange itself: it redeems the `pre_authorized_code` and `tx_code` at `POST /oauth/token`, fetches a `c_nonce` from `POST /nonce`, and calls `POST /credential` with a holder proof JWT. Then it stores the SD-JWT VC.
 
 <CodeGroup>
 ```bash cURL
-curl -sS -X POST "$DIDIT_API_BASE/credential-offers/$OFFER_ID/accept" \
-  -H "Content-Type: application/json" \
-  --data '{}' | jq '{
-    vct,
-    credential: .credential | {
-      id,
-      credential_name,
-      format,
-      status,
-      subject,
-      claims
-    }
-  }'
+echo "$OFFER" | jq -r '.claim_url'
+# open the printed URL in a browser, sign in, enter the tx_code from the offer response, and claim
 ```
 
 ```python Python
-# The demo accept endpoint is public — no Authorization header.
-accepted = requests.post(
-    f"{api_base}/credential-offers/{offer_id}/accept",
-    json={},
-).json()
-
-print(accepted["vct"])
-print(accepted["credential"])
+print("Open this URL in a browser and enter the tx_code:", offer["claim_url"])
+print("tx_code:", offer["tx_code"])
+input("Press Enter once the wallet shows the credential... ")
 ```
 </CodeGroup>
 
-    Real wallets do not call this demo endpoint. They follow [OpenID4VCI issuance](/guides/issuance): redeem the `pre_authorized_code` and `tx_code` with `POST /oauth/token`, request a `c_nonce` with `POST /nonce`, then call `POST /credential` with a holder proof JWT.
+    <Frame caption="Add to Wallet: the issuer, the credential type, and each claim marked You choose (selectively disclosable) or Always shared. The transaction code entry and the Add to Wallet button follow below."><img src="/images/screenshots/wallet-claim-offer.png" alt="Wallet Add to Wallet screen showing an employee badge offer from skyhop-airlines with Given Name, Family Name, Employee Id and Department marked You choose and Tier marked Always shared" /></Frame>
+
+    Your own wallet follows the same protocol. See [OpenID4VCI issuance](/guides/issuance) for the token, nonce, and credential calls.
   </Step>
 
-  <Step title="Request and verify a presentation">
-    Create an OpenID4VP presentation request for the `role` claim. Then use `POST /presentations/{id}/demo-present` to run a real server-side issue, present, and verify flow for that request.
+  <Step title="Request a presentation">
+    Create an OpenID4VP presentation request for the `role` claim. The response carries the `uuid` you hand to the wallet plus the `nonce` and the DCQL query Didit ID built for it.
 
 <CodeGroup>
 ```bash cURL
@@ -253,7 +244,7 @@ PRESENTATION="$(
       "requested_vct": "EmployeeBadge",
       "requested_claims": ["role"],
       "aud": "office-access-rp",
-      "trusted_iss": ""
+      "purpose": "Confirm your role for office access"
     }'
 )"
 
@@ -268,13 +259,7 @@ echo "$PRESENTATION" | jq '{
   status
 }'
 
-curl -sS -X POST "$DIDIT_API_BASE/presentations/$PRESENTATION_ID/demo-present" \
-  -H "Content-Type: application/json" \
-  --data '{}' | jq '{
-    verdict,
-    disclosed_claims,
-    checks
-  }'
+echo "Open in the wallet: https://wallet-idv0.staging.didit.me/present?request=$PRESENTATION_ID"
 ```
 
 ```python Python
@@ -285,7 +270,7 @@ presentation = requests.post(
         "requested_vct": "EmployeeBadge",
         "requested_claims": ["role"],
         "aud": "office-access-rp",
-        "trusted_iss": "",
+        "purpose": "Confirm your role for office access",
     },
 ).json()
 presentation_id = presentation["uuid"]
@@ -293,25 +278,64 @@ presentation_id = presentation["uuid"]
 print({k: presentation.get(k) for k in (
     "uuid", "dcql", "requested_claims", "aud", "nonce", "status",
 )})
-
-# demo-present is public — no Authorization header.
-result = requests.post(
-    f"{api_base}/presentations/{presentation_id}/demo-present",
-    json={},
-).json()
-
-print({k: result[k] for k in ("verdict", "disclosed_claims", "checks")})
+print("Open in the wallet:", f"https://wallet-idv0.staging.didit.me/present?request={presentation_id}")
 ```
 </CodeGroup>
 
-    In production, deliver the request to a wallet with the W3C Digital Credentials API using `openid4vp-v1-signed`. The wallet submits the `vp_token` to `POST /presentations/{id}/response`.
+    Open the printed wallet link in the same browser. The wallet shows the requester, the requested claim, and the disclosure choice. Approve it, and the wallet posts a key-bound `vp_token` to the public `POST /presentations/{id}/response` endpoint.
+
+    <Frame caption="Present: the requester, the requested claims as toggles, the always-shared claims, and the claims this verifier did not ask for, then Confirm with Passkey."><img src="/images/screenshots/wallet-present-consent.png" alt="Wallet Present screen where https://veribank.example requests Given Name and Employee Id, Tier is always shared, Family Name and Department are listed as not shared, and a Confirm with Passkey button" /></Frame>
+
+    In production, deliver the request to a wallet with the W3C Digital Credentials API using `openid4vp-v1-signed`, or render the same wallet link as a QR code. See [verify presentations](/guides/verification).
+  </Step>
+
+  <Step title="Read the verdict and the disclosed claims">
+    Poll the public `GET /presentations/{id}` until it carries a `result`. That result is PII-free: it has the `verdict`, the boolean `checks`, and an `error`, but never claim values. Then read `disclosed_claims` from your backend with `GET /verifications/{id}`, which accepts the presentation request UUID and requires the tenant API key.
+
+<CodeGroup>
+```bash cURL
+until curl -sS "$DIDIT_API_BASE/presentations/$PRESENTATION_ID" | jq -e '.result' >/dev/null; do
+  sleep 2
+done
+
+curl -sS "$DIDIT_API_BASE/presentations/$PRESENTATION_ID" | jq '{status, result}'
+
+curl -sS "$DIDIT_API_BASE/verifications/$PRESENTATION_ID" \
+  -H "Authorization: Bearer $DIDIT_API_KEY" | jq '{
+    verdict,
+    disclosed_claims,
+    checks
+  }'
+```
+
+```python Python
+import time
+
+while True:
+    status = requests.get(f"{api_base}/presentations/{presentation_id}").json()
+    if "result" in status:
+        break
+    time.sleep(2)
+
+print(status["result"])
+
+verification = requests.get(
+    f"{api_base}/verifications/{presentation_id}",
+    headers=auth,
+).json()
+
+print({k: verification[k] for k in ("verdict", "disclosed_claims", "checks")})
+```
+</CodeGroup>
   </Step>
 </Steps>
 
 ## Read the verification result
 
+`GET /verifications/{id}` returns the full verification record.
+
 <ResponseField name="verdict" type="string">
-  `verified` means Didit ID accepted the presentation.
+  `verified` means Didit ID accepted the presentation. Any other value is `failed`, and `error` says why.
 </ResponseField>
 
 <ResponseField name="disclosed_claims" type="object">
@@ -320,6 +344,10 @@ print({k: result[k] for k in ("verdict", "disclosed_claims", "checks")})
 
 <ResponseField name="checks" type="object">
   The verification checks. A verified response includes successful checks for `signature`, `key_binding`, `aud`, `nonce`, `alg_allowlist`, `not_expired`, and `not_revoked`.
+</ResponseField>
+
+<ResponseField name="request_id" type="string">
+  The presentation request UUID. `vct`, `verifier` (the request `aud`), and `requested_claims` are echoed alongside it.
 </ResponseField>
 
 ## Next steps

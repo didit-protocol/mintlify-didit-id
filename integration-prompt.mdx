@@ -38,9 +38,9 @@ The agent registers your account, bootstraps the credentials tenant, defines you
 | 2. Define the credential | `POST /v1/credential-schemas` with `vct` + attributes (`sd: true` for selective disclosure), then `POST /v1/credential-templates` for a reusable `template_id` |
 | 3. Issue via email | `POST /v1/credential-offers` with `recipient_email` + `send_email: true` — Didit ID emails a claim link that opens the holder wallet; the 6-digit `tx_code` (PIN) is shared out-of-band by the issuer |
 | 4. Holder claim | The OpenID4VCI exchange the wallet runs: `POST /v1/oauth/token` (pre-authorized_code grant + `tx_code`) → `POST /v1/nonce` → `POST /v1/credential` with an `openid4vci-proof+jwt` ES256 proof (holder JWK in the header, `aud` = `credential_issuer` from the issuer's `.well-known/openid-credential-issuer`) → the SD-JWT VC |
-| 5. Verify | `POST /v1/presentations/request` (DCQL) → wallet submits its `vp_token` to the public `POST /v1/presentations/{uuid}/response` → backend polls `GET /v1/presentations/{uuid}` for `result` with `verdict`, `disclosed_claims`, and the `checks` map |
+| 5. Verify | `POST /v1/presentations/request` (DCQL) → wallet submits its `vp_token` to the public `POST /v1/presentations/{uuid}/response` → backend polls `GET /v1/presentations/{uuid}` for `result` with `verdict` and the `checks` map, then reads `disclosed_claims` with `GET /v1/verifications/{uuid}` |
 
-The prompt also bundles the **lifecycle endpoints** (revoke / suspend / reactivate, Token Status Lists), the **trust registry and relying-party registration** calls, **issuer key rotation**, and the **demo endpoints** (`/accept`, `/demo-present`) so the integration runs locally without a wallet.
+The prompt also bundles the **lifecycle endpoints** (revoke / suspend / reactivate, Token Status Lists), the **trust registry and relying-party registration** calls, **issuer key rotation**, and the **hosted sandbox wallet** links (`claim_url`, `/present?request=<uuid>`) so the integration can be exercised end to end before a production wallet exists.
 
 ## Why this works as a one-prompt integration
 
@@ -49,7 +49,7 @@ The prompt also bundles the **lifecycle endpoints** (revoke / suspend / reactiva
 - **Two-secret contract.** The prompt names the boundary explicitly — the user `access_token` is only for `POST /v1/tenant/bootstrap`; the tenant `api_key` is for every other management call and never reaches a wallet, browser, or email.
 - **Protocol-exact.** It calls out the traps: the `pre-authorized_code` body key has a hyphen, tokens and nonces are single-use with 300 s / 60 s TTLs, offers expire in 10 minutes, and five wrong `tx_code` attempts lock the offer.
 - **Verdict-driven.** The agent's decision logic reads `result.verdict` as authoritative and uses the seven-boolean `checks` map (`signature`, `key_binding`, `aud`, `nonce`, `alg_allowlist`, `not_expired`, `not_revoked`) to explain failures.
-- **Demo-runnable.** The deliverable includes an end-to-end local run built on `/accept` and `/demo-present`, so the integration proves itself before a real wallet is in the loop.
+- **Demo-runnable.** The deliverable includes an end-to-end run against the hosted sandbox wallet, so the integration proves itself on the real protocol before your own wallet is in the loop.
 
 ## See also
 

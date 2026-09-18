@@ -133,7 +133,7 @@ curl -X POST "$DIDIT_BASE_URL/v1/oauth/token" \\
     "pre-authorized_code": "<pre_authorized_code from the offer>",
     "tx_code": "<6-digit PIN>"
   }'
-# -> 200 { access_token, token_type: "bearer", expires_in: 300 }
+# -> 200 { access_token, token_type: "Bearer", expires_in: 300 }
 
 # 4b) Mint a single-use proof nonce (60 s TTL).
 curl -X POST "$DIDIT_BASE_URL/v1/nonce" -H "Content-Type: application/json" -d '{}'
@@ -150,7 +150,7 @@ curl -X POST "$DIDIT_BASE_URL/v1/credential" \\
 # -> 200 { credential: "<jws>~<disclosure>~<disclosure>~", vct: "EmployeeBadge" }
 \`\`\`
 
-The response \`credential\` is the issued SD-JWT VC (issuer-signed JWS + tilde-separated disclosures, trailing tilde). The token, nonce, and offer are all consumed on success. For local demos without a wallet, \`POST /v1/credential-offers/{offer_id}/accept\` (empty body \`{}\`) runs 4a–4c server-side and returns the credential + a generated holder JWK — demo only, never production.
+The response \`credential\` is the issued SD-JWT VC (issuer-signed JWS + tilde-separated disclosures, trailing tilde). The token, nonce, and offer are all consumed on success. To test before your wallet exists, open the offer's \`claim_url\` in the hosted sandbox wallet (https://wallet-idv0.staging.didit.me): it runs 4a–4c with its own holder key.
 
 ## Step 5 — Verify a presentation (OpenID4VP + DCQL)
 
@@ -172,14 +172,18 @@ curl -X POST "$DIDIT_BASE_URL/v1/presentations/request" \\
 #     presentation and submits it to the PUBLIC response endpoint:
 #     POST /v1/presentations/<uuid>/response   body: { "vp_token": "<sd-jwt-vc presentation with KB-JWT>" }
 
-# 5c) Backend polls the request until the result lands.
+# 5c) Backend polls the request until the result lands (public, PII-free).
 curl "$DIDIT_BASE_URL/v1/presentations/<uuid>"
-# -> { uuid, status, ..., result: { verdict: "verified",
-#        disclosed_claims: { "role": "Engineer" },
+# -> { uuid, status, ..., result: { verdict: "verified", error: "",
 #        checks: { signature, key_binding, aud, nonce, alg_allowlist, not_expired, not_revoked } } }
+
+# 5d) Backend reads the disclosed claims (tenant API key; accepts the request uuid).
+curl "$DIDIT_BASE_URL/v1/verifications/<uuid>" -H "Authorization: Bearer $DIDIT_API_KEY"
+# -> { id, request_id, verdict, vct, verifier, requested_claims,
+#      disclosed_claims: { "role": "Engineer" }, checks, error, created_at }
 \`\`\`
 
-Treat \`result.verdict === "verified"\` as the authoritative decision; use the boolean \`checks\` map to explain failures. Issuer trust also gates the verdict — a cryptographically valid credential from an issuer outside the tenant trust registry fails. Audit history: \`GET /v1/verifications\` and \`GET /v1/verifications/{uuid}\` (tenant API key). Local demo without a wallet: \`POST /v1/presentations/{uuid}/demo-present\` (empty body) runs a real issue + present + verify server-side.
+Treat \`result.verdict === "verified"\` as the authoritative decision; use the boolean \`checks\` map to explain failures. Issuer trust also gates the verdict — a cryptographically valid credential from an issuer outside the tenant trust registry fails. Audit history: \`GET /v1/verifications\` and \`GET /v1/verifications/{uuid}\` (tenant API key). To test before your wallet exists, open \`https://wallet-idv0.staging.didit.me/present?request=<uuid>\` in the hosted sandbox wallet and approve the request there.
 
 ## Lifecycle & operations (wire these where relevant)
 
@@ -195,7 +199,7 @@ Build a small backend module that:
 1. Reads \`DIDIT_BASE_URL\`, \`DIDIT_ACCESS_TOKEN\`, and \`DIDIT_API_KEY\` from the environment; if \`DIDIT_API_KEY\` is missing, calls \`POST /v1/tenant/bootstrap\` once and persists the returned \`api_key\`.
 2. Exposes: \`createSchemaAndTemplate()\`, \`issueByEmail(recipientEmail, claims)\` (offer with \`recipient_email\` + \`send_email: true\`, returning \`offer_id\` and the \`tx_code\` to deliver out-of-band), \`requestPresentation(requestedClaims, aud)\`, and \`pollResult(presentationUuid)\` that resolves \`{ verdict, disclosed_claims, checks }\`.
 3. Never logs or hard-codes secrets; uses the tenant \`api_key\` as Bearer for every management call and the user \`access_token\` ONLY for \`/v1/tenant/bootstrap\`; never sends the API key to a wallet, browser, or email.
-4. Includes a runnable end-to-end demo using \`POST /v1/credential-offers/{uuid}/accept\` and \`POST /v1/presentations/{uuid}/demo-present\` so it works locally without a wallet, printing the final \`verdict\` + \`checks\`.
+4. Includes a runnable end-to-end script that prints the offer \`claim_url\` and the wallet present link, waits for the holder to act in the hosted sandbox wallet, and prints the final \`verdict\` + \`checks\` + \`disclosed_claims\`.
 
 If anything in \`## My application context\` is missing, ask once at the top of your reply, then ship the complete change set in my stack's idioms (\`fetch\` / \`axios\` / \`requests\` / \`okhttp\`). Adjust the example schema (\`EmployeeBadge\`) and claims to my credential; keep the endpoint contract exactly as specified above.
 `;

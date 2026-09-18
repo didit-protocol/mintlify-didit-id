@@ -17,10 +17,14 @@ Create a tenant API key in the Didit Console and store it as a server-side secre
 
 <Steps>
   <Step title="Open the Console">
-    Go to [Didit Console](https://business.didit.me) and select the tenant or application that owns your Didit ID configuration.
+    Go to the [Didit ID console](https://console-idv0.staging.didit.me) and sign in to the organization that owns your Didit ID tenant.
+
+    <Frame caption="The console sign-in page."><img src="/images/screenshots/console-sign-in.png" alt="Didit console sign-in form with e-mail and password fields" /></Frame>
   </Step>
   <Step title="Create a tenant API key">
-    Open the API key or developer settings for the tenant, then create a key for your backend service.
+    Open **API keys**, then create a key for your backend service. Choose the `sandbox` or `prod` environment and a role (`owner`, `admin`, `issuer`, `verifier`, `issuer-verifier`, or `reader`); the role is clamped so it never exceeds your own. The full token is shown once, at creation or rotation, and masked afterwards. Scripts and agents can instead call [`POST /v1/tenant/bootstrap`](/api-reference/api-keys/tenant-bootstrap-post) with a user access token, as described in [programmatic access](/guides/programmatic-access).
+
+    <Frame caption="Settings > API keys: each key shows its environment, masked token, scopes and last use. Create key issues a new one and shows the full token once."><img src="/images/screenshots/console-api-keys.png" alt="Console Settings page with the API keys section showing one sandbox key named backend-service with a masked token, its scopes and a Create key button" /></Frame>
   </Step>
   <Step title="Store it server-side">
     Save the key in your secret manager or local environment as `DIDIT_API_KEY`.
@@ -41,12 +45,18 @@ Management endpoints create and administer tenant-owned resources. These endpoin
 
 | Area | Endpoints |
 | --- | --- |
-| Credential configuration | `GET /credential-schemas`, `POST /credential-schemas`, `GET /credential-templates`, `POST /credential-templates` |
-| Issuance management | `POST /credential-offers`, `POST /credentials/issue`, `GET /credentials`, `GET /credentials/{uuid}` |
+| Credential configuration | `GET /credential-schemas`, `POST /credential-schemas`, `GET /credential-schemas/{uuid}`, `PATCH /credential-schemas/{uuid}`, `POST /credential-schemas/{uuid}/versions`, `POST /credential-schemas/{uuid}/revoke-credentials`, `GET /credential-templates`, `POST /credential-templates` |
+| Issuance management | `GET /credential-offers`, `POST /credential-offers`, `POST /credential-offers/{uuid}/resend-email`, `POST /credentials/issue`, `GET /credentials`, `GET /credentials/{uuid}` |
 | Credential lifecycle | `POST /credentials/{uuid}/revoke`, `POST /credentials/{uuid}/suspend`, `POST /credentials/{uuid}/reactivate` |
-| Verification management | `POST /presentations/request`, `GET /verifications`, `GET /verifications/{uuid}` |
-| Trust registry | `GET /trust-frameworks`, `GET /trusted-issuers`, `POST /trusted-issuers`, `DELETE /trusted-issuers/{uuid}`, `POST /trusted-issuers/{uuid}/validate`, `GET /relying-parties`, `POST /relying-parties`, `DELETE /relying-parties/{uuid}` |
+| Verification management | `GET /presentations/request`, `POST /presentations/request`, `GET /verifications`, `GET /verifications/{uuid}` |
+| Trust registry | `GET /trust-frameworks`, `POST /trust-frameworks`, `GET /trust-frameworks/{slug}`, `PATCH /trust-frameworks/{slug}`, `DELETE /trust-frameworks/{slug}`, `GET /trust-frameworks/{slug}/trust`, `PUT /trust-frameworks/{slug}/trust`, `POST /trust-frameworks/{slug}/issuer-overrides`, `GET /trusted-issuers`, `POST /trusted-issuers`, `PATCH /trusted-issuers/{uuid}`, `DELETE /trusted-issuers/{uuid}`, `POST /trusted-issuers/{uuid}/validate`, `GET /relying-parties`, `POST /relying-parties`, `PATCH /relying-parties/{uuid}`, `DELETE /relying-parties/{uuid}` |
 | Issuer keys | `GET /keys`, `POST /keys/rotate`, `GET /keys/impact` |
+| Webhooks | `GET /webhooks`, `POST /webhooks`, `PATCH /webhooks/{uuid}`, `DELETE /webhooks/{uuid}`, `POST /webhooks/{uuid}/test`, `GET /webhooks/deliveries` |
+| API keys | `GET /api-keys`, `POST /api-keys`, `POST /api-keys/{uuid}/rotate`, `DELETE /api-keys/{uuid}` |
+
+Each API key carries a role (`owner`, `admin`, `issuer`, `verifier`, `issuer-verifier`, or `reader`). Most reads are open to every role; listing webhooks, deliveries, or API keys needs a role with `read:webhooks` or `read:api-keys` (`reader` has neither). Writes require a capability the role grants: `issuer` keys can create schemas and templates, issue, change credential lifecycle, rotate signing keys, and manage webhooks; `verifier` keys can create presentation requests and manage trusted issuers and relying parties; only `owner` or `admin` keys can manage API keys and custom trust frameworks. A call outside the key's role returns `403`.
+
+`POST /v1/tenant/bootstrap` is the one exception to the tenant-key rule: it takes a Didit user `access_token` and returns the tenant API key. See [programmatic access](/guides/programmatic-access).
 
 The management endpoint creates the transaction. The public protocol endpoints complete the wallet or verifier exchange.
 
@@ -92,10 +102,11 @@ Public endpoints are designed for holder wallets, verifier callbacks, metadata d
 
 | Flow | Public endpoints |
 | --- | --- |
-| OpenID4VCI holder exchange | `GET /credential-offers/{uuid}`, `POST /credential-offers/{uuid}/accept`, `POST /oauth/token`, `POST /nonce`, `POST /credential` |
+| OpenID4VCI holder exchange | `GET /credential-offers/{uuid}`, `GET /credential-offers/resolve`, `GET /credential-offers/{uuid}/offer`, `POST /oauth/token`, `POST /nonce`, `POST /credential` |
 | Issuer metadata | `GET /issuers/{slug}/.well-known/openid-credential-issuer`, `GET /issuers/{slug}/.well-known/jwt-vc-issuer` |
-| OpenID4VP presentation exchange | `GET /presentations/{uuid}`, `POST /presentations/{uuid}/response`, `POST /presentations/{uuid}/demo-present` |
+| OpenID4VP presentation exchange | `GET /presentations/{uuid}`, `GET /presentations/{uuid}/request`, `POST /presentations/{uuid}/response` |
 | Token status lists | `GET /status-lists/{slug}/{uuid}` |
+| Webhook catalog | `GET /webhook-events` |
 
 For example, the OpenID4VCI token endpoint is public because the holder exchanges a `pre-authorized_code` and `tx_code` issued for a specific offer.
 

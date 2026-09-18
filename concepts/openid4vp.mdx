@@ -25,7 +25,7 @@ The examples on this page follow an age-gated site verifying an `AgeOver18` cred
   <Step title="Submit the vp_token">
     The wallet returns a `vp_token`. Submit it to [Submit a vp_token for verification](/api-reference/verification/presentations-uuid-response-post).
 
-    Didit ID verifies the presentation, applies the relying party's trust policy, and returns a `verdict`, `disclosed_claims`, and a `checks` object.
+    Didit ID verifies the presentation, applies the relying party's trust policy, and returns a `verdict`, `disclosed_claims`, and a `checks` object. A request is single-use: a second submission for the same `uuid` is rejected with `422` as a replay.
   </Step>
   <Step title="Poll or read the verification log">
     Poll [the presentation request](/api-reference/verification/presentations-uuid-get) while the holder flow is pending.
@@ -74,8 +74,8 @@ const presentationRequest = await response.json();
   The SD-JWT VC type that the wallet must present. This maps to the credential `vct`, such as `AgeOver18`.
 </ParamField>
 
-<ParamField path="requested_claims" type="string[]" required>
-  The claim names you want the holder to disclose. Didit ID places these claim requirements into the DCQL query.
+<ParamField path="requested_claims" type="string[]" default="[]">
+  The claim names you want the holder to disclose. Didit ID places these claim requirements into the DCQL query. Optional; an empty list requests the credential without asking for any disclosed claim.
 </ParamField>
 
 <ParamField path="aud" type="string" required>
@@ -152,12 +152,12 @@ If the verifier requests only `over_18`, the wallet includes only the `over_18` 
 ```
 
 <Tip>
-  In a production app, pass the presentation request through your holder handoff channel, then submit the wallet's `vp_token` to Didit ID. Use [Demo present](/api-reference/verification/presentations-uuid-demo-present-post) only for server-side test flows.
+  In a production app, pass the presentation request through your holder handoff channel, then let the wallet submit its `vp_token` to Didit ID. The wallet reads the OpenID4VP parameters it needs (`client_id`, `nonce`, `dcql_query`, `response_uri`, `state`) from the public [request parameters](/api-reference/verification/presentations-uuid-request-get) endpoint.
 </Tip>
 
 ## Submit the vp_token
 
-Submit the wallet response to `POST /v1/presentations/{uuid}/response`.
+Submit the wallet response to `POST /v1/presentations/{uuid}/response`. The endpoint is public and single-use per request; a valid presentation returns `200`, anything that fails verification returns `422` with `verdict: "failed"`, an `error`, and the `checks` that ran. The body may also carry `state`: if the wallet echoes it, the value must equal the request's `transaction_id` (the `state` from the public request parameters), or the response is rejected with `422` and `error: "state mismatch"`. A malformed body (for example a missing `vp_token`, or a DCQL object with more than one entry) returns `400` with the field errors instead.
 
 <CodeGroup>
 ```bash cURL
@@ -186,8 +186,9 @@ const verification = await response.json();
 ```
 </CodeGroup>
 
-<ParamField path="vp_token" type="string" required>
+<ParamField path="vp_token" type="string | object" required>
   The SD-JWT VC presentation returned by the wallet, including the holder's KB-JWT.
+  Send either the compact SD-JWT VC presentation string or the OpenID4VP 1.0 DCQL-keyed object, `{"cred1": ["<sd-jwt~kb>"]}`, with exactly one entry whose key is the credential query `id` from the request DCQL. Both forms are accepted; the object form must hold exactly one presentation.
 </ParamField>
 
 Didit ID returns the verification decision, disclosed claims, and check results.
@@ -251,5 +252,5 @@ Add issuers with [Add a trusted issuer](/api-reference/trust/trusted-issuers-pos
 The API response mirrors the documented `checks` fields. Trust policy affects the verification outcome, but it is not returned as a separate `trusted_issuer` boolean.
 
 <Warning>
-  Do not use disclosed claims until verification succeeds. A wallet can send a malformed, expired, replayed, or untrusted presentation; the `checks` object tells you which requirement failed.
+  Do not use disclosed claims until verification succeeds. A wallet can send a malformed, expired, replayed, or untrusted presentation. The boolean `checks` show which cryptographic or lifecycle check failed; policy failures, such as an issuer outside the trust policy, an issuer that does not match `trusted_iss`, or the wrong credential type, are reported in the `error` string.
 </Warning>
