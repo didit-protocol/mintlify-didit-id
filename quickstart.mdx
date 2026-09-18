@@ -29,7 +29,7 @@ This quickstart uses the sandbox API at `https://idv0.staging.didit.me/v1`. Mana
   <Step title="Create an account in the console">
     Open the [console](https://console-idv0.staging.didit.me) and create a sandbox account.
 
-    {/* screenshot: console sign-up 1280x800 */}
+    <Frame caption="Create your organisation: a work e-mail and a password, with an optional passkey right after. Google and Apple are not available yet."><img src="/images/screenshots/console-sign-up.png" alt="Didit Console sign-up card titled Create your organisation with a work e-mail field and a Continue with email button" /></Frame>
   </Step>
   <Step title="Issue a credential to your email">
     Create a credential offer and send it to an email address you can open.
@@ -49,7 +49,7 @@ This quickstart uses the sandbox API at `https://idv0.staging.didit.me/v1`. Mana
   <Step title="Get a tenant API key">
     Open the [console](https://console-idv0.staging.didit.me), go to **API keys**, and create a tenant API key. Store it in your shell, then make one authenticated request to confirm the key works.
 
-    {/* screenshot: console api-keys 1280x800 */}
+    <Frame caption="Settings > API keys: each key shows its environment, masked token, scopes and last use. Create key issues a new one and shows the full token once."><img src="/images/screenshots/console-api-keys.png" alt="Console Settings page with the API keys section showing one sandbox key named backend-service with a masked token, its scopes and a Create key button" /></Frame>
 
 <CodeGroup>
 ```bash cURL
@@ -226,7 +226,7 @@ input("Press Enter once the wallet shows the credential... ")
 ```
 </CodeGroup>
 
-    {/* screenshot: wallet claim-offer 390x844 */}
+    <Frame caption="Add to Wallet: the issuer, the credential type, and each claim marked You choose (selectively disclosable) or Always shared. The transaction code entry and the Add to Wallet button follow below."><img src="/images/screenshots/wallet-claim-offer.png" alt="Wallet Add to Wallet screen showing an employee badge offer from skyhop-airlines with Given Name, Family Name, Employee Id and Department marked You choose and Tier marked Always shared" /></Frame>
 
     Your own wallet follows the same protocol. See [OpenID4VCI issuance](/guides/issuance) for the token, nonce, and credential calls.
   </Step>
@@ -284,7 +284,7 @@ print("Open in the wallet:", f"https://wallet-idv0.staging.didit.me/present?requ
 
     Open the printed wallet link in the same browser. The wallet shows the requester, the requested claim, and the disclosure choice. Approve it, and the wallet posts a key-bound `vp_token` to the public `POST /presentations/{id}/response` endpoint.
 
-    {/* screenshot: wallet present-consent 390x844 */}
+    <Frame caption="Present: the requester, the requested claims as toggles, the always-shared claims, and the claims this verifier did not ask for, then Confirm with Passkey."><img src="/images/screenshots/wallet-present-consent.png" alt="Wallet Present screen where https://veribank.example requests Given Name and Employee Id, Tier is always shared, Family Name and Department are listed as not shared, and a Confirm with Passkey button" /></Frame>
 
     In production, deliver the request to a wallet with the W3C Digital Credentials API using `openid4vp-v1-signed`, or render the same wallet link as a QR code. See [verify presentations](/guides/verification).
   </Step>

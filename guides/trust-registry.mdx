@@ -8,7 +8,6 @@ Use the trust registry to decide which issuers each verifier accepts. Trust can 
 Trust decisions are separate from cryptographic checks. At verification time, Didit ID checks the credential signature, holder key binding, audience, nonce, algorithm allowlist, expiry, revocation, and the applicable trust policy.
 
 <CardGroup cols={2}>
-  {/* screenshot: console trust-registry 1280x800 */}
   <Card title="Try it in the console" icon="gauge" href="https://console-idv0.staging.didit.me">
     Open trust settings, review Didit Network, add trusted issuers, and configure relying-party policies.
   </Card>
@@ -16,6 +15,8 @@ Trust decisions are separate from cryptographic checks. At verification time, Di
     Browse trust frameworks, trusted issuers, issuer overrides, and relying-party endpoints.
   </Card>
 </CardGroup>
+
+<Frame caption="Verification policy in Account & organization: your verifiers, whether Didit Network issuers are accepted, and the issuer groups each verifier trusts."><img src="/images/screenshots/console-trust-registry.png" alt="Console Account & organization sheet showing the Verification policy section with a verifier named Campus Door, a Didit Network group marked Not accepted and organization issuer groups" /></Frame>
 
 <Note>
   Trust registry endpoints are management endpoints. Send `Authorization: Bearer $DIDIT_API_KEY` with each request.

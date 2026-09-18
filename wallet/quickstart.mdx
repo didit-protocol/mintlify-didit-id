@@ -33,7 +33,7 @@ Use the hosted wallet to claim a credential from an email link, then present it 
   <Step title="Claim the credential">
     Review the issuer, credential type, and requested transaction code. When you approve, the wallet runs the OpenID4VCI exchange and stores the SD-JWT VC.
 
-    {/* screenshot: wallet claim-offer 390x844 */}
+    <Frame caption="Add to Wallet: the issuer, the credential type, and each claim marked You choose (selectively disclosable) or Always shared. The transaction code entry and the Add to Wallet button follow below."><img src="/images/screenshots/wallet-claim-offer.png" alt="Wallet Add to Wallet screen showing an employee badge offer from skyhop-airlines with Given Name, Family Name, Employee Id and Department marked You choose and Tier marked Always shared" /></Frame>
   </Step>
 
   <Step title="Open VeriBank">
@@ -43,7 +43,7 @@ Use the hosted wallet to claim a credential from an email link, then present it 
   <Step title="Present with selective disclosure">
     Review the relying party and requested claims. Approve the presentation. The wallet submits an OpenID4VP `vp_token` with only the approved disclosures.
 
-    {/* screenshot: wallet present-consent 390x844 */}
+    <Frame caption="Present: the requester, the requested claims as toggles, the always-shared claims, and the claims this verifier did not ask for, then Confirm with Passkey."><img src="/images/screenshots/wallet-present-consent.png" alt="Wallet Present screen where https://veribank.example requests Given Name and Employee Id, Tier is always shared, Family Name and Department are listed as not shared, and a Confirm with Passkey button" /></Frame>
   </Step>
 </Steps>
 
